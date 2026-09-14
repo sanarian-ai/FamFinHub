@@ -1,0 +1,142 @@
+[
+  {
+    "name": "iciciSavings",
+    "holder": "Sangeeth",
+    "institution": "ICICI",
+    "kind": "bank_debit",
+    "active": true
+  },
+  {
+    "name": "iciciRiaSavings",
+    "holder": "Ria",
+    "institution": "ICICI",
+    "kind": "bank_debit",
+    "active": true
+  },
+  {
+    "name": "iciciCredit",
+    "holder": "Sangeeth",
+    "institution": "ICICI",
+    "kind": "credit_card",
+    "active": true
+  },
+  {
+    "name": "iciciRiaCredit",
+    "holder": "Ria",
+    "institution": "ICICI",
+    "kind": "credit_card",
+    "active": true
+  },
+  {
+    "name": "SBIRiaCredit",
+    "holder": "Ria",
+    "institution": "SBI",
+    "kind": "credit_card",
+    "active": true
+  },
+  {
+    "name": "hdfcdiners",
+    "holder": "Sangeeth",
+    "institution": "HDFC",
+    "kind": "credit_card",
+    "active": false
+  },
+  {
+    "name": "axisFKCredit",
+    "holder": "Sangeeth",
+    "institution": "Axis",
+    "kind": "credit_card",
+    "active": false
+  },
+  {
+    "name": "amexPlatinum",
+    "holder": "Sangeeth",
+    "institution": "Amex",
+    "kind": "credit_card",
+    "active": false
+  },
+  {
+    "name": "axisMagnusCredit",
+    "holder": "Sangeeth",
+    "institution": "Axis",
+    "kind": "credit_card",
+    "active": false
+  },
+  {
+    "name": "SBIODAccount",
+    "holder": "Sangeeth",
+    "institution": "SBI",
+    "kind": "bank_debit",
+    "active": false
+  },
+  {
+    "name": "amazonCredit",
+    "holder": "Sangeeth",
+    "institution": "ICICI",
+    "kind": "credit_card",
+    "active": false
+  },
+  {
+    "name": "SBISanCredit",
+    "holder": "Sangeeth",
+    "institution": "SBI",
+    "kind": "credit_card",
+    "active": false
+  },
+  {
+    "name": "Cash",
+    "holder": "Sangeeth",
+    "institution": null,
+    "kind": "cash",
+    "active": false
+  },
+  {
+    "name": "hdfcsavings",
+    "holder": "Sangeeth",
+    "institution": "HDFC",
+    "kind": "bank_debit",
+    "active": false
+  },
+  {
+    "name": "Ria Cash",
+    "holder": "Ria",
+    "institution": null,
+    "kind": "cash",
+    "active": false
+  },
+  {
+    "name": "paytm",
+    "holder": "Sangeeth",
+    "institution": null,
+    "kind": "wallet",
+    "active": false
+  },
+  {
+    "name": "Ria SBi Current",
+    "holder": "Ria",
+    "institution": "SBI",
+    "kind": "bank_debit",
+    "active": false
+  },
+  {
+    "name": "SBISanSavings",
+    "holder": "Sangeeth",
+    "institution": "SBI",
+    "kind": "bank_debit",
+    "active": false
+  },
+  {
+    "name": "PhonePe",
+    "holder": "Sangeeth",
+    "institution": null,
+    "kind": "wallet",
+    "active": false
+  },
+  {
+    "name": "NiyoGlobal",
+    "holder": "Sangeeth",
+    "institution": "Niyo",
+    "kind": "bank_debit",
+    "active": false
+  }
+]

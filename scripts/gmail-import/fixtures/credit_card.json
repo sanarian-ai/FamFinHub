@@ -1,0 +1,883 @@
+[
+  {
+    "msgId": "1a06157fd4e0f61e",
+    "threadId": "1a06157fd4e0f61e",
+    "date": "2026-09-02T08:58:21Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1093.00 on Sep 02, 2026 at 02:28:12. Info: PYU*Flipkart. The Available Credit Limit on your card is INR 18,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1093.0,
+      "merchant": "PYU*Flipkart",
+      "txnDateTime": "2026-09-02T02:28:12"
+    }
+  },
+  {
+    "msgId": "1a05cd84abeb0d37",
+    "threadId": "1a05cd84abeb0d37",
+    "date": "2026-09-01T12:00:55Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 325.28 on Sep 01, 2026 at 05:29:14. Info: UBER INDIA SYSTEMS. The Available Credit Limit on your card is INR 18,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 325.28,
+      "merchant": "UBER INDIA SYSTEMS",
+      "txnDateTime": "2026-09-01T05:29:14"
+    }
+  },
+  {
+    "msgId": "1a056a9425c52ad2",
+    "threadId": "1a056a9425c52ad2",
+    "date": "2026-08-31T07:11:40Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1167.00 on Aug 31, 2026 at 12:40:01. Info: PYU*licious. The Available Credit Limit on your card is INR 18,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1167.0,
+      "merchant": "PYU*licious",
+      "txnDateTime": "2026-08-31T12:40:01"
+    }
+  },
+  {
+    "msgId": "1a04eca40b32e9fc",
+    "threadId": "1a04eca40b32e9fc",
+    "date": "2026-08-29T18:30:15Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1077.00 on Aug 29, 2026 at 10:13:01. Info: RSP*SWIGGY PVT LTD FOO. The Available Credit Limit on your card is",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1077.0,
+      "merchant": "RSP*SWIGGY PVT LTD FOO",
+      "txnDateTime": "2026-08-29T10:13:01"
+    }
+  },
+  {
+    "msgId": "1a04bb7c0c2f7a19",
+    "threadId": "1a04bb7c0c2f7a19",
+    "date": "2026-08-29T04:11:42Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 321.59 on Aug 29, 2026 at 09:41:36. Info: UBER INDIA SYSTEMS. The Available Credit Limit on your card is INR 18,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 321.59,
+      "merchant": "UBER INDIA SYSTEMS",
+      "txnDateTime": "2026-08-29T09:41:36"
+    }
+  },
+  {
+    "msgId": "1a04763d40fcf07b",
+    "threadId": "1a04763d40fcf07b",
+    "date": "2026-08-28T07:59:27Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 267.80 on Aug 28, 2026 at 01:29:18. Info: UBER INDIA SYSTEMS. The Available Credit Limit on your card is INR 18,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 267.8,
+      "merchant": "UBER INDIA SYSTEMS",
+      "txnDateTime": "2026-08-28T01:29:18"
+    }
+  },
+  {
+    "msgId": "1a04177ed7e99468",
+    "threadId": "1a04177ed7e99468",
+    "date": "2026-08-27T04:25:27Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1527.00 on Aug 27, 2026 at 09:55:21. Info: URBANCLAP TECHNOLOGIES. The Available Credit Limit on your card is",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1527.0,
+      "merchant": "URBANCLAP TECHNOLOGIES",
+      "txnDateTime": "2026-08-27T09:55:21"
+    }
+  },
+  {
+    "msgId": "1a03c9e2b69c9274",
+    "threadId": "1a03c9e2b69c9274",
+    "date": "2026-08-26T05:48:24Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1655.00 on Aug 26, 2026 at 11:18:18. Info: PYU*licious. The Available Credit Limit on your card is INR 18,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1655.0,
+      "merchant": "PYU*licious",
+      "txnDateTime": "2026-08-26T11:18:18"
+    }
+  },
+  {
+    "msgId": "1a03753efaa495cf",
+    "threadId": "1a03753efaa495cf",
+    "date": "2026-08-25T05:08:39Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of USD 23.60 on Aug 25, 2026 at 10:38:34. Info: ANTHROPIC* CLAUDE SUB. The Available Credit Limit on your card is INR",
+    "bodySource": "full",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "USD",
+      "amount": 23.6,
+      "merchant": "ANTHROPIC* CLAUDE SUB",
+      "txnDateTime": "2026-08-25T10:38:34"
+    },
+    "plaintextBody": " ICICI Bank Online\n\n| |\n\n| |\n\n| |\n| |\n| Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of USD 23.60 on Aug 25, 2026 at 10:38:34. Info: ANTHROPIC* CLAUDE SUB. The Available Credit Limit on your card is INR 18,53,059.33 and Total Credit Limit is INR 21,00,000.00. The above limits are a total of the limits of all the Credit Cards issued to the primary card holder, including any supplementary cards. In case you have not done this transaction, to report it please call on 18002662 or SMS BLOCK space 3008 to 9215676766 from your registered mobile number and if you are outside India, call on 04071403333."
+  },
+  {
+    "msgId": "1a032221422627d8",
+    "threadId": "1a032221422627d8",
+    "date": "2026-08-24T04:56:18Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1499.00 on Aug 24, 2026 at 10:26:12. Info: FAHI TRADING LLP. The Available Credit Limit on your card is INR 18,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1499.0,
+      "merchant": "FAHI TRADING LLP",
+      "txnDateTime": "2026-08-24T10:26:12"
+    }
+  },
+  {
+    "msgId": "1a02e1851460ca1a",
+    "threadId": "1a02e1851460ca1a",
+    "date": "2026-08-23T10:07:24Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 773.58 on Aug 23, 2026 at 03:37:15. Info: PAY*BOOKMYSHOW COM. The Available Credit Limit on your card is INR 18,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 773.58,
+      "merchant": "PAY*BOOKMYSHOW COM",
+      "txnDateTime": "2026-08-23T03:37:15"
+    }
+  },
+  {
+    "msgId": "1a022c8bd2b087af",
+    "threadId": "1a022c8bd2b087af",
+    "date": "2026-08-21T05:25:26Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 2000.00 on Aug 21, 2026 at 10:55:20. Info: JAYASREE TRANSPORT PR5. The Available Credit Limit on your card is",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 2000.0,
+      "merchant": "JAYASREE TRANSPORT PR5",
+      "txnDateTime": "2026-08-21T10:55:20"
+    }
+  },
+  {
+    "msgId": "1a01e69ff5a7fb1a",
+    "threadId": "1a01e69ff5a7fb1a",
+    "date": "2026-08-20T09:03:16Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 15803.00 on Aug 20, 2026 at 02:33:06. Info: HYUNDAI. The Available Credit Limit on your card is INR 18,74957.15",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 15803.0,
+      "merchant": "HYUNDAI",
+      "txnDateTime": "2026-08-20T02:33:06"
+    }
+  },
+  {
+    "msgId": "1a01783dedd3ed80",
+    "threadId": "1a01783dedd3ed80",
+    "date": "2026-08-19T00:54:50Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 30.00 on Aug 19, 2026 at 06:24:46. Info: BLINKIT. The Available Credit Limit on your card is INR 18,85880.15 and",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 30.0,
+      "merchant": "BLINKIT",
+      "txnDateTime": "2026-08-19T06:24:46"
+    }
+  },
+  {
+    "msgId": "1a00b40a5122a9c3",
+    "threadId": "1a00b40a5122a9c3",
+    "date": "2026-08-16T15:22:33Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1255.00 on Aug 16, 2026 at 08:52:19. Info: SWIGGY PVT LTD E COM. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1255.0,
+      "merchant": "SWIGGY PVT LTD E COM",
+      "txnDateTime": "2026-08-16T08:52:19"
+    }
+  },
+  {
+    "msgId": "1a004433f3467529",
+    "threadId": "1a004433f3467529",
+    "date": "2026-08-15T07:07:29Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1360.00 on Aug 15, 2026 at 12:37:22. Info: RAZ*PRIME CUT. The Available Credit Limit on your card is INR 19,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1360.0,
+      "merchant": "RAZ*PRIME CUT",
+      "txnDateTime": "2026-08-15T12:37:22"
+    }
+  },
+  {
+    "msgId": "19ff1db661f3d6e6",
+    "threadId": "19ff1db661f3d6e6",
+    "date": "2026-08-11T17:23:33Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 890.00 on Aug 11, 2026 at 10:53:21. Info: PROGRESSIVE LABS INC. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 890.0,
+      "merchant": "PROGRESSIVE LABS INC",
+      "txnDateTime": "2026-08-11T10:53:21"
+    }
+  },
+  {
+    "msgId": "19fe9bb1937406aa",
+    "threadId": "19fe9bb1937406aa",
+    "date": "2026-08-10T03:31:36Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 203.00 on Aug 10, 2026 at 09:01:31. Info: URBAN COMPANY. The Available Credit Limit on your card is INR 19,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 203.0,
+      "merchant": "URBAN COMPANY",
+      "txnDateTime": "2026-08-10T09:01:31"
+    }
+  },
+  {
+    "msgId": "19fc150d26a9c82f",
+    "threadId": "19fc150d26a9c82f",
+    "date": "2026-08-02T07:12:06Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1378.00 on Aug 02, 2026 at 12:41:59. Info: Delightful Gourmet Pvt. The Available Credit Limit on your card is",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1378.0,
+      "merchant": "Delightful Gourmet Pvt",
+      "txnDateTime": "2026-08-02T12:41:59"
+    }
+  },
+  {
+    "msgId": "19fb69683138db66",
+    "threadId": "19fb69683138db66",
+    "date": "2026-07-31T05:12:24Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 818.00 on Jul 31, 2026 at 10:42:18. Info: PYU*FLIPKART INTERNET. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 818.0,
+      "merchant": "PYU*FLIPKART INTERNET",
+      "txnDateTime": "2026-07-31T10:42:18"
+    }
+  },
+  {
+    "msgId": "19fa6a6fbf08cb52",
+    "threadId": "19fa6a6fbf08cb52",
+    "date": "2026-07-28T02:56:26Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 824.00 on Jul 28, 2026 at 08:26:21. Info: PYU*Flipkart Internet. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 824.0,
+      "merchant": "PYU*Flipkart Internet",
+      "txnDateTime": "2026-07-28T08:26:21"
+    }
+  },
+  {
+    "msgId": "19fa3159b093a999",
+    "threadId": "19fa3159b093a999",
+    "date": "2026-07-27T10:18:26Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 647.00 on Jul 27, 2026 at 03:48:15. Info: SWIGGY PVT LTD GROCE. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 647.0,
+      "merchant": "SWIGGY PVT LTD GROCE",
+      "txnDateTime": "2026-07-27T03:48:15"
+    }
+  },
+  {
+    "msgId": "19f9c57eb3e50e92",
+    "threadId": "19f9c57eb3e50e92",
+    "date": "2026-07-26T02:53:54Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 4000.00 on Jul 26, 2026 at 08:23:50. Info: INNOVATIVE RETAIL CONC. The Available Credit Limit on your card is",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 4000.0,
+      "merchant": "INNOVATIVE RETAIL CONC",
+      "txnDateTime": "2026-07-26T08:23:50"
+    }
+  },
+  {
+    "msgId": "19f93183298c3b93",
+    "threadId": "19f93183298c3b93",
+    "date": "2026-07-24T07:47:42Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1220.00 on Jul 24, 2026 at 01:17:35. Info: PYU*Flipkart Internet. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1220.0,
+      "merchant": "PYU*Flipkart Internet",
+      "txnDateTime": "2026-07-24T01:17:35"
+    }
+  },
+  {
+    "msgId": "19f8cc81b4f86b83",
+    "threadId": "19f8cc81b4f86b83",
+    "date": "2026-07-23T02:22:30Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of USD 23.60 on Jul 23, 2026 at 07:52:26. Info: ANTHROPIC* CLAUDE SUB. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "USD",
+      "amount": 23.6,
+      "merchant": "ANTHROPIC* CLAUDE SUB",
+      "txnDateTime": "2026-07-23T07:52:26"
+    }
+  },
+  {
+    "msgId": "19f7b638e210a986",
+    "threadId": "19f7b638e210a986",
+    "date": "2026-07-19T17:17:55Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 38666.00 on Jul 19, 2026 at 10:47:42. Info: REWARD 360 GLOBAL SERV. The Available Credit Limit on your card is",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 38666.0,
+      "merchant": "REWARD 360 GLOBAL SERV",
+      "txnDateTime": "2026-07-19T10:47:42"
+    }
+  },
+  {
+    "msgId": "19f7335e1664bd6a",
+    "threadId": "19f7335e1664bd6a",
+    "date": "2026-07-18T03:11:55Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 820.00 on Jul 18, 2026 at 08:41:50. Info: Delightful Gourmet Pvt. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 820.0,
+      "merchant": "Delightful Gourmet Pvt",
+      "txnDateTime": "2026-07-18T08:41:50"
+    }
+  },
+  {
+    "msgId": "19f6da6af1fcee50",
+    "threadId": "19f6da6af1fcee50",
+    "date": "2026-07-17T01:17:46Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 409.00 on Jul 17, 2026 at 06:47:42. Info: SWIGGY INSTAMART PRIVA. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 409.0,
+      "merchant": "SWIGGY INSTAMART PRIVA",
+      "txnDateTime": "2026-07-17T06:47:42"
+    }
+  },
+  {
+    "msgId": "19f63a9be9c47040",
+    "threadId": "19f63a9be9c47040",
+    "date": "2026-07-15T02:44:55Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1700.00 on Jul 15, 2026 at 08:14:51. Info: RAZ*PRIME CUT. The Available Credit Limit on your card is INR 19,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1700.0,
+      "merchant": "RAZ*PRIME CUT",
+      "txnDateTime": "2026-07-15T08:14:51"
+    }
+  },
+  {
+    "msgId": "19f5f25863ec988f",
+    "threadId": "19f5f25863ec988f",
+    "date": "2026-07-14T05:42:01Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1136.00 on Jul 14, 2026 at 11:11:55. Info: Trolleypop Retail PVT. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1136.0,
+      "merchant": "Trolleypop Retail PVT",
+      "txnDateTime": "2026-07-14T11:11:55"
+    }
+  },
+  {
+    "msgId": "19f5535a254d1c45",
+    "threadId": "19f5535a254d1c45",
+    "date": "2026-07-12T07:23:25Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 351.00 on Jul 12, 2026 at 12:53:18. Info: BUNDL TECHNOLOGIES. The Available Credit Limit on your card is INR 20,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 351.0,
+      "merchant": "BUNDL TECHNOLOGIES",
+      "txnDateTime": "2026-07-12T12:53:18"
+    }
+  },
+  {
+    "msgId": "19f4a908b2565cc8",
+    "threadId": "19f4a908b2565cc8",
+    "date": "2026-07-10T05:46:53Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of USD 23.60 on Jul 10, 2026 at 11:16:46. Info: COMPUTER. The Available Credit Limit on your card is INR 20,22000.48",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "USD",
+      "amount": 23.6,
+      "merchant": "COMPUTER",
+      "txnDateTime": "2026-07-10T11:16:46"
+    }
+  },
+  {
+    "msgId": "19f449a6b84b4135",
+    "threadId": "19f449a6b84b4135",
+    "date": "2026-07-09T01:59:57Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 263.00 on Jul 09, 2026 at 07:29:53. Info: URBANCLAP TECHNOLOGIES. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 263.0,
+      "merchant": "URBANCLAP TECHNOLOGIES",
+      "txnDateTime": "2026-07-09T07:29:53"
+    }
+  },
+  {
+    "msgId": "19f3fbcac1857985",
+    "threadId": "19f3fbcac1857985",
+    "date": "2026-07-08T03:19:16Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 479.00 on Jul 08, 2026 at 08:49:11. Info: ASSPL. The Available Credit Limit on your card is INR 20,29400.52 and",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 479.0,
+      "merchant": "ASSPL",
+      "txnDateTime": "2026-07-08T08:49:11"
+    }
+  },
+  {
+    "msgId": "19f35ca78339c38d",
+    "threadId": "19f35ca78339c38d",
+    "date": "2026-07-06T04:58:08Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 693.00 on Jul 06, 2026 at 10:28:02. Info: Delightful Gourmet Pvt. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 693.0,
+      "merchant": "Delightful Gourmet Pvt",
+      "txnDateTime": "2026-07-06T10:28:02"
+    }
+  },
+  {
+    "msgId": "19f31f40a5a4dce8",
+    "threadId": "19f31f40a5a4dce8",
+    "date": "2026-07-05T11:05:03Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1033.00 on Jul 05, 2026 at 04:34:50. Info: SWIGGY LIMITED. The Available Credit Limit on your card is INR 20,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1033.0,
+      "merchant": "SWIGGY LIMITED",
+      "txnDateTime": "2026-07-05T04:34:50"
+    }
+  },
+  {
+    "msgId": "19f2ced4fa0676f5",
+    "threadId": "19f2ced4fa0676f5",
+    "date": "2026-07-04T11:39:34Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1194.00 on Jul 04, 2026 at 05:09:23. Info: RAZ*Swiggy. The Available Credit Limit on your card is INR 20,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1194.0,
+      "merchant": "RAZ*Swiggy",
+      "txnDateTime": "2026-07-04T05:09:23"
+    }
+  },
+  {
+    "msgId": "19f26203205d6d46",
+    "threadId": "19f26203205d6d46",
+    "date": "2026-07-03T03:57:51Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 7841.74 on Jul 03, 2026 at 09:27:46. Info: GOPINATH ENTERPRISES. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 7841.74,
+      "merchant": "GOPINATH ENTERPRISES",
+      "txnDateTime": "2026-07-03T09:27:46"
+    }
+  },
+  {
+    "msgId": "19f1c4bc67a4c6df",
+    "threadId": "19f1c4bc67a4c6df",
+    "date": "2026-07-01T06:09:14Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 309.00 on Jul 01, 2026 at 11:39:08. Info: ASSPL. The Available Credit Limit on your card is INR 20,45740.47 and",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 309.0,
+      "merchant": "ASSPL",
+      "txnDateTime": "2026-07-01T11:39:08"
+    }
+  },
+  {
+    "msgId": "19f14220428f22b8",
+    "threadId": "19f14220428f22b8",
+    "date": "2026-06-29T16:06:39Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 464.00 on Jun 29, 2026 at 09:36:27. Info: ASSPL. The Available Credit Limit on your card is INR 19,59763.10 and",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 464.0,
+      "merchant": "ASSPL",
+      "txnDateTime": "2026-06-29T09:36:27"
+    }
+  },
+  {
+    "msgId": "19f0e1ddd523768a",
+    "threadId": "19f0e1ddd523768a",
+    "date": "2026-06-28T12:04:24Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 250.00 on Jun 28, 2026 at 05:34:10. Info: PTM*UBER INDIA SYSTEMS. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 250.0,
+      "merchant": "PTM*UBER INDIA SYSTEMS",
+      "txnDateTime": "2026-06-28T05:34:10"
+    }
+  },
+  {
+    "msgId": "19f02fec17e6723d",
+    "threadId": "19f02fec17e6723d",
+    "date": "2026-06-26T08:14:36Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 2315.34 on Jun 26, 2026 at 01:44:28. Info: PRO. The Available Credit Limit on your card is INR 19,69945.95 and",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 2315.34,
+      "merchant": "PRO",
+      "txnDateTime": "2026-06-26T01:44:28"
+    }
+  },
+  {
+    "msgId": "19ef22572564ca39",
+    "threadId": "19ef22572564ca39",
+    "date": "2026-06-23T01:43:19Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of USD 120.00 on Jun 23, 2026 at 07:13:15. Info: DEPARTMENT OF PRODUCT. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "USD",
+      "amount": 120.0,
+      "merchant": "DEPARTMENT OF PRODUCT",
+      "txnDateTime": "2026-06-23T07:13:15"
+    }
+  },
+  {
+    "msgId": "19ee87e873599797",
+    "threadId": "19ee87e873599797",
+    "date": "2026-06-21T04:44:25Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 650.18 on Jun 21, 2026 at 10:14:19. Info: BOOK MY SHOW SMART G. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 650.18,
+      "merchant": "BOOK MY SHOW SMART G",
+      "txnDateTime": "2026-06-21T10:14:19"
+    }
+  },
+  {
+    "msgId": "19ee2f54b670c2bf",
+    "threadId": "19ee2f54b670c2bf",
+    "date": "2026-06-20T02:56:25Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 358.00 on Jun 20, 2026 at 08:26:21. Info: Flipkart Payments. The Available Credit Limit on your card is INR 20,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 358.0,
+      "merchant": "Flipkart Payments",
+      "txnDateTime": "2026-06-20T08:26:21"
+    }
+  },
+  {
+    "msgId": "19edf6363bb75e02",
+    "threadId": "19edf6363bb75e02",
+    "date": "2026-06-19T10:18:11Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 263.00 on Jun 19, 2026 at 03:48:03. Info: URBANCLAP TECHNOLOGIES. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 263.0,
+      "merchant": "URBANCLAP TECHNOLOGIES",
+      "txnDateTime": "2026-06-19T03:48:03"
+    }
+  },
+  {
+    "msgId": "19ed86e6b34300a0",
+    "threadId": "19ed86e6b34300a0",
+    "date": "2026-06-18T01:52:54Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 2190.00 on Jun 18, 2026 at 07:22:50. Info: CAS*FirstClub. The Available Credit Limit on your card is INR 20,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 2190.0,
+      "merchant": "CAS*FirstClub",
+      "txnDateTime": "2026-06-18T07:22:50"
+    }
+  },
+  {
+    "msgId": "19ec66b39df5e3eb",
+    "threadId": "19ec66b39df5e3eb",
+    "date": "2026-06-14T13:56:15Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 2326.00 on Jun 14, 2026 at 07:09:48. Info: RAZ*Swiggy. The Available Credit Limit on your card is INR 20,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 2326.0,
+      "merchant": "RAZ*Swiggy",
+      "txnDateTime": "2026-06-14T07:09:48"
+    }
+  },
+  {
+    "msgId": "19ec201737424662",
+    "threadId": "19ec201737424662",
+    "date": "2026-06-13T17:22:14Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 262.00 on Jun 13, 2026 at 10:51:59. Info: SWIGGY LIMITED. The Available Credit Limit on your card is INR 20,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 262.0,
+      "merchant": "SWIGGY LIMITED",
+      "txnDateTime": "2026-06-13T10:51:59"
+    }
+  },
+  {
+    "msgId": "19eb9f97fc9d3091",
+    "threadId": "19eb9f97fc9d3091",
+    "date": "2026-06-12T03:56:35Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 142.00 on Jun 12, 2026 at 09:26:30. Info: BUNDL TECHNOLOGIES. The Available Credit Limit on your card is INR 20,",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 142.0,
+      "merchant": "BUNDL TECHNOLOGIES",
+      "txnDateTime": "2026-06-12T09:26:30"
+    }
+  },
+  {
+    "msgId": "19ea705dfea41a64",
+    "threadId": "19ea705dfea41a64",
+    "date": "2026-06-08T11:35:15Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3107 has been used for a transaction of INR 3854.03 on Jun 08, 2026 at 05:05:06. Info: ASSPL. The Available Credit Limit on your card is INR 20,18656.63 and",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3107",
+      "currency": "INR",
+      "amount": 3854.03,
+      "merchant": "ASSPL",
+      "txnDateTime": "2026-06-08T05:05:06"
+    }
+  },
+  {
+    "msgId": "19e9b7573d6d4349",
+    "threadId": "19e9b7573d6d4349",
+    "date": "2026-06-06T05:40:34Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 1395.00 on Jun 06, 2026 at 11:10:29. Info: PRIME CUT. The Available Credit Limit on your card is INR 20,23240.66",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 1395.0,
+      "merchant": "PRIME CUT",
+      "txnDateTime": "2026-06-06T11:10:29"
+    }
+  },
+  {
+    "msgId": "19e9b78d38988b0e",
+    "threadId": "19e9b7573d6d4349",
+    "date": "2026-06-06T05:46:43Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 730.00 on Jun 06, 2026 at 11:16:37. Info: PRIME CUT. The Available Credit Limit on your card is INR 20,22510.66",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 730.0,
+      "merchant": "PRIME CUT",
+      "txnDateTime": "2026-06-06T11:16:37"
+    }
+  },
+  {
+    "msgId": "19e9806ff2084abd",
+    "threadId": "19e9806ff2084abd",
+    "date": "2026-06-05T13:42:41Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 320.96 on Jun 05, 2026 at 07:12:29. Info: UBER INDIA SYSTE PVT L. The Available Credit Limit on your card is INR",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 320.96,
+      "merchant": "UBER INDIA SYSTE PVT L",
+      "txnDateTime": "2026-06-05T07:12:29"
+    }
+  },
+  {
+    "msgId": "19e9897c19d6ae76",
+    "threadId": "19e9806ff2084abd",
+    "date": "2026-06-05T16:21:20Z",
+    "sender": "credit_cards@icici.bank.in",
+    "subject": "Transaction alert for your ICICI Bank Credit Card",
+    "snippet": "Dear Customer, Your ICICI Bank Credit Card XX3008 has been used for a transaction of INR 631.00 on Jun 05, 2026 at 09:51:03. Info: Swiggy. The Available Credit Limit on your card is INR 20,24635.66 and",
+    "bodySource": "snippet",
+    "expected": {
+      "cardLast": "3008",
+      "currency": "INR",
+      "amount": 631.0,
+      "merchant": "Swiggy",
+      "txnDateTime": "2026-06-05T09:51:03"
+    }
+  }
+]

@@ -1,0 +1,26 @@
+services:
+  - type: web
+    name: expense-tracker
+    runtime: node
+    plan: free
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.0
+      # All of these are prompted for when you deploy this Blueprint on Render
+      # (sync: false = not stored in this file, set once in the Render dashboard).
+      - key: DATABASE_URL
+        sync: false
+      - key: INGEST_API_KEY
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: ALLOWED_EMAILS
+        sync: false

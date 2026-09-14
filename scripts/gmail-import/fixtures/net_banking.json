@@ -1,0 +1,50 @@
+[
+  {
+    "msgId": "19f3a285ea125d07",
+    "threadId": "19f3a285ea125d07",
+    "date": "2026-07-07T01:19:09Z",
+    "sender": "customercare@icicibank.com",
+    "subject": "Transaction alert for your ICICI Bank Net Banking",
+    "plaintextBody": " ICICI Bank\n\n| |\n| [](http://www.icicibank.com/campaigns/mailers/otp-26-12/wm/disclaimer.html) |\n\n| |\n| Dear Customer, |\n| You have made an online payment of INR 58619.25 towards Unity Living (Razorpay Payments PVT LTD RIB) from your Account XX630 on Jul 07, 2026 at 06:49 hours. The Transaction ID is 1225846343. |\n| In case you have not done this transaction,to report it please call on 18002662 or SMS BLOCK 630 to 9215676766 from your registered mobile number. Never share your OTP, URN, CVV or passwords with anyone even if the person claims to be a bank employee. |\n| Sincerely, Team ICICI Bank |\n| T&Cs |\n| This is a system-generated e-mail. Please do not reply to this e-mail. |\n\n| [](http://www.icicibank.com/campaigns/mailers/2015-jan/service-test/disclaimer-pb.html) |\n| |",
+    "expected": {
+      "amount": 58619.25,
+      "currency": "INR",
+      "merchant": "Unity Living (Razorpay Payments PVT LTD RIB)",
+      "accountLast": "630",
+      "txnDateTime": "2026-07-07T06:49:00",
+      "transactionId": "1225846343"
+    }
+  },
+  {
+    "msgId": "19eef7e7bc61fa45",
+    "threadId": "19eef7e7bc61fa45",
+    "date": "2026-06-22T13:21:42Z",
+    "sender": "customercare@icicibank.com",
+    "subject": "Transaction alert for your ICICI Bank Net Banking",
+    "plaintextBody": " ICICI Bank\n\n| |\n| [](http://www.icicibank.com/campaigns/mailers/otp-26-12/wm/disclaimer.html) |\n\n| |\n| Dear Customer, |\n| You have made an online payment of INR 3700.00 towards GREEN WOOD HIGH TRUST (PAYTM PAYMENTS SERVICES LIMITED) from your Account XX630 on Jun 22, 2026 at 18:51 hours. The Transaction ID is 1219864613. |\n| In case you have not done this transaction,to report it please call on 18002662 or SMS BLOCK 630 to 9215676766 from your registered mobile number. Never share your OTP, URN, CVV or passwords with anyone even if the person claims to be a bank employee. |\n| Sincerely, Team ICICI Bank |\n| T&Cs |\n| This is a system-generated e-mail. Please do not reply to this e-mail. |\n\n| [](http://www.icicibank.com/campaigns/mailers/2015-jan/service-test/disclaimer-pb.html) |\n| |",
+    "expected": {
+      "amount": 3700.00,
+      "currency": "INR",
+      "merchant": "GREEN WOOD HIGH TRUST (PAYTM PAYMENTS SERVICES LIMITED)",
+      "accountLast": "630",
+      "txnDateTime": "2026-06-22T18:51:00",
+      "transactionId": "1219864613"
+    }
+  },
+  {
+    "msgId": "19ed96a35dd72ed2",
+    "threadId": "19ed96a35dd72ed2",
+    "date": "2026-06-18T06:27:54Z",
+    "sender": "customercare@icicibank.com",
+    "subject": "Transaction alert for your ICICI Bank Net Banking",
+    "plaintextBody": " ICICI Bank\n\n| |\n| [](http://www.icicibank.com/campaigns/mailers/otp-26-12/wm/disclaimer.html) |\n\n| |\n| Dear Customer, |\n| You have made an online payment of INR 50900.00 towards GREEN WOOD HIGH TRUST (PAYTM PAYMENTS SERVICES LIMITED) from your Account XX630 on Jun 18, 2026 at 11:57 hours. The Transaction ID is 1219020201. |\n| In case you have not done this transaction,to report it please call on 18002662 or SMS BLOCK 630 to 9215676766 from your registered mobile number. Never share your OTP, URN, CVV or passwords with anyone even if the person claims to be a bank employee. |\n| Sincerely, Team ICICI Bank |\n| T&Cs |\n| This is a system-generated e-mail. Please do not reply to this e-mail. |\n\n| [](http://www.icicibank.com/campaigns/mailers/2015-jan/service-test/disclaimer-pb.html) |\n| |",
+    "expected": {
+      "amount": 50900.00,
+      "currency": "INR",
+      "merchant": "GREEN WOOD HIGH TRUST (PAYTM PAYMENTS SERVICES LIMITED)",
+      "accountLast": "630",
+      "txnDateTime": "2026-06-18T11:57:00",
+      "transactionId": "1219020201"
+    }
+  }
+]

@@ -1,0 +1,1440 @@
+{
+  "natures": [
+    {
+      "name": "Discretionary Expense",
+      "accountType": "Expenditure"
+    },
+    {
+      "name": "Education Expenses",
+      "accountType": "Expenditure"
+    },
+    {
+      "name": "Household Fixed",
+      "accountType": "Expenditure"
+    },
+    {
+      "name": "Income Tax",
+      "accountType": "Expenditure"
+    },
+    {
+      "name": "Insurance Premium",
+      "accountType": "Expenditure"
+    },
+    {
+      "name": "Medical",
+      "accountType": "Expenditure"
+    },
+    {
+      "name": "Official Expense",
+      "accountType": "Expenditure"
+    },
+    {
+      "name": "One Off Expenses",
+      "accountType": "Expenditure"
+    },
+    {
+      "name": "Vacation",
+      "accountType": "Expenditure"
+    },
+    {
+      "name": "Income",
+      "accountType": "Income"
+    },
+    {
+      "name": "Investment Return",
+      "accountType": "Income"
+    },
+    {
+      "name": "Investments",
+      "accountType": "Investment"
+    },
+    {
+      "name": "Planned Asset",
+      "accountType": "Investment"
+    }
+  ],
+  "types": [
+    {
+      "name": "Cash",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Charity",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Fin Service Charge",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Food & Entertainment",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Gifts",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Home Shifting",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Learning",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Lifestyle Expense",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Official Travel",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Online Subscription",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Travel",
+      "natureName": "Discretionary Expense"
+    },
+    {
+      "name": "Kids Education",
+      "natureName": "Education Expenses"
+    },
+    {
+      "name": "Loan - Education",
+      "natureName": "Education Expenses"
+    },
+    {
+      "name": "Entertainment",
+      "natureName": "Household Fixed"
+    },
+    {
+      "name": "House Maintenance",
+      "natureName": "Household Fixed"
+    },
+    {
+      "name": "House Staff",
+      "natureName": "Household Fixed"
+    },
+    {
+      "name": "Household Shopping",
+      "natureName": "Household Fixed"
+    },
+    {
+      "name": "Rent",
+      "natureName": "Household Fixed"
+    },
+    {
+      "name": "Utilities",
+      "natureName": "Household Fixed"
+    },
+    {
+      "name": "Vehicle & Local Travel",
+      "natureName": "Household Fixed"
+    },
+    {
+      "name": "Income Tax",
+      "natureName": "Income Tax"
+    },
+    {
+      "name": "Insurance Premium",
+      "natureName": "Insurance Premium"
+    },
+    {
+      "name": "Vehicle & Local Travel",
+      "natureName": "Insurance Premium"
+    },
+    {
+      "name": "Medical",
+      "natureName": "Medical"
+    },
+    {
+      "name": "Official Travel",
+      "natureName": "Official Expense"
+    },
+    {
+      "name": "Baptism",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "Family",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "House Rennovation",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "House Warming",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "Milestone Gift",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "Not Sure",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "Party",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "Property Selling",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "Shifting Expenses",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "Vehicle Purchase",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "YobiZ",
+      "natureName": "One Off Expenses"
+    },
+    {
+      "name": "Vacation",
+      "natureName": "Vacation"
+    },
+    {
+      "name": "Bank Interest",
+      "natureName": "Income"
+    },
+    {
+      "name": "Gifts",
+      "natureName": "Income"
+    },
+    {
+      "name": "Income Tax",
+      "natureName": "Income"
+    },
+    {
+      "name": "Salary",
+      "natureName": "Income"
+    },
+    {
+      "name": "Salary Bonus",
+      "natureName": "Income"
+    },
+    {
+      "name": "Salary Stocks",
+      "natureName": "Income"
+    },
+    {
+      "name": "Divident",
+      "natureName": "Investment Return"
+    },
+    {
+      "name": "Rent",
+      "natureName": "Investment Return"
+    },
+    {
+      "name": "Crypto Investments",
+      "natureName": "Investments"
+    },
+    {
+      "name": "Insurance Investment",
+      "natureName": "Investments"
+    },
+    {
+      "name": "US Stocks",
+      "natureName": "Investments"
+    },
+    {
+      "name": "Home Buying",
+      "natureName": "Planned Asset"
+    },
+    {
+      "name": "Property Purchase",
+      "natureName": "Planned Asset"
+    }
+  ],
+  "categories": [
+    {
+      "name": "Cash",
+      "expenseType": "Cash",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Charity/Donations",
+      "expenseType": "Charity",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Church Donation",
+      "expenseType": "Charity",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Kochettan Donation",
+      "expenseType": "Charity",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Credit Card Charges",
+      "expenseType": "Fin Service Charge",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Financial Advisory",
+      "expenseType": "Fin Service Charge",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Investment charges",
+      "expenseType": "Fin Service Charge",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Service Charges/Fees",
+      "expenseType": "Fin Service Charge",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Birthday Party",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Dining",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Entertainment",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Food FK",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Food Outside",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "House Party",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Liquor",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Movie",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Netflix",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Ria Work Food",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Ria Work Party",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Sangeeth Work Party",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Team Gifts",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Team Party",
+      "expenseType": "Food & Entertainment",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "birthday party gifts",
+      "expenseType": "Gifts",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Family Gifts",
+      "expenseType": "Gifts",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Friends Gifts",
+      "expenseType": "Gifts",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Onam Celebrations",
+      "expenseType": "Gifts",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Relatives Gifts",
+      "expenseType": "Gifts",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "XMas Celebrations",
+      "expenseType": "Gifts",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Home Shifting",
+      "expenseType": "Home Shifting",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Rent Security Deposit",
+      "expenseType": "Home Shifting",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Books",
+      "expenseType": "Learning",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "eBooks",
+      "expenseType": "Learning",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Professional engagement",
+      "expenseType": "Learning",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Ria - Studies",
+      "expenseType": "Learning",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Ria Coaching",
+      "expenseType": "Learning",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Sangeeth Coaching",
+      "expenseType": "Learning",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Sangeeth Reading Subs",
+      "expenseType": "Learning",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Accessorries",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Apps",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Clothes",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Courier",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Digital Tool",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Dry Cleaning",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Electornic Items",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Furniture",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Gadget",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Home Appliances",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Home Decor",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "home interior",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Lakhsyan",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Lens & Glasses",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Ornaments",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Personal",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Personal Care Shopping",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Reuben Clothes",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Reuben Misc",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Reuben Toy",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Ria Clothes",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Rochelle Care",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Rochelle Clothes",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Rochelle Toys",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Salon",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Jewelry Shopping",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Sangeeth Clothes",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Shoes",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Sports",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Uncategorised",
+      "expenseType": "Lifestyle Expense",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Israel Trip",
+      "expenseType": "Official Travel",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "US Trip Loss",
+      "expenseType": "Official Travel",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Google Drive",
+      "expenseType": "Online Subscription",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "AI Subscription",
+      "expenseType": "Online Subscription",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Online Subscription",
+      "expenseType": "Online Subscription",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Ankur Wedding",
+      "expenseType": "Travel",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Appa Amma Flight",
+      "expenseType": "Travel",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "FastTag",
+      "expenseType": "Travel",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Flight Ticket",
+      "expenseType": "Travel",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Kerala Trip",
+      "expenseType": "Travel",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Out of City",
+      "expenseType": "Travel",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Train Ticket",
+      "expenseType": "Travel",
+      "expenseNature": "Discretionary Expense"
+    },
+    {
+      "name": "Kids Books",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Kids Extra Curricular",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Kids School Fees",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Kids School Uniform",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Reuben Books",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Reuben Day Care",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Reuben Extra Curricular",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Reuben School Fees",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Reuben School Misc",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Rochelle Extra Curricular",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Rochelle School Fees",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Rochelle School Misc",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Stationaries",
+      "expenseType": "Kids Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "Loan - Education",
+      "expenseType": "Loan - Education",
+      "expenseNature": "Education Expenses"
+    },
+    {
+      "name": "dishtv",
+      "expenseType": "Entertainment",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Hotstar",
+      "expenseType": "Entertainment",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Itunes",
+      "expenseType": "Entertainment",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "OTT",
+      "expenseType": "Entertainment",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Prime",
+      "expenseType": "Entertainment",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Garden Expense",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Home Appliances Servicing",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Home Applicances Repair",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Home Cleaning",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Home Repair",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Monthly Maintenance",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Pest Control",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Plant Purchase",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Property Tax",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Quarterly Maintenance",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Seed Purchase",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "ZeroB AMC 4 Year",
+      "expenseType": "House Maintenance",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Car Wash",
+      "expenseType": "House Staff",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Gardner",
+      "expenseType": "House Staff",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Gym",
+      "expenseType": "House Staff",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Ironing",
+      "expenseType": "House Staff",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Maid Advance",
+      "expenseType": "House Staff",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Maid Bonus",
+      "expenseType": "House Staff",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Maid Misc",
+      "expenseType": "House Staff",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Maid Salary",
+      "expenseType": "House Staff",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Departmental Stores",
+      "expenseType": "Household Shopping",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Groceries",
+      "expenseType": "Household Shopping",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Meat",
+      "expenseType": "Household Shopping",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Milk",
+      "expenseType": "Household Shopping",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Rent",
+      "expenseType": "Rent",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Broadband Bill",
+      "expenseType": "Utilities",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Commune Corpus",
+      "expenseType": "Utilities",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "DG Charges",
+      "expenseType": "Utilities",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Electricity Bill",
+      "expenseType": "Utilities",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Gas",
+      "expenseType": "Utilities",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Mobile phone bill",
+      "expenseType": "Utilities",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Paper",
+      "expenseType": "Utilities",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Reimbursement",
+      "expenseType": "Utilities",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Water Bill",
+      "expenseType": "Utilities",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Bike Maintenance",
+      "expenseType": "Vehicle & Local Travel",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Car Maintenance",
+      "expenseType": "Vehicle & Local Travel",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Driving License",
+      "expenseType": "Vehicle & Local Travel",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Fuel",
+      "expenseType": "Vehicle & Local Travel",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Local Commute",
+      "expenseType": "Vehicle & Local Travel",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Ria Commute",
+      "expenseType": "Vehicle & Local Travel",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Traffic fine",
+      "expenseType": "Vehicle & Local Travel",
+      "expenseNature": "Household Fixed"
+    },
+    {
+      "name": "Income Tax Advance",
+      "expenseType": "Income Tax",
+      "expenseNature": "Income Tax"
+    },
+    {
+      "name": "Income Tax Due",
+      "expenseType": "Income Tax",
+      "expenseNature": "Income Tax"
+    },
+    {
+      "name": "Tax Filing",
+      "expenseType": "Income Tax",
+      "expenseNature": "Income Tax"
+    },
+    {
+      "name": "Accident Insurance",
+      "expenseType": "Insurance Premium",
+      "expenseNature": "Insurance Premium"
+    },
+    {
+      "name": "Critical Illness Insurance",
+      "expenseType": "Insurance Premium",
+      "expenseNature": "Insurance Premium"
+    },
+    {
+      "name": "Health Insurance",
+      "expenseType": "Insurance Premium",
+      "expenseNature": "Insurance Premium"
+    },
+    {
+      "name": "Insurance - Medical",
+      "expenseType": "Insurance Premium",
+      "expenseNature": "Insurance Premium"
+    },
+    {
+      "name": "LIC Premium",
+      "expenseType": "Insurance Premium",
+      "expenseNature": "Insurance Premium"
+    },
+    {
+      "name": "Life Insurance",
+      "expenseType": "Insurance Premium",
+      "expenseNature": "Insurance Premium"
+    },
+    {
+      "name": "Insurance - Car",
+      "expenseType": "Vehicle & Local Travel",
+      "expenseNature": "Insurance Premium"
+    },
+    {
+      "name": "Ayurvedic treatment",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Dental",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Medical",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Medical - Amma",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Medical - Appa",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Medical - Chechi",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Medical - Reuben",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Medical - Ria",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Medical - Sangeeth",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Medical Covid",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Medicines",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Rochelle Medical",
+      "expenseType": "Medical",
+      "expenseNature": "Medical"
+    },
+    {
+      "name": "Dubai 2025",
+      "expenseType": "Official Travel",
+      "expenseNature": "Official Expense"
+    },
+    {
+      "name": "ISB Mohali 2025",
+      "expenseType": "Official Travel",
+      "expenseNature": "Official Expense"
+    },
+    {
+      "name": "IIT Kharagpur",
+      "expenseType": "Official Travel",
+      "expenseNature": "Official Expense"
+    },
+    {
+      "name": "Udaipur 2025",
+      "expenseType": "Official Travel",
+      "expenseNature": "Official Expense"
+    },
+    {
+      "name": "Baptism",
+      "expenseType": "Baptism",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "To Appa",
+      "expenseType": "Family",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "To Jeevan",
+      "expenseType": "Family",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Athickal 2.0",
+      "expenseType": "House Rennovation",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Painting",
+      "expenseType": "House Rennovation",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Solar Panel",
+      "expenseType": "House Rennovation",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Water Softner",
+      "expenseType": "House Rennovation",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "House Warming",
+      "expenseType": "House Warming",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Milestone Gift",
+      "expenseType": "Milestone Gift",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Not Sure",
+      "expenseType": "Not Sure",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Reuben Holy Communion",
+      "expenseType": "Party",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Property Selling",
+      "expenseType": "Property Selling",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Shifting Expenses",
+      "expenseType": "Shifting Expenses",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Bike Purchase",
+      "expenseType": "Vehicle Purchase",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Bike Selling",
+      "expenseType": "Vehicle Purchase",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Car Purchase",
+      "expenseType": "Vehicle Purchase",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Car Selling",
+      "expenseType": "Vehicle Purchase",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Endeavour Purchase",
+      "expenseType": "Vehicle Purchase",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "YobiZ",
+      "expenseType": "YobiZ",
+      "expenseNature": "One Off Expenses"
+    },
+    {
+      "name": "Alleppey Oct 21 Trip",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Andaman Trip 2023",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Bali 2025",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Champions Ranch 2022",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Chikmaglur 2025",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Coorg Wayanad Dec 21",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Dubai 2022",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Europe Shopping",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Europe Travel",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Goa Plan Oct 21",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Goa Trip",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Goa Trip 2023",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Goa with Friends 2022",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Himachal May 2022",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Hongkong 2024",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Indonesia 2025",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Indore 2024",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Mulki Surfing 2024",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Mysore Trip 2023",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Mysore Trip 2024",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Ooty trip 2019",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Pondi 2024 Aug",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Sandakphu 2023",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Uttarakhand 2026",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Singapore Trip",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Thailand Trip",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Trivandrum Trip 2023",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Vacation",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Vagamon 2023",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Velankanni Trip",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Yelagiri & Kodaikkanal 2025",
+      "expenseType": "Vacation",
+      "expenseNature": "Vacation"
+    },
+    {
+      "name": "Interest",
+      "expenseType": "Bank Interest",
+      "expenseNature": "Income"
+    },
+    {
+      "name": "Gifts to Us",
+      "expenseType": "Gifts",
+      "expenseNature": "Income"
+    },
+    {
+      "name": "Income Tax Refund",
+      "expenseType": "Income Tax",
+      "expenseNature": "Income"
+    },
+    {
+      "name": "Ria Salary",
+      "expenseType": "Salary",
+      "expenseNature": "Income"
+    },
+    {
+      "name": "Sangeeth Salary",
+      "expenseType": "Salary",
+      "expenseNature": "Income"
+    },
+    {
+      "name": "Sangeeth Bonus",
+      "expenseType": "Salary Bonus",
+      "expenseNature": "Income"
+    },
+    {
+      "name": "Flipkart Stocks",
+      "expenseType": "Salary Stocks",
+      "expenseNature": "Income"
+    },
+    {
+      "name": "Divident",
+      "expenseType": "Divident",
+      "expenseNature": "Investment Return"
+    },
+    {
+      "name": "Propshare Rent",
+      "expenseType": "Rent",
+      "expenseNature": "Investment Return"
+    },
+    {
+      "name": "CoinDCX Investment",
+      "expenseType": "Crypto Investments",
+      "expenseNature": "Investments"
+    },
+    {
+      "name": "Future Generali",
+      "expenseType": "Insurance Investment",
+      "expenseNature": "Investments"
+    },
+    {
+      "name": "INDMoney US Stocks",
+      "expenseType": "US Stocks",
+      "expenseNature": "Investments"
+    },
+    {
+      "name": "Interior Jiju/Deepa",
+      "expenseType": "Home Buying",
+      "expenseNature": "Planned Asset"
+    },
+    {
+      "name": "Interior Self",
+      "expenseType": "Home Buying",
+      "expenseNature": "Planned Asset"
+    },
+    {
+      "name": "Legal Expenses",
+      "expenseType": "Home Buying",
+      "expenseNature": "Planned Asset"
+    },
+    {
+      "name": "Loan - Home",
+      "expenseType": "Home Buying",
+      "expenseNature": "Planned Asset"
+    },
+    {
+      "name": "Loan Expenses",
+      "expenseType": "Home Buying",
+      "expenseNature": "Planned Asset"
+    },
+    {
+      "name": "Property Cost",
+      "expenseType": "Home Buying",
+      "expenseNature": "Planned Asset"
+    },
+    {
+      "name": "Registration Expense",
+      "expenseType": "Home Buying",
+      "expenseNature": "Planned Asset"
+    },
+    {
+      "name": "TUIG EMI",
+      "expenseType": "Property Purchase",
+      "expenseNature": "Planned Asset"
+    },
+    {
+      "name": "TUIG Property",
+      "expenseType": "Property Purchase",
+      "expenseNature": "Planned Asset"
+    }
+  ]
+}

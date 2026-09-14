@@ -1,0 +1,158 @@
+// Expense Tracker data model — see project doc "expense-tracker-plan.md" (Phase 2 + 8.6/8.7)
+// Production (Render + Supabase Postgres) — this copy is pre-switched from the sqlite
+// schema used for local dev. If you keep iterating locally against SQLite, don't push this
+// file's datasource block back over your local one.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountTypeEnum {
+  Expenditure
+  Investment
+  Income
+}
+
+enum TxnStatus {
+  categorized
+  needs_review
+}
+
+enum TxnSource {
+  manual
+  gmail_daily
+  gmail_monthly_reconcile
+  csv_import
+  migration
+}
+
+enum AccountKind {
+  bank_debit
+  credit_card
+  cash
+  wallet
+}
+
+enum RuleMatchType {
+  exact
+  contains
+  regex
+}
+
+enum RuleSource {
+  seeded_from_history
+  user_defined
+  llm_suggested
+  review_queue_created
+}
+
+// Top of the hierarchy — 1:1 with AccountType, verified against the historical mapping table.
+model ExpenseNature {
+  id          String          @id @default(cuid())
+  name        String          @unique
+  accountType AccountTypeEnum
+  isActive    Boolean         @default(true)
+  expenseTypes ExpenseType[]
+
+  @@map("expense_natures")
+}
+
+model ExpenseType {
+  id              String        @id @default(cuid())
+  name            String
+  expenseNatureId String
+  expenseNature   ExpenseNature @relation(fields: [expenseNatureId], references: [id])
+  isActive        Boolean       @default(true)
+  categories      Category[]
+
+  @@unique([name, expenseNatureId])
+  @@map("expense_types")
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  expenseTypeId String
+  expenseType   ExpenseType   @relation(fields: [expenseTypeId], references: [id])
+  isActive      Boolean       @default(true)
+  transactions  Transaction[]
+  rules         CategoryRule[]
+
+  @@map("categories")
+}
+
+model Account {
+  id          String      @id @default(cuid())
+  name        String      @unique // e.g. "iciciRiaSavings" — carried over from the sheet's "Spend On" values
+  holder      String      // "Sangeeth" | "Ria"
+  accountKind AccountKind
+  institution String?     // "ICICI" | "SBI" | ...
+  isActive    Boolean     @default(true) // false for legacy/migration-only accounts (Amex, Axis, HDFC, Cash, etc.)
+  transactions Transaction[]
+
+  @@map("accounts")
+}
+
+model Transaction {
+  id              String      @id @default(cuid())
+  txnDate         DateTime
+  rawDescription  String
+  amount          Decimal     // signed: negative = expense/outflow, positive = income/inflow
+  currency        String      @default("INR")
+  categoryId      String?
+  category        Category?   @relation(fields: [categoryId], references: [id])
+  accountId       String?
+  account         Account?    @relation(fields: [accountId], references: [id])
+  status          TxnStatus   @default(categorized)
+  source          TxnSource
+  importBatchId   String?
+  importBatch     ImportBatch? @relation(fields: [importBatchId], references: [id])
+  dedupeHash      String      @unique // hash(date + amount + accountId + normalized description)
+  suggestedCategoryId String?  // set when status=needs_review and a rule/LLM has a guess
+  suggestionReason    String?  // human-readable "why" shown in the Review Queue
+  legacyCalYear   Int?        // carried over from sheet for cross-checking during migration
+  legacyFyYear    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([txnDate])
+  @@index([categoryId])
+  @@index([accountId])
+  @@index([status])
+  @@map("transactions")
+}
+
+model CategoryRule {
+  id         String        @id @default(cuid())
+  matchType  RuleMatchType
+  pattern    String
+  categoryId String
+  category   Category      @relation(fields: [categoryId], references: [id])
+  priority   Int           @default(100) // lower = matched first
+  source     RuleSource
+  isActive   Boolean       @default(true)
+  createdAt  DateTime      @default(now())
+
+  @@index([pattern])
+  @@map("category_rules")
+}
+
+model ImportBatch {
+  id           String        @id @default(cuid())
+  source       TxnSource
+  startedAt    DateTime      @default(now())
+  finishedAt   DateTime?
+  status       String        @default("running") // running | completed | failed
+  rowsIn       Int           @default(0)
+  rowsMatched  Int           @default(0)
+  rowsNeedsReview Int        @default(0)
+  notes        String?
+  transactions Transaction[]
+
+  @@map("import_batches")
+}
