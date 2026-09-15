@@ -1,4 +1,4 @@
-# Expense Tracker
+# Family Finance Hub
 
 Personal expense tracking, categorization, and insights for Sangeeth & Ria — replacing the
 "Expense Tracking" Google Sheet. Full background/decisions: see the project's

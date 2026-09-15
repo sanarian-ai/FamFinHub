@@ -3,7 +3,7 @@ import "./globals.css";
 import Nav from "@/components/Nav";
 
 export const metadata: Metadata = {
-  title: "Expense Tracker",
+  title: "Family Finance Hub",
   description: "Personal expense tracking, categorization, and insights.",
 };
 

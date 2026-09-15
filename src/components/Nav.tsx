@@ -21,7 +21,7 @@ export default async function Nav() {
   return (
     <nav className="w-60 shrink-0 border-r border-slate-200 bg-white p-4 flex flex-col gap-1">
       <div className="px-2 pb-4">
-        <div className="text-sm font-semibold text-slate-900">Expense Tracker</div>
+        <div className="text-sm font-semibold text-slate-900">Family Finance Hub</div>
         <div className="text-xs text-slate-500">Sangeeth &amp; Ria</div>
       </div>
       {links.map((l) => (
