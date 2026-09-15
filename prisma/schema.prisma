@@ -1,4 +1,4 @@
-// Expense Tracker data model — see project doc "expense-tracker-plan.md" (Phase 2 + 8.6/8.7)
+// Family Finance Hub data model — see project doc "expense-tracker-plan.md" (Phase 2 + 8.6/8.7)
 // Production (Render + Supabase Postgres) — this copy is pre-switched from the sqlite
 // schema used for local dev. If you keep iterating locally against SQLite, don't push this
 // file's datasource block back over your local one.

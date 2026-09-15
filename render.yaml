@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: expense-tracker
+    name: family-finance-hub
     runtime: node
     plan: free
     buildCommand: npm install && npx prisma generate && npm run build
