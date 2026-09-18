@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import {
   fetchActiveCategoryRules,
@@ -19,6 +20,36 @@ import { RestoreDismissalButton } from "./RestoreDismissalButton";
 export const dynamic = "force-dynamic";
 
 type SearchParams = { [key: string]: string | string[] | undefined };
+
+// YYYY-MM-DD in UTC, matching how the Ledger page parses `from`/`to` (`${from}T00:00:00.000Z`).
+function isoDateUTC(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
+function addDaysUTC(d: Date, days: number): Date {
+  return new Date(d.getTime() + days * 24 * 60 * 60 * 1000);
+}
+
+// Deep-link into the Ledger, pre-filtered to exactly this group's transactions, so a reviewer
+// can see full account/date/amount detail (and bulk-recategorize right there) instead of
+// deciding from the bare description string alone.
+function ledgerLinkForGroup(representativeDescription: string): string {
+  const params = new URLSearchParams();
+  params.set("q", representativeDescription);
+  params.set("status", "needs_review");
+  return `/ledger?${params.toString()}`;
+}
+
+// Deep-link into the Ledger showing everything (any status) in a window around this group's
+// dates — the "was this part of a trip / one-off event" context a bare description can't answer.
+const CONTEXT_WINDOW_DAYS = 5;
+function ledgerContextLink(earliest: Date, latest: Date): string {
+  const params = new URLSearchParams();
+  params.set("from", isoDateUTC(addDaysUTC(earliest, -CONTEXT_WINDOW_DAYS)));
+  params.set("to", isoDateUTC(addDaysUTC(latest, CONTEXT_WINDOW_DAYS)));
+  return `/ledger?${params.toString()}`;
+}
+
 
 type Group = {
   key: string;
@@ -243,6 +274,22 @@ export default async function ReviewPage({
                       Why flagged: {g.suggestionReason}
                     </p>
                   )}
+                  <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                    <Link
+                      href={ledgerLinkForGroup(g.representativeDescription)}
+                      target="_blank"
+                      className="font-medium text-sky-600 hover:text-sky-800 hover:underline"
+                    >
+                      View transaction{g.count === 1 ? "" : "s"} in Ledger &rarr;
+                    </Link>
+                    <Link
+                      href={ledgerContextLink(g.earliest, g.latest)}
+                      target="_blank"
+                      className="font-medium text-slate-500 hover:text-slate-700 hover:underline"
+                    >
+                      View nearby dates (&plusmn;{CONTEXT_WINDOW_DAYS}d) &rarr;
+                    </Link>
+                  </div>
                 </div>
               </div>
 

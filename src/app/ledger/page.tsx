@@ -78,10 +78,10 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
   }
 
   if (q) {
-    // SQLite's LIKE is case-insensitive for ASCII by default, so plain
-    // `contains` covers the "case-insensitive search" requirement here —
-    // `mode: "insensitive"` is a Postgres/Mongo-only option in Prisma.
-    where.rawDescription = { contains: q };
+    // Postgres' `contains` is case-sensitive by default (unlike SQLite's default LIKE), so a
+    // search like "swiggy" would silently miss "SWIGGY INSTAMART" without this — explicit
+    // `mode: "insensitive"` (a Postgres/Mongo-only Prisma option) is required here.
+    where.rawDescription = { contains: q, mode: "insensitive" };
   }
 
   const totalCount = await prisma.transaction.count({ where });
