@@ -40,7 +40,7 @@ function parseIciciDate(dateStr: string, timeStr: string): Date | null {
 }
 
 const NET_BANKING_RE =
-  /You have made an online payment of (\w+) ([\d.]+) towards (.+?) from your Account XX(\d+) on (\w+ \d{1,2}, \d{4}) at ([\d:]+) hours\.(?:\s*The Transaction ID is (\d+)\.)?/;
+  /You have made an online payment of (\w+) ([\d,]+(?:\.\d+)?) towards (.+?) from your Account XX(\d+) on (\w+ \d{1,2}, \d{4}) at ([\d:]+) hours\.(?:\s*The Transaction ID is (\d+)\.)?/;
 
 export function parseNetBankingAlert(sender: string, body: string): ParseResult {
   if (sender !== "customercare@icicibank.com") {
@@ -53,7 +53,7 @@ export function parseNetBankingAlert(sender: string, body: string): ParseResult 
   if (!txnDateTime) return { ok: false, reason: `could not parse date/time: ${dateStr} ${timeStr}` };
   return {
     ok: true,
-    amount: parseFloat(amountStr),
+    amount: parseFloat(amountStr.replace(/,/g, "")),
     currency,
     merchant: merchant.trim(),
     txnDateTime,
@@ -64,7 +64,7 @@ export function parseNetBankingAlert(sender: string, body: string): ParseResult 
 }
 
 const CREDIT_CARD_RE =
-  /Credit Card XX(\d+) has been used for a transaction of (\w+) ([\d.]+) on (\w+ \d{1,2}, \d{4}) at ([\d:]+)\. Info: (.+?)\. The Avail/;
+  /Credit Card XX(\d+) has been used for a transaction of (\w+) ([\d,]+(?:\.\d+)?) on (\w+ \d{1,2}, \d{4}) at ([\d:]+)\. Info: (.+?)\. The Avail/;
 
 export function parseCreditCardAlert(sender: string, body: string): ParseResult {
   if (sender !== "credit_cards@icicibank.com" && sender !== "credit_cards@icici.bank.in") {
@@ -77,7 +77,7 @@ export function parseCreditCardAlert(sender: string, body: string): ParseResult 
   if (!txnDateTime) return { ok: false, reason: `could not parse date/time: ${dateStr} ${timeStr}` };
   return {
     ok: true,
-    amount: parseFloat(amountStr),
+    amount: parseFloat(amountStr.replace(/,/g, "")),
     currency,
     merchant: merchant.trim(),
     txnDateTime,

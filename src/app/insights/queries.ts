@@ -195,6 +195,17 @@ export function filterRowsByYears<T extends { ym: string }>(rows: T[], view: Vie
   return rows.filter((r) => selected.has(yearBucket(r.ym, view).sortKey));
 }
 
+// The first-ever-visit default (no URL param, no persisted cookie yet): the last 3 years
+// *including the current one*, computed from the real current date — not from what data happens
+// to exist yet, so a brand-new calendar/fiscal year with no transactions in it yet is still
+// included rather than silently dropped. `count` includes the current year itself.
+export function defaultRecentYearKeys(view: ViewMode, count = 3): number[] {
+  const now = new Date();
+  const y = now.getFullYear();
+  const currentKey = view === "cal" ? y : now.getMonth() + 1 >= 4 ? y : y - 1;
+  return Array.from({ length: count }, (_, i) => currentKey - (count - 1 - i));
+}
+
 // ---- YoY ----
 
 export type YearTotal = { label: string; sortKey: number; total: number; pctChange: number | null; partial: boolean };

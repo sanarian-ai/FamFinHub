@@ -78,3 +78,31 @@ export async function categorizeAndCreateRuleAction(groupKey: string, categoryId
 
   revalidatePath("/review");
 }
+
+/**
+ * Action 4: "Discard forever" — opt this description pattern out of the Review Queue
+ * permanently. Deliberately does NOT change the underlying transactions' status (they stay
+ * `needs_review` — still honestly uncategorized), it just records the pattern in
+ * ReviewDismissal so the queue (and the Dashboard's needs-review count) excludes any matching
+ * row, present or future, on every subsequent load. Upsert so re-discarding after a restore
+ * just refreshes the sample/count rather than erroring on the unique constraint.
+ */
+export async function discardGroupForeverAction(groupKey: string, sampleDescription: string) {
+  const ids = await getGroupTransactionIds(groupKey);
+
+  await prisma.reviewDismissal.upsert({
+    where: { descriptionKey: groupKey },
+    create: { descriptionKey: groupKey, sampleDescription, dismissedCount: ids.length },
+    update: { sampleDescription, dismissedCount: ids.length },
+  });
+
+  revalidatePath("/review");
+  revalidatePath("/");
+}
+
+/** Undoes a "Discard forever" — the pattern's matching transactions reappear in the queue. */
+export async function restoreDismissalAction(id: string) {
+  await prisma.reviewDismissal.delete({ where: { id } });
+  revalidatePath("/review");
+  revalidatePath("/");
+}

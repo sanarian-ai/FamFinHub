@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import clsx from "clsx";
 import { PageHeader, Card, StatTile, Badge, EmptyState } from "@/components/ui";
 import { formatINR } from "@/lib/format";
@@ -19,26 +20,30 @@ import {
   getAvailableYears,
   parseYearsParam,
   filterRowsByYears,
+  defaultRecentYearKeys,
   type ViewMode,
   type TrendSelector,
 } from "./queries";
+import { YEARS_COOKIE_NAME, decodeYearsCookie } from "./yearsCookie";
 import { YoYBarChart } from "./YoYBarChart";
 import { TrendAreaChart } from "./TrendAreaChart";
 import { SeasonalityBarChart } from "./SeasonalityBarChart";
 import { AccountStackedBarChart } from "./AccountStackedBarChart";
 import { FilterSelect } from "./FilterSelect";
 import { YearMultiSelect } from "./YearMultiSelect";
+import { ClearYearsFilterLink } from "./ClearYearsFilterLink";
 import { CATEGORICAL, OTHER_SLOT } from "./chartTheme";
 
 export const dynamic = "force-dynamic"; // always compute live off current DB state — never cache stale trends
 
 type SearchParams = { [key: string]: string | string[] | undefined };
 
-export default async function InsightsPage({ searchParams }: { searchParams: SearchParams }) {
-  const view: ViewMode = searchParams.view === "fy" ? "fy" : "cal";
-  const rawNature = typeof searchParams.nature === "string" ? searchParams.nature : "all";
-  const rawTrend = typeof searchParams.trend === "string" ? searchParams.trend : undefined;
-  const rawYears = typeof searchParams.years === "string" ? searchParams.years : undefined;
+export default async function InsightsPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const params = await searchParams;
+  const view: ViewMode = params.view === "fy" ? "fy" : "cal";
+  const rawNature = typeof params.nature === "string" ? params.nature : "all";
+  const rawTrend = typeof params.trend === "string" ? params.trend : undefined;
+  const urlYears = typeof params.years === "string" ? params.years : undefined;
 
   const [monthlyTypeAll, monthlyAccountAll, natures, types] = await Promise.all([
     getMonthlyByType(),
@@ -48,11 +53,26 @@ export default async function InsightsPage({ searchParams }: { searchParams: Sea
   ]);
 
   // --- Global year filter (the "uber" selector) — scopes every view on this page ---
+  //
+  // Source of truth, in order: the URL's own `years` param (so every link on the page, once
+  // clicked, is an exact shareable/bookmarkable state) → the persisted cookie (so a fresh visit
+  // with no `years` in the URL, e.g. typing /insights directly, opens on the last thing the user
+  // picked) → the last-3-years-including-current default, on a genuinely first-ever visit.
   const availableYears = getAvailableYears(monthlyTypeAll, view);
-  const selectedYears = parseYearsParam(rawYears);
+  const cookieStore = await cookies();
+  const persistedYears = decodeYearsCookie(cookieStore.get(YEARS_COOKIE_NAME)?.value);
+  const selectedYears: Set<number> | null =
+    urlYears !== undefined
+      ? parseYearsParam(urlYears)
+      : persistedYears !== undefined
+      ? persistedYears
+      : new Set(defaultRecentYearKeys(view));
   const monthlyType = filterRowsByYears(monthlyTypeAll, view, selectedYears);
   const monthlyAccount = filterRowsByYears(monthlyAccountAll, view, selectedYears);
   const yearsFilterActive = selectedYears != null;
+  // Carried into every other Link's href (qs()) below so switching view/nature/trend never
+  // silently drops the active years selection back to "all" or re-derives a different default.
+  const effectiveYearsParam = selectedYears == null ? "" : [...selectedYears].sort((a, b) => a - b).join(",");
 
   // --- YoY ---
   const yoyNature = natures.some((n) => n.id === rawNature) ? rawNature : "all";
@@ -68,7 +88,7 @@ export default async function InsightsPage({ searchParams }: { searchParams: Sea
       view,
       nature: yoyNature,
       trend: `${trendSel.kind}:${trendSel.id}`,
-      ...(rawYears ? { years: rawYears } : {}),
+      ...(effectiveYearsParam ? { years: effectiveYearsParam } : {}),
       ...overrides,
     };
     const params = new URLSearchParams();
@@ -119,7 +139,7 @@ export default async function InsightsPage({ searchParams }: { searchParams: Sea
         subtitle="13 years of real spend, aggregated live from the ledger — replaces the old per-year Sheet tabs that quietly broke."
         actions={
           <div className="flex items-center gap-2">
-            <YearMultiSelect options={availableYears} />
+            <YearMultiSelect options={availableYears} selectedKeys={selectedYears == null ? null : [...selectedYears]} />
             <div className="flex rounded-lg border border-slate-300 bg-white p-0.5 text-sm">
               <Link
                 href={qs({ view: "cal" })}
@@ -141,7 +161,7 @@ export default async function InsightsPage({ searchParams }: { searchParams: Sea
               </Link>
             </div>
             <a
-              href={`/insights/export?view=${view}&nature=${yoyNature}${rawYears ? `&years=${rawYears}` : ""}`}
+              href={`/insights/export?view=${view}&nature=${yoyNature}${effectiveYearsParam ? `&years=${effectiveYearsParam}` : ""}`}
               className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
             >
               Export YoY CSV
@@ -153,10 +173,9 @@ export default async function InsightsPage({ searchParams }: { searchParams: Sea
       {yearsFilterActive && (
         <p className="-mt-4 mb-6 text-xs text-slate-500">
           Showing only the years selected above — every view on this page (YoY, trend explorer, seasonality, account
-          breakdown, anomalies, export) is scoped to that selection.{" "}
-          <Link href={qs({ years: "" })} className="font-medium text-slate-700 underline underline-offset-2">
-            Clear filter
-          </Link>
+          breakdown, anomalies, export) is scoped to that selection, and it&rsquo;s remembered next time you open this
+          page.{" "}
+          <ClearYearsFilterLink href={qs({ years: "" })} totalOptions={availableYears.length} />
         </p>
       )}
 

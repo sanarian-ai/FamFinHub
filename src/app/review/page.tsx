@@ -1,12 +1,24 @@
 import { prisma } from "@/lib/prisma";
-import { matchCategoryRule, normalizeDescriptionKey } from "@/lib/categorize";
+import {
+  fetchActiveCategoryRules,
+  matchCategoryRuleFromList,
+  normalizeDescriptionKey,
+} from "@/lib/categorize";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { formatINR, formatDate } from "@/lib/format";
-import { ReviewGroupActions, type CategoryOption, type LiveSuggestion } from "./ReviewGroupActions";
+import {
+  ReviewGroupActions,
+  type CategoryOption,
+  type LiveSuggestion,
+} from "./ReviewGroupActions";
+import { ReviewFilters } from "./ReviewFilters";
+import { RestoreDismissalButton } from "./RestoreDismissalButton";
 
 // The queue changes every time an action runs (revalidatePath handles that), but it's also
 // an operational screen someone lands on repeatedly through the day — never serve a stale cache.
 export const dynamic = "force-dynamic";
+
+type SearchParams = { [key: string]: string | string[] | undefined };
 
 type Group = {
   key: string;
@@ -20,24 +32,65 @@ type Group = {
   currencies: string[];
 };
 
-export default async function ReviewPage() {
-  const [needsReview, activeCategories] = await Promise.all([
-    prisma.transaction.findMany({
-      where: { status: "needs_review" },
-      orderBy: { txnDate: "asc" },
-    }),
-    prisma.category.findMany({
-      where: { isActive: true },
-      include: { expenseType: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+export default async function ReviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const params = await searchParams;
+  const yearParam =
+    typeof params.year === "string" ? parseInt(params.year, 10) : undefined;
+  const monthParam =
+    typeof params.month === "string" ? parseInt(params.month, 10) : undefined;
+  const selectedYear = Number.isFinite(yearParam) ? yearParam : undefined;
+  const selectedMonth =
+    Number.isFinite(monthParam) && monthParam! >= 1 && monthParam! <= 12
+      ? monthParam
+      : undefined;
+
+  const [allNeedsReview, activeCategories, dismissals, categoryRules] =
+    await Promise.all([
+      prisma.transaction.findMany({
+        where: { status: "needs_review" },
+        orderBy: { txnDate: "asc" },
+      }),
+      prisma.category.findMany({
+        where: { isActive: true },
+        include: { expenseType: true },
+        orderBy: { name: "asc" },
+      }),
+      prisma.reviewDismissal.findMany({ orderBy: { createdAt: "desc" } }),
+      // Fetched once here, not per group below — see the note on matchCategoryRuleFromList().
+      fetchActiveCategoryRules(),
+    ]);
 
   const categoryOptions: CategoryOption[] = activeCategories.map((c) => ({
     id: c.id,
     name: c.name,
     expenseType: c.expenseType.name,
   }));
+
+  // "Discard forever" rows never come back, present or future — filtered out before anything
+  // else touches this list (year/month options, counts, grouping all follow from this).
+  const dismissedKeys = new Set(dismissals.map((d) => d.descriptionKey));
+  const activeRows = allNeedsReview.filter(
+    (t) => !dismissedKeys.has(normalizeDescriptionKey(t.rawDescription)),
+  );
+
+  // Year options: only years that actually have an outstanding row, so the filter never offers
+  // an empty choice. Computed from activeRows (pre-year/month-filter) so switching years doesn't
+  // shrink the year list itself.
+  const availableYears = Array.from(
+    new Set(activeRows.map((t) => t.txnDate.getUTCFullYear())),
+  ).sort((a, b) => a - b);
+
+  const needsReview = activeRows.filter((t) => {
+    if (selectedYear != null && t.txnDate.getUTCFullYear() !== selectedYear)
+      return false;
+    if (selectedMonth != null && t.txnDate.getUTCMonth() + 1 !== selectedMonth)
+      return false;
+    return true;
+  });
 
   // Group by normalized description — this is the core idea of the screen: 86 near-identical
   // "local commute" rows should read as one decision, not 86 separate line items.
@@ -73,67 +126,91 @@ export default async function ReviewPage() {
     bucket.totalAmount += Number(txn.amount);
     if (txn.txnDate < bucket.earliest) bucket.earliest = txn.txnDate;
     if (txn.txnDate > bucket.latest) bucket.latest = txn.txnDate;
-    if (!bucket.suggestionReason && txn.suggestionReason) bucket.suggestionReason = txn.suggestionReason;
-    bucket.variantCounts.set(txn.rawDescription, (bucket.variantCounts.get(txn.rawDescription) ?? 0) + 1);
+    if (!bucket.suggestionReason && txn.suggestionReason)
+      bucket.suggestionReason = txn.suggestionReason;
+    bucket.variantCounts.set(
+      txn.rawDescription,
+      (bucket.variantCounts.get(txn.rawDescription) ?? 0) + 1,
+    );
     bucket.currencies.add(txn.currency);
   }
 
   // Resolve a representative raw-description string per group (the most common exact variant)
   // and check live whether any CategoryRule now matches it — rules can appear at any time via
   // Mapping Admin or an earlier Review Queue session, so this is computed fresh on every load.
-  const groups: Group[] = await Promise.all(
-    Array.from(buckets.entries()).map(async ([key, bucket]) => {
-      let representativeDescription = key;
-      let bestCount = -1;
-      for (const [variant, count] of bucket.variantCounts) {
-        if (count > bestCount) {
-          bestCount = count;
-          representativeDescription = variant;
-        }
+  const groups: Group[] = Array.from(buckets.entries()).map(([key, bucket]) => {
+    let representativeDescription = key;
+    let bestCount = -1;
+    for (const [variant, count] of bucket.variantCounts) {
+      if (count > bestCount) {
+        bestCount = count;
+        representativeDescription = variant;
       }
+    }
 
-      const match = await matchCategoryRule(representativeDescription);
+    // In-memory match against the rule set fetched once above — no DB call per group.
+    const match = matchCategoryRuleFromList(
+      representativeDescription,
+      categoryRules,
+    );
 
-      return {
-        key,
-        representativeDescription,
-        count: bucket.count,
-        totalAmount: bucket.totalAmount,
-        earliest: bucket.earliest,
-        latest: bucket.latest,
-        suggestionReason: bucket.suggestionReason,
-        currencies: Array.from(bucket.currencies),
-        suggestion: match
-          ? {
-              categoryId: match.category.id,
-              categoryName: match.category.name,
-              ruleSummary: `${match.rule.matchType} · "${match.rule.pattern}"`,
-            }
-          : null,
-      };
-    })
-  );
+    return {
+      key,
+      representativeDescription,
+      count: bucket.count,
+      totalAmount: bucket.totalAmount,
+      earliest: bucket.earliest,
+      latest: bucket.latest,
+      suggestionReason: bucket.suggestionReason,
+      currencies: Array.from(bucket.currencies),
+      suggestion: match
+        ? {
+            categoryId: match.category.id,
+            categoryName: match.category.name,
+            ruleSummary: `${match.rule.matchType} · "${match.rule.pattern}"`,
+          }
+        : null,
+    };
+  });
 
   // Sort by count descending: a group of 86 identical rows is one decision that clears 86
   // transactions at once, so surfacing the biggest recurring gaps first shrinks the queue
   // fastest. Ties broken by total absolute amount, so bigger-dollar gaps still float up.
-  groups.sort((a, b) => b.count - a.count || Math.abs(b.totalAmount) - Math.abs(a.totalAmount));
+  groups.sort(
+    (a, b) =>
+      b.count - a.count || Math.abs(b.totalAmount) - Math.abs(a.totalAmount),
+  );
+
+  const filterActive = selectedYear != null || selectedMonth != null;
 
   return (
     <div>
       <PageHeader
         title="Review Queue"
         subtitle={
-          needsReview.length > 0
-            ? `${needsReview.length} transaction${needsReview.length === 1 ? "" : "s"} across ${groups.length} description group${
-                groups.length === 1 ? "" : "s"
-              } need a category.`
+          activeRows.length > 0
+            ? filterActive
+              ? `${needsReview.length} of ${activeRows.length} transaction${activeRows.length === 1 ? "" : "s"} match this filter, across ${groups.length} description group${groups.length === 1 ? "" : "s"}.`
+              : `${needsReview.length} transaction${needsReview.length === 1 ? "" : "s"} across ${groups.length} description group${
+                  groups.length === 1 ? "" : "s"
+                } need a category.`
             : undefined
+        }
+        actions={
+          <ReviewFilters
+            years={availableYears}
+            selectedYear={selectedYear}
+            selectedMonth={selectedMonth}
+          />
         }
       />
 
-      {groups.length === 0 ? (
-        <EmptyState>You&rsquo;re all caught up — no transactions need review.</EmptyState>
+      {activeRows.length === 0 ? (
+        <EmptyState>
+          You&rsquo;re all caught up — no transactions need review.
+        </EmptyState>
+      ) : groups.length === 0 ? (
+        <EmptyState>No transactions need review for this filter.</EmptyState>
       ) : (
         <div className="space-y-4">
           {groups.map((g) => (
@@ -141,7 +218,9 @@ export default async function ReviewPage() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="break-words font-medium text-slate-900">{g.representativeDescription}</h3>
+                    <h3 className="break-words font-medium text-slate-900">
+                      {g.representativeDescription}
+                    </h3>
                     <Badge tone="amber">
                       {g.count} transaction{g.count === 1 ? "" : "s"}
                     </Badge>
@@ -160,17 +239,53 @@ export default async function ReviewPage() {
                     )}
                   </div>
                   {g.suggestionReason && (
-                    <p className="mt-2 text-xs italic text-slate-500">Why flagged: {g.suggestionReason}</p>
+                    <p className="mt-2 text-xs italic text-slate-500">
+                      Why flagged: {g.suggestionReason}
+                    </p>
                   )}
                 </div>
               </div>
 
               <div className="mt-4 border-t border-slate-100 pt-4">
-                <ReviewGroupActions groupKey={g.key} suggestion={g.suggestion} categories={categoryOptions} />
+                <ReviewGroupActions
+                  groupKey={g.key}
+                  representativeDescription={g.representativeDescription}
+                  count={g.count}
+                  suggestion={g.suggestion}
+                  categories={categoryOptions}
+                />
               </div>
             </Card>
           ))}
         </div>
+      )}
+
+      {dismissals.length > 0 && (
+        <details className="mt-8">
+          <summary className="cursor-pointer text-sm font-medium text-slate-500 hover:text-slate-700">
+            Discarded forever ({dismissals.length})
+          </summary>
+          <div className="mt-3 space-y-2">
+            {dismissals.map((d) => (
+              <div
+                key={d.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2"
+              >
+                <div className="min-w-0">
+                  <p className="break-words text-sm text-slate-700">
+                    {d.sampleDescription}
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Discarded {formatDate(d.createdAt)} · {d.dismissedCount}{" "}
+                    transaction
+                    {d.dismissedCount === 1 ? "" : "s"} at the time
+                  </p>
+                </div>
+                <RestoreDismissalButton id={d.id} />
+              </div>
+            ))}
+          </div>
+        </details>
       )}
     </div>
   );

@@ -17,15 +17,16 @@ function first(v: string | string[] | undefined): string {
   return v ?? "";
 }
 
-export default async function LedgerPage({ searchParams }: { searchParams: SearchParams }) {
-  const from = first(searchParams.from);
-  const to = first(searchParams.to);
-  const accountId = first(searchParams.accountId);
-  const categoryId = first(searchParams.categoryId);
-  const status = first(searchParams.status);
-  const q = first(searchParams.q).trim();
-  const includeHistorical = first(searchParams.includeHistorical) === "1";
-  const requestedPage = parseInt(first(searchParams.page), 10);
+export default async function LedgerPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const params = await searchParams;
+  const from = first(params.from);
+  const to = first(params.to);
+  const accountId = first(params.accountId);
+  const categoryId = first(params.categoryId);
+  const status = first(params.status);
+  const q = first(params.q).trim();
+  const includeHistorical = first(params.includeHistorical) === "1";
+  const requestedPage = parseInt(first(params.page), 10);
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
   const [accounts, categoriesRaw] = await Promise.all([

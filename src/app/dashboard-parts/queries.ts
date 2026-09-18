@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { normalizeDescriptionKey } from "@/lib/categorize";
 import type { Prisma } from "@prisma/client";
 
 export interface ExpenditureRow {
@@ -82,6 +83,14 @@ export async function getEffectiveNow(): Promise<Date> {
   return latestDate < real ? latestDate : real;
 }
 
+// Excludes rows matching a permanent Review Queue dismissal (see ReviewDismissal) — those are
+// still technically uncategorized, but the user has explicitly opted out of being nagged about
+// them, so they shouldn't inflate the "needs categorization" banner either.
 export async function getNeedsReviewCount(): Promise<number> {
-  return prisma.transaction.count({ where: { status: "needs_review" } });
+  const [rows, dismissals] = await Promise.all([
+    prisma.transaction.findMany({ where: { status: "needs_review" }, select: { rawDescription: true } }),
+    prisma.reviewDismissal.findMany({ select: { descriptionKey: true } }),
+  ]);
+  const dismissedKeys = new Set(dismissals.map((d) => d.descriptionKey));
+  return rows.filter((r) => !dismissedKeys.has(normalizeDescriptionKey(r.rawDescription))).length;
 }

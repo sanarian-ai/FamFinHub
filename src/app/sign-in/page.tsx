@@ -6,12 +6,13 @@ import SignInButton from "./SignInButton";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: Promise<{ error?: string }>;
 }) {
   const session = await getServerSession(authOptions);
   if (session) redirect("/");
 
-  const denied = searchParams.error === "AccessDenied";
+  const params = await searchParams;
+  const denied = params.error === "AccessDenied";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">

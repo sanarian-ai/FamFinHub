@@ -29,9 +29,10 @@ export const dynamic = "force-dynamic"; // always reflect the live dev database
 
 type SearchParams = { [key: string]: string | string[] | undefined };
 
-export default async function DashboardPage({ searchParams }: { searchParams: SearchParams }) {
-  const periodParam = typeof searchParams.period === "string" ? searchParams.period : "month";
-  const viewParam = typeof searchParams.view === "string" ? searchParams.view : "cal";
+export default async function DashboardPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  const params = await searchParams;
+  const periodParam = typeof params.period === "string" ? params.period : "month";
+  const viewParam = typeof params.view === "string" ? params.view : "cal";
   const kind: PeriodKind = periodParam === "year" ? "year" : "month";
   const view: YearView = viewParam === "fy" ? "fy" : "cal";
 

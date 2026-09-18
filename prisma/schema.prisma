@@ -8,8 +8,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 enum AccountTypeEnum {
@@ -140,6 +141,22 @@ model CategoryRule {
 
   @@index([pattern])
   @@map("category_rules")
+}
+
+// A description pattern the user has permanently opted out of reviewing — created by the
+// Review Queue's "Discard forever" action. Deliberately separate from Transaction.status:
+// dismissed transactions stay `needs_review` (they're still genuinely uncategorized, so
+// Ledger's status filter and any future categorization pass still see them honestly) — this
+// table only controls what the Review Queue *surfaces*, and covers future imports too, since
+// the queue excludes any needs_review row whose normalized description matches a row here.
+model ReviewDismissal {
+  id                String   @id @default(cuid())
+  descriptionKey    String   @unique // normalizeDescriptionKey(rawDescription) — same key the Review Queue groups by
+  sampleDescription String   // one representative raw description, for display in the "restore" list
+  dismissedCount    Int      @default(0) // how many needs_review rows matched at the moment of dismissal (informational only)
+  createdAt         DateTime @default(now())
+
+  @@map("review_dismissals")
 }
 
 model ImportBatch {

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { computeDedupeHash } from "@/lib/dedupe";
-import { matchCategoryRule } from "@/lib/categorize";
+import {
+  fetchActiveCategoryRules,
+  matchCategoryRuleFromList,
+} from "@/lib/categorize";
 
 /**
  * External ingest endpoint for the Claude-orchestrated Gmail import (plan doc section 8.6/8.7).
@@ -32,13 +35,23 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => null);
   if (!body || !Array.isArray(body.transactions)) {
-    return NextResponse.json({ error: "expected { transactions: IngestTxn[] }" }, { status: 400 });
+    return NextResponse.json(
+      { error: "expected { transactions: IngestTxn[] }" },
+      { status: 400 },
+    );
   }
 
   const txns: IngestTxn[] = body.transactions;
   const batch = await prisma.importBatch.create({
-    data: { source: txns[0]?.source ?? "gmail_daily", status: "running", rowsIn: txns.length },
+    data: {
+      source: txns[0]?.source ?? "gmail_daily",
+      status: "running",
+      rowsIn: txns.length,
+    },
   });
+
+  // Fetched once for the whole batch, not per row — see the note on matchCategoryRuleFromList().
+  const categoryRules = await fetchActiveCategoryRules();
 
   let matched = 0,
     needsReview = 0,
@@ -48,11 +61,20 @@ export async function POST(req: NextRequest) {
   for (let i = 0; i < txns.length; i++) {
     const t = txns[i];
     try {
-      const account = await prisma.account.findUnique({ where: { name: t.accountName } });
+      const account = await prisma.account.findUnique({
+        where: { name: t.accountName },
+      });
       const txnDate = new Date(t.txnDate);
-      const dedupeHash = computeDedupeHash(txnDate, t.amount, t.accountName, t.rawDescription);
+      const dedupeHash = computeDedupeHash(
+        txnDate,
+        t.amount,
+        t.accountName,
+        t.rawDescription,
+      );
 
-      const existing = await prisma.transaction.findUnique({ where: { dedupeHash } });
+      const existing = await prisma.transaction.findUnique({
+        where: { dedupeHash },
+      });
       if (existing) {
         duplicates++;
         continue; // idempotent: re-processing the same email/statement line is a no-op
@@ -77,7 +99,9 @@ export async function POST(req: NextRequest) {
           suggestionReason ??
           `Foreign currency (${currency} ${Math.abs(t.amount).toFixed(2)}) — enter the INR amount from your statement, then categorize.`;
       } else if (t.categoryName) {
-        const cat = await prisma.category.findUnique({ where: { name: t.categoryName } });
+        const cat = await prisma.category.findUnique({
+          where: { name: t.categoryName },
+        });
         if (cat) {
           categoryId = cat.id;
           status = "categorized";
@@ -87,7 +111,10 @@ export async function POST(req: NextRequest) {
       }
 
       if (!isForeignCurrency && !categoryId) {
-        const ruleMatch = await matchCategoryRule(t.rawDescription);
+        const ruleMatch = matchCategoryRuleFromList(
+          t.rawDescription,
+          categoryRules,
+        );
         if (ruleMatch) {
           categoryId = ruleMatch.category.id;
           status = "categorized";
@@ -113,7 +140,10 @@ export async function POST(req: NextRequest) {
       if (status === "categorized") matched++;
       else needsReview++;
     } catch (e) {
-      errors.push({ row: i, error: e instanceof Error ? e.message : String(e) });
+      errors.push({
+        row: i,
+        error: e instanceof Error ? e.message : String(e),
+      });
     }
   }
 

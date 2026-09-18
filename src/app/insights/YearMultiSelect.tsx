@@ -3,21 +3,30 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
+import { YEARS_COOKIE_NAME, encodeYearsCookie } from "./yearsCookie";
 
 /**
  * The global "which years to consider" filter for Insights & Trends — sits at the top of the
  * page (the "uber" control) and scopes every view below it (YoY, trend explorer, seasonality,
  * account breakdown, anomalies, CSV export). Backed by a `years` query param: a comma-separated
- * list of yearBucket sortKeys, or absent entirely for "all years" (the default).
+ * list of yearBucket sortKeys, or absent for "all years selected". `selectedKeys` is passed down
+ * from the server (page.tsx), which already resolved URL → persisted cookie → default — this
+ * component never re-derives selection state from searchParams itself, so its display can never
+ * drift from what's actually been filtered server-side.
  */
-export function YearMultiSelect({ options }: { options: { sortKey: number; label: string }[] }) {
+export function YearMultiSelect({
+  options,
+  selectedKeys,
+}: {
+  options: { sortKey: number; label: string }[];
+  selectedKeys: number[] | null;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const rawSelected = searchParams.get("years");
-  const selected = rawSelected ? new Set(rawSelected.split(",").map(Number)) : null; // null = all
+  const selected = selectedKeys == null ? null : new Set(selectedKeys); // null = all
   const allSelected = selected == null;
 
   useEffect(() => {
@@ -29,9 +38,11 @@ export function YearMultiSelect({ options }: { options: { sortKey: number; label
   }, []);
 
   function applyKeys(keys: number[] | null) {
+    // Persist first — so a fresh visit (no `years` in the URL) still opens on this choice.
+    document.cookie = `${YEARS_COOKIE_NAME}=${encodeYearsCookie(keys, options.length)}; path=/; max-age=31536000; samesite=lax`;
     const params = new URLSearchParams(searchParams.toString());
     if (keys == null || keys.length === options.length) {
-      params.delete("years"); // "everything selected" collapses back to the "all years" default
+      params.delete("years"); // "everything selected" collapses back to the "all years" state
     } else {
       params.set("years", keys.sort((a, b) => a - b).join(","));
     }
