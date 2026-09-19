@@ -92,3 +92,11 @@ export function trailingMonths(anchor: Date, n = 12): PeriodRange[] {
 export function monthShortLabel(date: Date): string {
   return new Intl.DateTimeFormat("en-IN", { month: "short", year: "2-digit" }).format(date);
 }
+
+// Household view toggle — "household" means combined (both holders), otherwise scoped to
+// one person's own accounts. Kept here alongside the period types since both live in the
+// same URL-param family on the Dashboard.
+export type Holder = "Sangeeth" | "Ria";
+export type PersonView = "household" | Holder;
+
+export const HOLDERS: Holder[] = ["Sangeeth", "Ria"];

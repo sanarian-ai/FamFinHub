@@ -106,3 +106,29 @@ export async function restoreDismissalAction(id: string) {
   revalidatePath("/review");
   revalidatePath("/");
 }
+
+/**
+ * Bulk version of categorizeGroupAction — categorizes every transaction across several
+ * selected description-groups at once, in one query round trip. Added per the confirmed
+ * decision to let the Review Queue select multiple rows/groups and clear them together,
+ * rather than one description-group per action.
+ */
+export async function bulkCategorizeGroupsAction(groupKeys: string[], categoryId: string) {
+  if (!categoryId || !groupKeys || groupKeys.length === 0) return;
+
+  const rows = await prisma.transaction.findMany({
+    where: { status: "needs_review" },
+    select: { id: true, rawDescription: true },
+  });
+  const keySet = new Set(groupKeys);
+  const ids = rows.filter((r) => keySet.has(normalizeDescriptionKey(r.rawDescription))).map((r) => r.id);
+  if (ids.length === 0) return;
+
+  await prisma.transaction.updateMany({
+    where: { id: { in: ids } },
+    data: { categoryId, status: "categorized", suggestedCategoryId: null, suggestionReason: null },
+  });
+
+  revalidatePath("/review");
+  revalidatePath("/");
+}

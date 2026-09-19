@@ -4,8 +4,13 @@ import { formatDate, formatINR, pctChange } from "@/lib/format";
 import {
   getEffectiveNow,
   getExpenditureRows,
-  getExpenditureTotal,
   getNeedsReviewCount,
+  getCashFlowSummary,
+  getCashFlowRows,
+  getAccountTypeRows,
+  getHolderSplit,
+  getUnattributedTotal,
+  getLastImportSync,
 } from "./dashboard-parts/queries";
 import {
   getPeriod,
@@ -16,18 +21,27 @@ import {
   trailingMonths,
   type PeriodKind,
   type YearView,
+  type PersonView,
+  type Holder,
 } from "./dashboard-parts/period";
-import { bucketByMonthAndNature, sumByAccount, sumByNature, topMovers } from "./dashboard-parts/aggregate";
-import { NATURE_COLOR_ORDER } from "./dashboard-parts/colors";
+import { sumByAccount, sumByNature, sumByAccountType, topMovers, bucketCashFlowByMonth } from "./dashboard-parts/aggregate";
 import { PeriodSelector } from "./dashboard-parts/PeriodSelector";
-import { TrendChart, type TrendDatum } from "./dashboard-parts/TrendChart";
-import { NatureDonut } from "./dashboard-parts/NatureDonut";
+import { PersonSelector } from "./dashboard-parts/PersonSelector";
+import { CashFlowTrendChart, type CashFlowDatum } from "./dashboard-parts/CashFlowTrendChart";
+import { BreakdownCard } from "./dashboard-parts/BreakdownCard";
 import { AccountSplit } from "./dashboard-parts/AccountSplit";
 import { TopMovers } from "./dashboard-parts/TopMovers";
+import { ContributionSplitBars } from "./dashboard-parts/ContributionSplitBars";
+import { HouseholdSplit } from "./dashboard-parts/HouseholdSplit";
+import { DataQualityStrip } from "./dashboard-parts/DataQualityStrip";
 
-export const dynamic = "force-dynamic"; // always reflect the live dev database
+export const dynamic = "force-dynamic"; // always reflect the live database
 
 type SearchParams = { [key: string]: string | string[] | undefined };
+
+function parsePerson(v: unknown): PersonView {
+  return v === "Sangeeth" || v === "Ria" ? v : "household";
+}
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const params = await searchParams;
@@ -35,6 +49,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const viewParam = typeof params.view === "string" ? params.view : "cal";
   const kind: PeriodKind = periodParam === "year" ? "year" : "month";
   const view: YearView = viewParam === "fy" ? "fy" : "cal";
+  const person = parsePerson(params.person);
+  const holder: Holder | undefined = person === "household" ? undefined : person;
 
   const effectiveNow = await getEffectiveNow();
 
@@ -50,39 +66,74 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const trailingStart = months[0].start;
   const trailingEnd = months[months.length - 1].end;
 
-  const [currentRows, prevTotal, sameLastYearTotal, needsReviewCount, trailingRows, moverCurrentRows, moverPrevRows] =
-    await Promise.all([
-      getExpenditureRows(current.start, current.end),
-      getExpenditureTotal(prevPeriod.start, prevPeriod.end),
-      getExpenditureTotal(sameLastYear.start, sameLastYear.end),
-      getNeedsReviewCount(),
-      getExpenditureRows(trailingStart, trailingEnd),
-      getExpenditureRows(currentMonth.start, currentMonth.end),
-      getExpenditureRows(prevMonth.start, prevMonth.end),
-    ]);
+  const [
+    cashFlowCurrent,
+    cashFlowPrev,
+    cashFlowSameLastYear,
+    needsReviewCount,
+    unattributedTotal,
+    lastSync,
+    currentExpenditureRows,
+    trailingCashFlowRows,
+    moverCurrentRows,
+    moverPrevRows,
+    accountTypeRows,
+    holderSplit,
+    sangeethAccountRows,
+    riaAccountRows,
+  ] = await Promise.all([
+    getCashFlowSummary(current.start, current.end, holder),
+    getCashFlowSummary(prevPeriod.start, prevPeriod.end, holder),
+    getCashFlowSummary(sameLastYear.start, sameLastYear.end, holder),
+    getNeedsReviewCount(),
+    getUnattributedTotal(),
+    getLastImportSync(),
+    getExpenditureRows(current.start, current.end, holder),
+    getCashFlowRows(trailingStart, trailingEnd, holder),
+    getExpenditureRows(currentMonth.start, currentMonth.end, holder),
+    getExpenditureRows(prevMonth.start, prevMonth.end, holder),
+    getAccountTypeRows(current.start, current.end, holder),
+    person === "household" ? getHolderSplit(current.start, current.end) : Promise.resolve(null),
+    person === "household" ? getExpenditureRows(current.start, current.end, "Sangeeth") : Promise.resolve([]),
+    person === "household" ? getExpenditureRows(current.start, current.end, "Ria") : Promise.resolve([]),
+  ]);
 
-  const currentTotal = currentRows.reduce((s, r) => s + r.amount, 0);
-  const natureTotals = sumByNature(currentRows);
-  const accountTotals = sumByAccount(currentRows);
+  const natureTotals = sumByNature(currentExpenditureRows);
+  const spendOnlyTotal = currentExpenditureRows.reduce((s, r) => s + r.amount, 0);
+  const accountTotals = sumByAccount(currentExpenditureRows);
+  const accountTypeTotals = sumByAccountType(accountTypeRows);
+  const accountTypeGrandTotal = accountTypeTotals.reduce((s, d) => s + d.total, 0);
   const movers = topMovers(moverCurrentRows, moverPrevRows, 5);
 
-  const buckets = bucketByMonthAndNature(trailingRows, months);
-  const trendData: TrendDatum[] = buckets.map((b) => {
-    const row: TrendDatum = { month: monthShortLabel(b.month.start) };
-    for (const n of NATURE_COLOR_ORDER) row[n] = b.byNature.get(n) ?? 0;
-    return row;
-  });
+  const monthLabels = months.map((m) => monthShortLabel(m.start));
+  const cashFlowBuckets = bucketCashFlowByMonth(trailingCashFlowRows.income, trailingCashFlowRows.expense, months);
+  const cashFlowTrendData: CashFlowDatum[] = cashFlowBuckets.map((b, i) => ({
+    month: monthLabels[i],
+    income: b.income,
+    expense: b.expense,
+    net: b.net,
+  }));
+
+  const accountsByHolder: Record<string, ReturnType<typeof sumByAccount>> =
+    person === "household"
+      ? { Sangeeth: sumByAccount(sangeethAccountRows), Ria: sumByAccount(riaAccountRows) }
+      : {};
 
   return (
     <div>
       <PageHeader
         title="Dashboard"
-        subtitle={`As of ${formatDate(effectiveNow)} — ${current.label}`}
-        actions={<PeriodSelector kind={kind} view={view} />}
+        subtitle={`As of ${formatDate(effectiveNow)} — ${current.label}${person !== "household" ? ` — ${person}` : ""}`}
+        actions={
+          <div className="flex flex-col items-end gap-2">
+            <PeriodSelector kind={kind} view={view} />
+            <PersonSelector kind={kind} view={view} person={person} />
+          </div>
+        }
       />
 
       {needsReviewCount > 0 && (
-        <Link href="/review" className="mb-6 block">
+        <Link href="/review" className="mb-4 block">
           <Card className="flex items-center justify-between gap-4 border-amber-200 bg-amber-50 hover:bg-amber-100">
             <div className="flex items-center gap-3">
               <span className="text-xl" aria-hidden>
@@ -101,47 +152,94 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </Link>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <StatTile label={`Spend — ${current.label}`} value={formatINR(currentTotal)} />
+      <div className="mb-6">
+        <DataQualityStrip needsReviewCount={needsReviewCount} unattributedTotal={unattributedTotal} lastSync={lastSync} />
+      </div>
+
+      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatTile
-          label="vs last period"
-          value={formatINR(prevTotal)}
-          delta={pctChange(currentTotal, prevTotal)}
-          deltaLabel={`vs ${prevPeriod.label}`}
+          label={`Income — ${current.label}`}
+          value={formatINR(cashFlowCurrent.income)}
+          delta={pctChange(cashFlowCurrent.income, cashFlowPrev.income)}
+          deltaLabel="vs last period"
+          delta2={pctChange(cashFlowCurrent.income, cashFlowSameLastYear.income)}
+          deltaLabel2="vs last year"
+          positiveIsBad={false}
         />
         <StatTile
-          label="vs same period last year"
-          value={formatINR(sameLastYearTotal)}
-          delta={pctChange(currentTotal, sameLastYearTotal)}
-          deltaLabel={`vs ${sameLastYear.label}`}
+          label={`Expense — ${current.label}`}
+          value={formatINR(cashFlowCurrent.expense)}
+          delta={pctChange(cashFlowCurrent.expense, cashFlowPrev.expense)}
+          deltaLabel="vs last period"
+          delta2={pctChange(cashFlowCurrent.expense, cashFlowSameLastYear.expense)}
+          deltaLabel2="vs last year"
+          positiveIsBad={true}
+        />
+        <StatTile
+          label="Net"
+          value={formatINR(cashFlowCurrent.net)}
+          delta={pctChange(cashFlowCurrent.net, cashFlowPrev.net)}
+          deltaLabel="vs last period"
+          delta2={pctChange(cashFlowCurrent.net, cashFlowSameLastYear.net)}
+          deltaLabel2="vs last year"
+          positiveIsBad={false}
+        />
+        <StatTile
+          label="Savings rate"
+          value={cashFlowCurrent.savingsRate != null ? `${cashFlowCurrent.savingsRate.toFixed(0)}%` : "—"}
+          delta={
+            cashFlowCurrent.savingsRate != null && cashFlowPrev.savingsRate != null
+              ? cashFlowCurrent.savingsRate - cashFlowPrev.savingsRate
+              : null
+          }
+          deltaLabel="pts vs last period"
+          positiveIsBad={false}
         />
       </div>
+
+      {person === "household" && holderSplit && (
+        <div className="mb-6">
+          <ContributionSplitBars holders={holderSplit} />
+        </div>
+      )}
 
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">Trailing 12 months — expenditure by nature</h2>
-          <TrendChart data={trendData} />
+          <h2 className="mb-4 text-sm font-semibold text-slate-900">Trailing 12 months — income vs. expense</h2>
+          <CashFlowTrendChart data={cashFlowTrendData} />
         </Card>
         <Card>
-          <h2 className="mb-1 text-sm font-semibold text-slate-900">Spend by nature — {current.label}</h2>
-          <p className="mb-4 text-xs text-slate-400">Click a category to view it in the Ledger.</p>
-          <NatureDonut data={natureTotals} total={currentTotal} />
+          <BreakdownCard
+            natureData={natureTotals}
+            natureTotal={spendOnlyTotal}
+            accountTypeData={accountTypeTotals}
+            accountTypeTotal={accountTypeGrandTotal}
+            periodLabel={current.label}
+          />
         </Card>
       </div>
 
+      {person === "household" && holderSplit && (
+        <div className="mb-6">
+          <HouseholdSplit holders={holderSplit} accountsByHolder={accountsByHolder} />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className={person === "household" ? "lg:col-span-2" : undefined}>
           <h2 className="mb-1 text-sm font-semibold text-slate-900">Top movers</h2>
           <p className="mb-2 text-xs text-slate-400">
             Categories with the largest change, {monthShortLabel(prevMonth.start)} → {monthShortLabel(currentMonth.start)}
           </p>
           <TopMovers movers={movers} />
         </Card>
-        <Card>
-          <h2 className="mb-1 text-sm font-semibold text-slate-900">Spend by account — {current.label}</h2>
-          <p className="mb-4 text-xs text-slate-400">Sangeeth &amp; Ria's active accounts.</p>
-          <AccountSplit accounts={accountTotals} />
-        </Card>
+        {person !== "household" && (
+          <Card>
+            <h2 className="mb-1 text-sm font-semibold text-slate-900">Spend by account — {current.label}</h2>
+            <p className="mb-4 text-xs text-slate-400">{person}&rsquo;s active accounts.</p>
+            <AccountSplit accounts={accountTotals} />
+          </Card>
+        )}
       </div>
     </div>
   );

@@ -21,35 +21,41 @@ export function Card({ children, className }: { children: ReactNode; className?:
   );
 }
 
+function deltaLine(delta: number | null | undefined, deltaLabel: string | undefined, positiveIsBad: boolean) {
+  if (delta == null) return null;
+  const color = delta > 0 ? (positiveIsBad ? "text-rose-600" : "text-emerald-600") : "text-emerald-600";
+  return (
+    <div className={clsx("mt-1 text-xs font-medium", color)}>
+      {delta > 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(1)}% {deltaLabel}
+    </div>
+  );
+}
+
 export function StatTile({
   label,
   value,
   delta,
   deltaLabel,
+  delta2,
+  deltaLabel2,
+  positiveIsBad = true,
 }: {
   label: string;
   value: string;
   delta?: number | null;
   deltaLabel?: string;
+  /** A second comparator line — e.g. vs. the same period last year, alongside vs. last period. */
+  delta2?: number | null;
+  deltaLabel2?: string;
+  /** Whether a positive delta should read as bad (red) — true for spend/expense tiles, false for income/net. */
+  positiveIsBad?: boolean;
 }) {
-  const positiveIsBad = true; // spend going up is "bad" — color accordingly
-  const deltaColor =
-    delta == null
-      ? "text-slate-400"
-      : delta > 0
-      ? positiveIsBad
-        ? "text-rose-600"
-        : "text-emerald-600"
-      : "text-emerald-600";
   return (
     <Card>
       <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
       <div className="mt-1 text-2xl font-semibold text-slate-900">{value}</div>
-      {delta != null && (
-        <div className={clsx("mt-1 text-xs font-medium", deltaColor)}>
-          {delta > 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(1)}% {deltaLabel}
-        </div>
-      )}
+      {deltaLine(delta, deltaLabel, positiveIsBad)}
+      {deltaLine(delta2, deltaLabel2, positiveIsBad)}
     </Card>
   );
 }

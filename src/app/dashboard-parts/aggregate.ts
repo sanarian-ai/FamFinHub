@@ -96,3 +96,48 @@ export function bucketByMonthAndNature(rows: ExpenditureRow[], months: PeriodRan
   }
   return buckets;
 }
+
+// ---------------------------------------------------------------------------
+// Cash flow additions
+// ---------------------------------------------------------------------------
+
+import type { FlowPoint, AccountTypeRow } from "./queries";
+
+export interface AccountTypeTotal {
+  type: "Expenditure" | "Investment" | "Income";
+  total: number;
+}
+
+const ACCOUNT_TYPE_ORDER: AccountTypeTotal["type"][] = ["Expenditure", "Investment", "Income"];
+
+export function sumByAccountType(rows: AccountTypeRow[]): AccountTypeTotal[] {
+  const totals = new Map<AccountTypeTotal["type"], number>();
+  for (const r of rows) totals.set(r.accountType, (totals.get(r.accountType) ?? 0) + r.amount);
+  return ACCOUNT_TYPE_ORDER.filter((t) => totals.has(t)).map((t) => ({ type: t, total: totals.get(t)! }));
+}
+
+export interface CashFlowMonthPoint {
+  month: PeriodRange;
+  income: number;
+  expense: number;
+  net: number;
+}
+
+/** Buckets income/expense FlowPoints into one row per month, for the cash flow trend chart. */
+export function bucketCashFlowByMonth(
+  income: FlowPoint[],
+  expense: FlowPoint[],
+  months: PeriodRange[]
+): CashFlowMonthPoint[] {
+  const buckets = months.map((m) => ({ month: m, income: 0, expense: 0 }));
+  const place = (rows: FlowPoint[], key: "income" | "expense") => {
+    for (const r of rows) {
+      const idx = buckets.findIndex((b) => r.txnDate >= b.month.start && r.txnDate < b.month.end);
+      if (idx === -1) continue;
+      buckets[idx][key] += r.amount;
+    }
+  };
+  place(income, "income");
+  place(expense, "expense");
+  return buckets.map((b) => ({ ...b, net: b.income - b.expense }));
+}

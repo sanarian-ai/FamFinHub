@@ -38,3 +38,17 @@ export function natureColor(name: string): string {
   if (idx === -1 || idx >= HUES.length) return OVERFLOW_GRAY;
   return HUES[idx];
 }
+
+// Account Type breakdown (the "by Account Type" toggle) — 3 fixed buckets, distinct hues
+// from the Nature palette above so the two breakdowns never look like they share a legend.
+export const ACCOUNT_TYPE_COLORS: Record<string, string> = {
+  Expenditure: "#e34948", // red — money leaving as spend
+  Investment: "#2a78d6", // blue — money moved into savings/assets
+  Income: "#1baf7a", // aqua — money coming in
+};
+
+// Two-person comparisons (hero contribution strip, Household split region).
+export const HOLDER_COLORS: Record<string, string> = {
+  Sangeeth: "#2a78d6",
+  Ria: "#e87ba4",
+};

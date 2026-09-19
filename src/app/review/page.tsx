@@ -1,17 +1,13 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import {
   fetchActiveCategoryRules,
   matchCategoryRuleFromList,
   normalizeDescriptionKey,
 } from "@/lib/categorize";
-import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
-import { formatINR, formatDate } from "@/lib/format";
-import {
-  ReviewGroupActions,
-  type CategoryOption,
-  type LiveSuggestion,
-} from "./ReviewGroupActions";
+import { PageHeader, EmptyState } from "@/components/ui";
+import { formatDate } from "@/lib/format";
+import type { CategoryOption, LiveSuggestion } from "./ReviewGroupActions";
+import { ReviewQueueList } from "./ReviewQueueList";
 import { ReviewFilters } from "./ReviewFilters";
 import { RestoreDismissalButton } from "./RestoreDismissalButton";
 
@@ -20,36 +16,6 @@ import { RestoreDismissalButton } from "./RestoreDismissalButton";
 export const dynamic = "force-dynamic";
 
 type SearchParams = { [key: string]: string | string[] | undefined };
-
-// YYYY-MM-DD in UTC, matching how the Ledger page parses `from`/`to` (`${from}T00:00:00.000Z`).
-function isoDateUTC(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function addDaysUTC(d: Date, days: number): Date {
-  return new Date(d.getTime() + days * 24 * 60 * 60 * 1000);
-}
-
-// Deep-link into the Ledger, pre-filtered to exactly this group's transactions, so a reviewer
-// can see full account/date/amount detail (and bulk-recategorize right there) instead of
-// deciding from the bare description string alone.
-function ledgerLinkForGroup(representativeDescription: string): string {
-  const params = new URLSearchParams();
-  params.set("q", representativeDescription);
-  params.set("status", "needs_review");
-  return `/ledger?${params.toString()}`;
-}
-
-// Deep-link into the Ledger showing everything (any status) in a window around this group's
-// dates — the "was this part of a trip / one-off event" context a bare description can't answer.
-const CONTEXT_WINDOW_DAYS = 5;
-function ledgerContextLink(earliest: Date, latest: Date): string {
-  const params = new URLSearchParams();
-  params.set("from", isoDateUTC(addDaysUTC(earliest, -CONTEXT_WINDOW_DAYS)));
-  params.set("to", isoDateUTC(addDaysUTC(latest, CONTEXT_WINDOW_DAYS)));
-  return `/ledger?${params.toString()}`;
-}
-
 
 type Group = {
   key: string;
@@ -243,68 +209,7 @@ export default async function ReviewPage({
       ) : groups.length === 0 ? (
         <EmptyState>No transactions need review for this filter.</EmptyState>
       ) : (
-        <div className="space-y-4">
-          {groups.map((g) => (
-            <Card key={g.key}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <h3 className="break-words font-medium text-slate-900">
-                      {g.representativeDescription}
-                    </h3>
-                    <Badge tone="amber">
-                      {g.count} transaction{g.count === 1 ? "" : "s"}
-                    </Badge>
-                  </div>
-                  <div className="mt-1 text-sm text-slate-500">
-                    {formatDate(g.earliest)} – {formatDate(g.latest)} · Total{" "}
-                    {g.currencies.length === 1 && g.currencies[0] !== "INR" ? (
-                      <>
-                        {g.currencies[0]} {Math.abs(g.totalAmount).toFixed(2)}{" "}
-                        <span className="align-middle">
-                          <Badge tone="amber">FX — not yet in INR</Badge>
-                        </span>
-                      </>
-                    ) : (
-                      formatINR(g.totalAmount)
-                    )}
-                  </div>
-                  {g.suggestionReason && (
-                    <p className="mt-2 text-xs italic text-slate-500">
-                      Why flagged: {g.suggestionReason}
-                    </p>
-                  )}
-                  <div className="mt-2 flex flex-wrap gap-3 text-xs">
-                    <Link
-                      href={ledgerLinkForGroup(g.representativeDescription)}
-                      target="_blank"
-                      className="font-medium text-sky-600 hover:text-sky-800 hover:underline"
-                    >
-                      View transaction{g.count === 1 ? "" : "s"} in Ledger &rarr;
-                    </Link>
-                    <Link
-                      href={ledgerContextLink(g.earliest, g.latest)}
-                      target="_blank"
-                      className="font-medium text-slate-500 hover:text-slate-700 hover:underline"
-                    >
-                      View nearby dates (&plusmn;{CONTEXT_WINDOW_DAYS}d) &rarr;
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-4 border-t border-slate-100 pt-4">
-                <ReviewGroupActions
-                  groupKey={g.key}
-                  representativeDescription={g.representativeDescription}
-                  count={g.count}
-                  suggestion={g.suggestion}
-                  categories={categoryOptions}
-                />
-              </div>
-            </Card>
-          ))}
-        </div>
+        <ReviewQueueList groups={groups} categories={categoryOptions} />
       )}
 
       {dismissals.length > 0 && (
