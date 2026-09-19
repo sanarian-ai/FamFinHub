@@ -6,7 +6,7 @@ import { Card } from "@/components/ui";
 import { CashFlowTrendChart, type CashFlowDatum } from "./CashFlowTrendChart";
 import { BreakdownCard } from "./BreakdownCard";
 import { FLOW_COLORS } from "./colors";
-import { sumByNature, sumByCategoryRanked, sumByAccountType, filterRowsInRange, type NatureTotal, type AccountTypeTotal, type RankedCategoryTotals } from "./aggregate";
+import { sumByNature, sumByCategoryRanked, sumByAccountType, filterRowsInRange, type RankedCategoryTotals } from "./aggregate";
 import { getYearBreakdownAction, type YearBreakdown } from "./actions";
 import type { ExpenditureRow, IncomeRow, AccountTypeRow } from "./queries";
 import type { PeriodRange, Holder } from "./period";
@@ -35,11 +35,6 @@ export function CashFlowSection({
   trailingExpenditureRows,
   trailingIncomeRows,
   trailingAccountTypeRows,
-  topNatureData,
-  topNatureTotal,
-  topAccountTypeData,
-  topAccountTypeTotal,
-  topPeriodLabel,
   holder,
 }: {
   months: PeriodRange[];
@@ -49,13 +44,6 @@ export function CashFlowSection({
   trailingExpenditureRows: ExpenditureRow[];
   trailingIncomeRows: IncomeRow[];
   trailingAccountTypeRows: AccountTypeRow[];
-  // The existing, unchanged top-of-page breakdown — still scoped to whatever the page's
-  // Period selector (Month/Year/FY) is set to, independent of the drill-down below.
-  topNatureData: NatureTotal[];
-  topNatureTotal: number;
-  topAccountTypeData: AccountTypeTotal[];
-  topAccountTypeTotal: number;
-  topPeriodLabel: string;
   holder?: Holder;
 }) {
   const [granularity, setGranularity] = useState<Granularity>("month");
@@ -116,8 +104,8 @@ export function CashFlowSection({
 
   return (
     <>
-      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+      <div className="mb-6">
+        <Card>
           <h2 className="mb-4 text-sm font-semibold text-slate-900">Trailing 12 months — income vs. expense</h2>
           <CashFlowTrendChart
             data={cashFlowTrendData}
@@ -128,22 +116,11 @@ export function CashFlowSection({
             }}
           />
         </Card>
-        <Card>
-          <BreakdownCard
-            natureData={topNatureData}
-            natureTotal={topNatureTotal}
-            accountTypeData={topAccountTypeData}
-            accountTypeTotal={topAccountTypeTotal}
-            periodLabel={topPeriodLabel}
-          />
-        </Card>
       </div>
 
       <div className="mb-6">
         <div className="mb-3 flex flex-wrap items-center gap-3">
-          <h2 className="text-sm font-semibold text-slate-900">
-            {granularity === "month" ? "Month" : "Year"} breakdown — {periodLabel}
-          </h2>
+          <h2 className="text-sm font-semibold text-slate-900">Breakdown analysis — {periodLabel}</h2>
 
           <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-0.5 text-xs">
             {(["month", "year"] as const).map((g) => (

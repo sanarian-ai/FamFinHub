@@ -26,7 +26,7 @@ import {
   type PersonView,
   type Holder,
 } from "./dashboard-parts/period";
-import { sumByAccount, sumByNature, sumByAccountType, topMovers, bucketCashFlowByMonth } from "./dashboard-parts/aggregate";
+import { sumByAccount, topMovers, bucketCashFlowByMonth } from "./dashboard-parts/aggregate";
 import { PeriodSelector } from "./dashboard-parts/PeriodSelector";
 import { PersonSelector } from "./dashboard-parts/PersonSelector";
 import { type CashFlowDatum } from "./dashboard-parts/CashFlowTrendChart";
@@ -83,7 +83,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     availableYears,
     moverCurrentRows,
     moverPrevRows,
-    accountTypeRows,
     holderSplit,
     sangeethAccountRows,
     riaAccountRows,
@@ -102,17 +101,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     getAvailableYears(),
     getExpenditureRows(currentMonth.start, currentMonth.end, holder),
     getExpenditureRows(prevMonth.start, prevMonth.end, holder),
-    getAccountTypeRows(current.start, current.end, holder),
     person === "household" ? getHolderSplit(current.start, current.end) : Promise.resolve(null),
     person === "household" ? getExpenditureRows(current.start, current.end, "Sangeeth") : Promise.resolve([]),
     person === "household" ? getExpenditureRows(current.start, current.end, "Ria") : Promise.resolve([]),
   ]);
 
-  const natureTotals = sumByNature(currentExpenditureRows);
-  const spendOnlyTotal = currentExpenditureRows.reduce((s, r) => s + r.amount, 0);
   const accountTotals = sumByAccount(currentExpenditureRows);
-  const accountTypeTotals = sumByAccountType(accountTypeRows);
-  const accountTypeGrandTotal = accountTypeTotals.reduce((s, d) => s + d.total, 0);
   const movers = topMovers(moverCurrentRows, moverPrevRows, 5);
 
   const monthLabels = months.map((m) => monthShortLabel(m.start));
@@ -219,11 +213,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         trailingExpenditureRows={trailingExpenditureRows}
         trailingIncomeRows={trailingIncomeRows}
         trailingAccountTypeRows={trailingAccountTypeRows}
-        topNatureData={natureTotals}
-        topNatureTotal={spendOnlyTotal}
-        topAccountTypeData={accountTypeTotals}
-        topAccountTypeTotal={accountTypeGrandTotal}
-        topPeriodLabel={current.label}
         availableYears={availableYears}
         holder={holder}
       />
