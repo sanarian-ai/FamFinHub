@@ -9,6 +9,7 @@ import {
   getCashFlowSummary,
   getCashFlowRows,
   getAccountTypeRows,
+  getAvailableYears,
   getHolderSplit,
   getUnattributedTotal,
   getLastImportSync,
@@ -79,6 +80,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     trailingExpenditureRows,
     trailingIncomeRows,
     trailingAccountTypeRows,
+    availableYears,
     moverCurrentRows,
     moverPrevRows,
     accountTypeRows,
@@ -97,6 +99,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     getExpenditureRows(trailingStart, trailingEnd, holder),
     getIncomeRows(trailingStart, trailingEnd, holder),
     getAccountTypeRows(trailingStart, trailingEnd, holder),
+    getAvailableYears(),
     getExpenditureRows(currentMonth.start, currentMonth.end, holder),
     getExpenditureRows(prevMonth.start, prevMonth.end, holder),
     getAccountTypeRows(current.start, current.end, holder),
@@ -221,6 +224,8 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         topAccountTypeData={accountTypeTotals}
         topAccountTypeTotal={accountTypeGrandTotal}
         topPeriodLabel={current.label}
+        availableYears={availableYears}
+        holder={holder}
       />
 
       {person === "household" && holderSplit && (

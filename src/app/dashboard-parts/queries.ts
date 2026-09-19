@@ -303,3 +303,20 @@ export async function getLastImportSync(): Promise<Date | null> {
   });
   return agg._max.createdAt ?? null;
 }
+
+/**
+ * Every calendar year that has at least one transaction on record, descending (most recent
+ * first) — powers the Year-mode dropdown in the trailing-12-months drill-down (see
+ * CashFlowSection). The app holds ~14 years of history (2013 onward), well outside the
+ * trailing-12-month window already shipped to the browser, so Year mode fetches on demand
+ * per selected year rather than shipping every year's rows upfront — see actions.ts.
+ */
+export async function getAvailableYears(): Promise<number[]> {
+  const agg = await prisma.transaction.aggregate({ _min: { txnDate: true }, _max: { txnDate: true } });
+  const min = agg._min.txnDate;
+  const max = agg._max.txnDate;
+  if (!min || !max) return [];
+  const years: number[] = [];
+  for (let y = max.getUTCFullYear(); y >= min.getUTCFullYear(); y--) years.push(y);
+  return years;
+}

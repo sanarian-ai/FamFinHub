@@ -29,7 +29,7 @@ export function CategoryBars({
   rangeEnd: Date;
 }) {
   if (data.items.length === 0 || total === 0) {
-    return <div className="flex h-56 items-center justify-center text-sm text-slate-400">Nothing categorized this month yet.</div>;
+    return <div className="flex h-56 items-center justify-center text-sm text-slate-400">Nothing categorized in this period yet.</div>;
   }
   const from = isoDateUTC(rangeStart);
   // rangeEnd is exclusive (the start of the next month) — Ledger's "to" filter is inclusive,
