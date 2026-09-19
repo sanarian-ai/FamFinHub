@@ -14,6 +14,7 @@ export type Group = {
   count: number;
   totalAmount: number;
   maxAbsAmount: number;
+  direction: "income" | "expense";
   earliest: Date;
   latest: Date;
   suggestionReason: string | null;
@@ -82,6 +83,7 @@ export function ReviewQueueList({
 }) {
   const [search, setSearch] = useState("");
   const [amountBucket, setAmountBucket] = useState<string | null>(null);
+  const [direction, setDirection] = useState<"all" | "income" | "expense">("all");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -91,8 +93,16 @@ export function ReviewQueueList({
 
   const searchTerm = search.trim().toLowerCase();
   const activeBucket = AMOUNT_BUCKETS.find((b) => b.id === amountBucket) ?? null;
+  // Direction narrows the pool the amount buckets/sort operate on (an AND filter, not another
+  // bucket dimension) — crossing direction x amount into 8 buckets would leave several with
+  // counts in the single digits (see the income side of the distribution) for little gain over
+  // one extra toggle.
+  const byDirection = useMemo(
+    () => (direction === "all" ? groups : groups.filter((g) => g.direction === direction)),
+    [groups, direction]
+  );
   const filteredGroups = useMemo(() => {
-    let result = groups;
+    let result = byDirection;
     if (searchTerm) {
       result = result.filter((g) => g.representativeDescription.toLowerCase().includes(searchTerm));
     }
@@ -104,16 +114,27 @@ export function ReviewQueueList({
       result = [...result].sort((a, b) => b.maxAbsAmount - a.maxAbsAmount);
     }
     return result;
-  }, [groups, searchTerm, activeBucket]);
+  }, [byDirection, searchTerm, activeBucket]);
   const filteredTxnCount = filteredGroups.reduce((s, g) => s + g.count, 0);
+  // Bucket counts reflect the direction filter (so they stay meaningful once you've narrowed to
+  // Income or Expense) but not the text search — same "static while typing" behavior as the
+  // keyword chips.
   const bucketCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const b of AMOUNT_BUCKETS) {
-      counts.set(b.id, groups.filter((g) => g.maxAbsAmount >= b.min && g.maxAbsAmount < b.max).length);
+      counts.set(b.id, byDirection.filter((g) => g.maxAbsAmount >= b.min && g.maxAbsAmount < b.max).length);
     }
     return counts;
-  }, [groups]);
-  const isFiltered = !!searchTerm || !!activeBucket;
+  }, [byDirection]);
+  const directionCounts = useMemo(
+    () => ({
+      all: groups.length,
+      income: groups.filter((g) => g.direction === "income").length,
+      expense: groups.filter((g) => g.direction === "expense").length,
+    }),
+    [groups]
+  );
+  const isFiltered = !!searchTerm || !!activeBucket || direction !== "all";
 
   function toggle(key: string) {
     setSelected((prev) => {
@@ -186,6 +207,31 @@ export function ReviewQueueList({
             ))}
           </div>
         )}
+        <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-400">Direction</p>
+          <div className="inline-flex overflow-hidden rounded-md border border-slate-200">
+            {(
+              [
+                { id: "all", label: "All" },
+                { id: "income", label: "Income" },
+                { id: "expense", label: "Expense" },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setDirection(opt.id)}
+                className={clsx(
+                  "px-2.5 py-1 text-xs font-medium transition",
+                  direction === opt.id ? "bg-emerald-100 text-emerald-800" : "bg-slate-50 text-slate-600 hover:bg-slate-100",
+                  opt.id !== "all" && "border-l border-slate-200"
+                )}
+              >
+                {opt.label} ({directionCounts[opt.id]})
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="mt-3 border-t border-slate-100 pt-3">
           <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-400">
             Filter by amount &mdash; largest transaction in each group
@@ -224,6 +270,9 @@ export function ReviewQueueList({
                   {searchTerm ? " and are" : " match"} {activeBucket.label}
                   , sorted by amount
                 </>
+              )}
+              {direction !== "all" && (
+                <> ({direction === "income" ? "income only" : "expense only"})</>
               )}
             </span>
             {filteredGroups.length > 0 && (
@@ -308,7 +357,8 @@ export function ReviewQueueList({
         <Card>
           <p className="text-sm text-slate-500">
             No pending groups match{searchTerm ? <> &ldquo;{searchTerm}&rdquo;</> : null}
-            {activeBucket ? <> {searchTerm ? "and " : ""}{activeBucket.label}</> : null}.
+            {activeBucket ? <> {searchTerm ? "and " : ""}{activeBucket.label}</> : null}
+            {direction !== "all" ? <> ({direction === "income" ? "income only" : "expense only"})</> : null}.
           </p>
         </Card>
       ) : (

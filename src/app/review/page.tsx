@@ -23,6 +23,9 @@ type Group = {
   count: number;
   totalAmount: number;
   maxAbsAmount: number;
+  // Sign of the group's largest-magnitude transaction — same basis as maxAbsAmount, so the
+  // Income/Expense toggle and the amount buckets always agree on which transaction "counts".
+  direction: "income" | "expense";
   earliest: Date;
   latest: Date;
   suggestionReason: string | null;
@@ -152,6 +155,7 @@ export default async function ReviewPage({
       count: number;
       totalAmount: number;
       maxAbsAmount: number;
+      directionAtMax: "income" | "expense";
       earliest: Date;
       latest: Date;
       suggestionReason: string | null;
@@ -168,6 +172,7 @@ export default async function ReviewPage({
         count: 0,
         totalAmount: 0,
         maxAbsAmount: 0,
+        directionAtMax: Number(txn.amount) < 0 ? "expense" : "income",
         earliest: txn.txnDate,
         latest: txn.txnDate,
         suggestionReason: null,
@@ -177,7 +182,11 @@ export default async function ReviewPage({
     }
     bucket.count += 1;
     bucket.totalAmount += Number(txn.amount);
-    bucket.maxAbsAmount = Math.max(bucket.maxAbsAmount, Math.abs(Number(txn.amount)));
+    const absAmt = Math.abs(Number(txn.amount));
+    if (absAmt >= bucket.maxAbsAmount) {
+      bucket.maxAbsAmount = absAmt;
+      bucket.directionAtMax = Number(txn.amount) < 0 ? "expense" : "income";
+    }
     if (txn.txnDate < bucket.earliest) bucket.earliest = txn.txnDate;
     if (txn.txnDate > bucket.latest) bucket.latest = txn.txnDate;
     if (!bucket.suggestionReason && txn.suggestionReason)
@@ -214,6 +223,7 @@ export default async function ReviewPage({
       count: bucket.count,
       totalAmount: bucket.totalAmount,
       maxAbsAmount: bucket.maxAbsAmount,
+      direction: bucket.directionAtMax,
       earliest: bucket.earliest,
       latest: bucket.latest,
       suggestionReason: bucket.suggestionReason,
