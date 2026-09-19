@@ -13,12 +13,28 @@ export type Group = {
   representativeDescription: string;
   count: number;
   totalAmount: number;
+  maxAbsAmount: number;
   earliest: Date;
   latest: Date;
   suggestionReason: string | null;
   suggestion: LiveSuggestion;
   currencies: string[];
 };
+
+export type AmountBucket = { id: string; label: string; min: number; max: number };
+
+// Cutoffs picked from the real needs_review distribution (2026-09-19): the bulk of the queue is
+// small day-to-day spend (₹0–5,000, ~90% of rows), then a near-empty ₹5k–1L band, then a real
+// fat tail of five/six/seven-figure transfers — mutual-fund RTGS, FX remittances, property NEFTs
+// — that matter far more to the household's financial picture than volume of small rows does.
+// Buckets on each group's LARGEST individual transaction (`maxAbsAmount`), not its summed total,
+// so a group of many small recurring charges never gets misclassified as "high-value."
+export const AMOUNT_BUCKETS: AmountBucket[] = [
+  { id: "under-1k", label: "Under ₹1,000", min: 0, max: 1000 },
+  { id: "1k-5k", label: "₹1,000 – 5,000", min: 1000, max: 5000 },
+  { id: "5k-1l", label: "₹5,000 – 1,00,000", min: 5000, max: 100000 },
+  { id: "1l-plus", label: "₹1,00,000+", min: 100000, max: Infinity },
+];
 
 export type KeywordChip = { token: string; count: number };
 
@@ -65,6 +81,7 @@ export function ReviewQueueList({
   keywordChips: KeywordChip[];
 }) {
   const [search, setSearch] = useState("");
+  const [amountBucket, setAmountBucket] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -73,11 +90,30 @@ export function ReviewQueueList({
   const [error, setError] = useState<string | null>(null);
 
   const searchTerm = search.trim().toLowerCase();
+  const activeBucket = AMOUNT_BUCKETS.find((b) => b.id === amountBucket) ?? null;
   const filteredGroups = useMemo(() => {
-    if (!searchTerm) return groups;
-    return groups.filter((g) => g.representativeDescription.toLowerCase().includes(searchTerm));
-  }, [groups, searchTerm]);
+    let result = groups;
+    if (searchTerm) {
+      result = result.filter((g) => g.representativeDescription.toLowerCase().includes(searchTerm));
+    }
+    if (activeBucket) {
+      result = result.filter((g) => g.maxAbsAmount >= activeBucket.min && g.maxAbsAmount < activeBucket.max);
+      // Default queue order is "biggest recurring pattern first" (count desc) — the right lens
+      // for clearing bulk noise. Once amount-filtered, the point is reviewing the biggest-ticket
+      // items first, so re-sort by the group's largest transaction, descending.
+      result = [...result].sort((a, b) => b.maxAbsAmount - a.maxAbsAmount);
+    }
+    return result;
+  }, [groups, searchTerm, activeBucket]);
   const filteredTxnCount = filteredGroups.reduce((s, g) => s + g.count, 0);
+  const bucketCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const b of AMOUNT_BUCKETS) {
+      counts.set(b.id, groups.filter((g) => g.maxAbsAmount >= b.min && g.maxAbsAmount < b.max).length);
+    }
+    return counts;
+  }, [groups]);
+  const isFiltered = !!searchTerm || !!activeBucket;
 
   function toggle(key: string) {
     setSelected((prev) => {
@@ -150,11 +186,45 @@ export function ReviewQueueList({
             ))}
           </div>
         )}
-        {searchTerm && (
+        <div className="mt-3 border-t border-slate-100 pt-3">
+          <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-400">
+            Filter by amount &mdash; largest transaction in each group
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {AMOUNT_BUCKETS.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setAmountBucket((prev) => (prev === b.id ? null : b.id))}
+                className={clsx(
+                  "rounded-full border px-2.5 py-1 text-xs font-medium transition",
+                  amountBucket === b.id
+                    ? "border-emerald-300 bg-emerald-100 text-emerald-800"
+                    : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                )}
+              >
+                {b.label} ({bucketCounts.get(b.id) ?? 0})
+              </button>
+            ))}
+          </div>
+        </div>
+        {isFiltered && (
           <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3 text-sm">
             <span className="text-slate-600">
               {filteredGroups.length} group{filteredGroups.length === 1 ? "" : "s"} · {filteredTxnCount} transaction
-              {filteredTxnCount === 1 ? "" : "s"} match &ldquo;{searchTerm}&rdquo;
+              {filteredTxnCount === 1 ? "" : "s"}
+              {searchTerm && (
+                <>
+                  {" "}
+                  match &ldquo;{searchTerm}&rdquo;
+                </>
+              )}
+              {activeBucket && (
+                <>
+                  {searchTerm ? " and are" : " match"} {activeBucket.label}
+                  , sorted by amount
+                </>
+              )}
             </span>
             {filteredGroups.length > 0 && (
               <button type="button" onClick={selectAllFiltered} className="font-medium text-indigo-600 hover:underline">
@@ -234,9 +304,12 @@ export function ReviewQueueList({
         </Card>
       )}
 
-      {filteredGroups.length === 0 && searchTerm ? (
+      {filteredGroups.length === 0 && isFiltered ? (
         <Card>
-          <p className="text-sm text-slate-500">No pending groups match &ldquo;{searchTerm}&rdquo;.</p>
+          <p className="text-sm text-slate-500">
+            No pending groups match{searchTerm ? <> &ldquo;{searchTerm}&rdquo;</> : null}
+            {activeBucket ? <> {searchTerm ? "and " : ""}{activeBucket.label}</> : null}.
+          </p>
         </Card>
       ) : (
         filteredGroups.map((g) => (

@@ -22,6 +22,7 @@ type Group = {
   representativeDescription: string;
   count: number;
   totalAmount: number;
+  maxAbsAmount: number;
   earliest: Date;
   latest: Date;
   suggestionReason: string | null;
@@ -150,6 +151,7 @@ export default async function ReviewPage({
       variantCounts: Map<string, number>;
       count: number;
       totalAmount: number;
+      maxAbsAmount: number;
       earliest: Date;
       latest: Date;
       suggestionReason: string | null;
@@ -165,6 +167,7 @@ export default async function ReviewPage({
         variantCounts: new Map(),
         count: 0,
         totalAmount: 0,
+        maxAbsAmount: 0,
         earliest: txn.txnDate,
         latest: txn.txnDate,
         suggestionReason: null,
@@ -174,6 +177,7 @@ export default async function ReviewPage({
     }
     bucket.count += 1;
     bucket.totalAmount += Number(txn.amount);
+    bucket.maxAbsAmount = Math.max(bucket.maxAbsAmount, Math.abs(Number(txn.amount)));
     if (txn.txnDate < bucket.earliest) bucket.earliest = txn.txnDate;
     if (txn.txnDate > bucket.latest) bucket.latest = txn.txnDate;
     if (!bucket.suggestionReason && txn.suggestionReason)
@@ -209,6 +213,7 @@ export default async function ReviewPage({
       representativeDescription,
       count: bucket.count,
       totalAmount: bucket.totalAmount,
+      maxAbsAmount: bucket.maxAbsAmount,
       earliest: bucket.earliest,
       latest: bucket.latest,
       suggestionReason: bucket.suggestionReason,
