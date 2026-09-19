@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import clsx from "clsx";
-import { Card } from "@/components/ui";
+import { formatINR } from "@/lib/format";
+import { Card, StatTile } from "@/components/ui";
 import { CashFlowTrendChart, type CashFlowDatum } from "./CashFlowTrendChart";
 import { BreakdownCard } from "./BreakdownCard";
 import { FLOW_COLORS } from "./colors";
@@ -101,6 +102,10 @@ export function CashFlowSection({
   const rangeStart = granularity === "year" ? yearData?.rangeStart ?? selected.start : selected.start;
   const rangeEnd = granularity === "year" ? yearData?.rangeEnd ?? selected.end : selected.end;
   const periodLabel = granularity === "year" ? yearData?.label ?? String(selectedYear) : selected.label;
+  // Investment isn't tracked as its own row set (unlike Expense/Income) — it's one of the three
+  // slices already computed into accountTypeData above, so just pull it out rather than adding
+  // a fourth parallel data path.
+  const investmentTotal = accountTypeData.find((d) => d.type === "Investment")?.total ?? 0;
 
   return (
     <>
@@ -175,6 +180,13 @@ export function CashFlowSection({
             </button>
           )}
         </div>
+
+        <div className={clsx("mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3 transition-opacity", yearLoading && "opacity-50")}>
+          <StatTile label={`Income — ${periodLabel}`} value={formatINR(incomeTotal)} positiveIsBad={false} />
+          <StatTile label={`Expense — ${periodLabel}`} value={formatINR(expenseTotal)} positiveIsBad={true} />
+          <StatTile label={`Investment — ${periodLabel}`} value={formatINR(investmentTotal)} positiveIsBad={false} />
+        </div>
+
         <div className={clsx("grid grid-cols-1 gap-6 lg:grid-cols-2 transition-opacity", yearLoading && "opacity-50")}>
           <Card>
             <BreakdownCard
