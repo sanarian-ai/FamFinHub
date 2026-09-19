@@ -173,6 +173,55 @@ export async function getIncomeRows(start: Date, end: Date, holder?: Holder): Pr
   }));
 }
 
+/**
+ * Investment-nature rows (SIPs, mutual fund/stock purchases, etc.) — powers the Investment
+ * breakdown card's Nature/Category tabs. Unlike expenditureWhere/incomeWhere, deliberately NOT
+ * sign-filtered: checked against production, 263/265 Investment-category rows are negative
+ * (money leaving an account into an investment) but 2 are positive (₹5,50,625 — redemptions/
+ * interest credited back). Filtering to amount < 0 would silently drop those two. Matches how
+ * getAccountTypeRows already treats Investment (no sign filter, plain Math.abs()).
+ */
+function investmentWhere(start: Date, end: Date, holder?: Holder): Prisma.TransactionWhereInput {
+  return {
+    ...effectiveDateWhere(start, end),
+    category: { expenseType: { expenseNature: { is: { accountType: "Investment" } } } },
+    ...holderWhere(holder),
+  };
+}
+
+export type InvestmentRow = ExpenditureRow;
+
+export async function getInvestmentRows(start: Date, end: Date, holder?: Holder): Promise<InvestmentRow[]> {
+  const txns = await prisma.transaction.findMany({
+    where: investmentWhere(start, end, holder),
+    select: {
+      amount: true,
+      txnDate: true,
+      effectiveMonth: true,
+      categoryId: true,
+      category: {
+        select: {
+          name: true,
+          expenseType: { select: { expenseNature: { select: { id: true, name: true } } } },
+        },
+      },
+      accountId: true,
+      account: { select: { name: true, holder: true } },
+    },
+  });
+  return txns.map((t) => ({
+    amount: Math.abs(Number(t.amount)),
+    effectiveDate: t.effectiveMonth ?? t.txnDate,
+    categoryId: t.categoryId as string,
+    categoryName: t.category?.name ?? "Uncategorized",
+    natureId: t.category?.expenseType.expenseNature.id ?? "unknown",
+    natureName: t.category?.expenseType.expenseNature.name ?? "Uncategorized",
+    accountId: t.accountId,
+    accountName: t.account?.name ?? null,
+    accountHolder: t.account?.holder ?? null,
+  }));
+}
+
 // Deliberately NOT scoped to accountType: "Expenditure" only for this helper's callers that
 // need every negative-amount categorized row (kept separate from expenditureWhere above,
 // which existing Nature/Ledger/TopMovers views still rely on unchanged).

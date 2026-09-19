@@ -58,14 +58,16 @@ function CustomTooltip({ active, payload, label }: any) {
 
 export function CashFlowTrendChart({
   data,
-  selectedIndex,
+  selectedRange,
   onSelectMonth,
 }: {
   data: CashFlowDatum[];
-  /** Index into `data` of the month currently drilled into — its bars render at full opacity,
-   * every other month dims, and clicking any bar (selected or not) reports its index so the
-   * parent can toggle the drill-down. Omit both props to render the chart non-interactively. */
-  selectedIndex?: number;
+  /** Index range into `data` (inclusive both ends) currently drilled into — its bars render at
+   * full opacity, every other month dims. A single selected month is just start === end.
+   * Clicking any bar (selected or not) reports its index so the parent can decide what to do
+   * with it (collapse the range to that one month, in CashFlowSection's case). Omit both props
+   * to render the chart non-interactively. */
+  selectedRange?: { start: number; end: number };
   onSelectMonth?: (index: number) => void;
 }) {
   const hasAny = data.some((d) => d.income > 0 || d.expense > 0);
@@ -77,7 +79,8 @@ export function CashFlowTrendChart({
     );
   }
   const interactive = !!onSelectMonth;
-  const opacityFor = (index: number) => (selectedIndex == null || selectedIndex === index ? 1 : DIMMED_OPACITY);
+  const opacityFor = (index: number) =>
+    selectedRange == null || (index >= selectedRange.start && index <= selectedRange.end) ? 1 : DIMMED_OPACITY;
 
   return (
     <ResponsiveContainer width="100%" height={288}>

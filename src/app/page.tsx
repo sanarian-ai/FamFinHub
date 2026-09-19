@@ -5,6 +5,7 @@ import {
   getEffectiveNow,
   getExpenditureRows,
   getIncomeRows,
+  getInvestmentRows,
   getNeedsReviewCount,
   getCashFlowSummary,
   getCashFlowRows,
@@ -80,6 +81,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     trailingExpenditureRows,
     trailingIncomeRows,
     trailingAccountTypeRows,
+    trailingInvestmentRows,
     availableYears,
     moverCurrentRows,
     moverPrevRows,
@@ -98,6 +100,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     getExpenditureRows(trailingStart, trailingEnd, holder),
     getIncomeRows(trailingStart, trailingEnd, holder),
     getAccountTypeRows(trailingStart, trailingEnd, holder),
+    getInvestmentRows(trailingStart, trailingEnd, holder),
     getAvailableYears(),
     getExpenditureRows(currentMonth.start, currentMonth.end, holder),
     getExpenditureRows(prevMonth.start, prevMonth.end, holder),
@@ -213,6 +216,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         trailingExpenditureRows={trailingExpenditureRows}
         trailingIncomeRows={trailingIncomeRows}
         trailingAccountTypeRows={trailingAccountTypeRows}
+        trailingInvestmentRows={trailingInvestmentRows}
         availableYears={availableYears}
         holder={holder}
       />

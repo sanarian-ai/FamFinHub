@@ -54,10 +54,12 @@ export const HOLDER_COLORS: Record<string, string> = {
 };
 
 // Same hex values as CashFlowTrendChart's local INCOME_COLOR/EXPENSE_COLOR — centralized here
-// so the per-month Expense/Income composition cards (CategoryBars) read as visually part of
-// the same system as the trend chart above them, without forcing a refactor of that already-
-// working component's own local constants.
+// so the per-month Expense/Income/Investment composition cards (CategoryBars) read as visually
+// part of the same system as the trend chart above them, without forcing a refactor of that
+// already-working component's own local constants. `investment` matches ACCOUNT_TYPE_COLORS.
+// Investment above (same blue) so the two breakdowns never disagree on Investment's color.
 export const FLOW_COLORS = {
   income: "#1baf7a",
   expense: "#e34948",
+  investment: "#2a78d6",
 } as const;
