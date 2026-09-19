@@ -52,3 +52,12 @@ export const HOLDER_COLORS: Record<string, string> = {
   Sangeeth: "#2a78d6",
   Ria: "#e87ba4",
 };
+
+// Same hex values as CashFlowTrendChart's local INCOME_COLOR/EXPENSE_COLOR — centralized here
+// so the per-month Expense/Income composition cards (CategoryBars) read as visually part of
+// the same system as the trend chart above them, without forcing a refactor of that already-
+// working component's own local constants.
+export const FLOW_COLORS = {
+  income: "#1baf7a",
+  expense: "#e34948",
+} as const;

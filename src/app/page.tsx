@@ -4,6 +4,7 @@ import { formatDate, formatINR, pctChange } from "@/lib/format";
 import {
   getEffectiveNow,
   getExpenditureRows,
+  getIncomeRows,
   getNeedsReviewCount,
   getCashFlowSummary,
   getCashFlowRows,
@@ -27,8 +28,8 @@ import {
 import { sumByAccount, sumByNature, sumByAccountType, topMovers, bucketCashFlowByMonth } from "./dashboard-parts/aggregate";
 import { PeriodSelector } from "./dashboard-parts/PeriodSelector";
 import { PersonSelector } from "./dashboard-parts/PersonSelector";
-import { CashFlowTrendChart, type CashFlowDatum } from "./dashboard-parts/CashFlowTrendChart";
-import { BreakdownCard } from "./dashboard-parts/BreakdownCard";
+import { type CashFlowDatum } from "./dashboard-parts/CashFlowTrendChart";
+import { CashFlowSection } from "./dashboard-parts/CashFlowSection";
 import { AccountSplit } from "./dashboard-parts/AccountSplit";
 import { TopMovers } from "./dashboard-parts/TopMovers";
 import { ContributionSplitBars } from "./dashboard-parts/ContributionSplitBars";
@@ -75,6 +76,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     lastSync,
     currentExpenditureRows,
     trailingCashFlowRows,
+    trailingExpenditureRows,
+    trailingIncomeRows,
+    trailingAccountTypeRows,
     moverCurrentRows,
     moverPrevRows,
     accountTypeRows,
@@ -90,6 +94,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     getLastImportSync(),
     getExpenditureRows(current.start, current.end, holder),
     getCashFlowRows(trailingStart, trailingEnd, holder),
+    getExpenditureRows(trailingStart, trailingEnd, holder),
+    getIncomeRows(trailingStart, trailingEnd, holder),
+    getAccountTypeRows(trailingStart, trailingEnd, holder),
     getExpenditureRows(currentMonth.start, currentMonth.end, holder),
     getExpenditureRows(prevMonth.start, prevMonth.end, holder),
     getAccountTypeRows(current.start, current.end, holder),
@@ -203,21 +210,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <h2 className="mb-4 text-sm font-semibold text-slate-900">Trailing 12 months — income vs. expense</h2>
-          <CashFlowTrendChart data={cashFlowTrendData} />
-        </Card>
-        <Card>
-          <BreakdownCard
-            natureData={natureTotals}
-            natureTotal={spendOnlyTotal}
-            accountTypeData={accountTypeTotals}
-            accountTypeTotal={accountTypeGrandTotal}
-            periodLabel={current.label}
-          />
-        </Card>
-      </div>
+      <CashFlowSection
+        months={months}
+        cashFlowTrendData={cashFlowTrendData}
+        trailingExpenditureRows={trailingExpenditureRows}
+        trailingIncomeRows={trailingIncomeRows}
+        trailingAccountTypeRows={trailingAccountTypeRows}
+        topNatureData={natureTotals}
+        topNatureTotal={spendOnlyTotal}
+        topAccountTypeData={accountTypeTotals}
+        topAccountTypeTotal={accountTypeGrandTotal}
+        topPeriodLabel={current.label}
+      />
 
       {person === "household" && holderSplit && (
         <div className="mb-6">

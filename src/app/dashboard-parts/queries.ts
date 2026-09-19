@@ -119,6 +119,42 @@ function incomeWhere(start: Date, end: Date, holder?: Holder): Prisma.Transactio
   };
 }
 
+// Same shape as ExpenditureRow (amount as positive magnitude, full category/nature/account
+// tags) but for Income-type rows — powers the per-month Income composition drill-down. Kept
+// as a distinct type alias (not a raw reuse of ExpenditureRow) so call sites read honestly
+// about which side of cash flow a given array holds.
+export type IncomeRow = ExpenditureRow;
+
+export async function getIncomeRows(start: Date, end: Date, holder?: Holder): Promise<IncomeRow[]> {
+  const txns = await prisma.transaction.findMany({
+    where: incomeWhere(start, end, holder),
+    select: {
+      amount: true,
+      txnDate: true,
+      categoryId: true,
+      category: {
+        select: {
+          name: true,
+          expenseType: { select: { expenseNature: { select: { id: true, name: true } } } },
+        },
+      },
+      accountId: true,
+      account: { select: { name: true, holder: true } },
+    },
+  });
+  return txns.map((t) => ({
+    amount: Math.abs(Number(t.amount)),
+    txnDate: t.txnDate,
+    categoryId: t.categoryId as string,
+    categoryName: t.category?.name ?? "Uncategorized",
+    natureId: t.category?.expenseType.expenseNature.id ?? "unknown",
+    natureName: t.category?.expenseType.expenseNature.name ?? "Uncategorized",
+    accountId: t.accountId,
+    accountName: t.account?.name ?? null,
+    accountHolder: t.account?.holder ?? null,
+  }));
+}
+
 // Deliberately NOT scoped to accountType: "Expenditure" only for this helper's callers that
 // need every negative-amount categorized row (kept separate from expenditureWhere above,
 // which existing Nature/Ledger/TopMovers views still rely on unchanged).
@@ -215,6 +251,7 @@ export async function getCashFlowRows(
 export interface AccountTypeRow {
   amount: number; // positive magnitude
   accountType: "Expenditure" | "Investment" | "Income";
+  txnDate: Date; // lets callers re-slice a wider fetch (e.g. a trailing-12mo window) by month client-side
 }
 
 /**
@@ -233,6 +270,7 @@ export async function getAccountTypeRows(start: Date, end: Date, holder?: Holder
     },
     select: {
       amount: true,
+      txnDate: true,
       category: { select: { expenseType: { select: { expenseNature: { select: { accountType: true } } } } } },
     },
   });
@@ -241,6 +279,7 @@ export async function getAccountTypeRows(start: Date, end: Date, holder?: Holder
     .map((r) => ({
       amount: Math.abs(Number(r.amount)),
       accountType: r.category!.expenseType.expenseNature.accountType as AccountTypeRow["accountType"],
+      txnDate: r.txnDate,
     }));
 }
 

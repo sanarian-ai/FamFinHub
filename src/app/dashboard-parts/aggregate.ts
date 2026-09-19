@@ -33,6 +33,37 @@ export function sumByCategory(rows: ExpenditureRow[]): Map<string, CategoryTotal
   return map;
 }
 
+export interface RankedCategoryTotals {
+  items: CategoryTotal[]; // top N, descending
+  otherTotal: number; // sum of everything past the top N
+  otherCount: number; // how many categories are folded into otherTotal
+}
+
+/**
+ * Category is a long, unbounded tail (237 possible values, per colors.ts's own note on why
+ * Nature gets a fixed hue-per-identity palette and Category deliberately doesn't) — so unlike
+ * Nature/Account Type, this ranks by value and caps the list rather than showing every
+ * category. Used by the per-month drill-down, where a single month typically touches 15-40
+ * distinct categories.
+ */
+export function sumByCategoryRanked(rows: ExpenditureRow[], topN = 8): RankedCategoryTotals {
+  const all = [...sumByCategory(rows).values()].sort((a, b) => b.total - a.total);
+  const items = all.slice(0, topN);
+  const rest = all.slice(topN);
+  return {
+    items,
+    otherTotal: rest.reduce((s, c) => s + c.total, 0),
+    otherCount: rest.length,
+  };
+}
+
+/** Rows whose txnDate falls inside a given month range — the client-side counterpart to the
+ * server-side date filters, used once the full trailing-12-month row set has already been
+ * shipped to the browser and a single month is picked by clicking the trend chart. */
+export function filterRowsInRange<T extends { txnDate: Date }>(rows: T[], range: PeriodRange): T[] {
+  return rows.filter((r) => r.txnDate >= range.start && r.txnDate < range.end);
+}
+
 export interface AccountTotal {
   id: string;
   name: string;

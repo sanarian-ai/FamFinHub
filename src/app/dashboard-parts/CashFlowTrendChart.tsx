@@ -3,6 +3,7 @@
 import {
   Bar,
   CartesianGrid,
+  Cell,
   ComposedChart,
   Legend,
   Line,
@@ -25,6 +26,7 @@ const GRID = "#e1e0d9";
 const INCOME_COLOR = "#1baf7a";
 const EXPENSE_COLOR = "#e34948";
 const NET_COLOR = "#0b0b0b";
+const DIMMED_OPACITY = 0.35;
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -54,7 +56,18 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function CashFlowTrendChart({ data }: { data: CashFlowDatum[] }) {
+export function CashFlowTrendChart({
+  data,
+  selectedIndex,
+  onSelectMonth,
+}: {
+  data: CashFlowDatum[];
+  /** Index into `data` of the month currently drilled into — its bars render at full opacity,
+   * every other month dims, and clicking any bar (selected or not) reports its index so the
+   * parent can toggle the drill-down. Omit both props to render the chart non-interactively. */
+  selectedIndex?: number;
+  onSelectMonth?: (index: number) => void;
+}) {
   const hasAny = data.some((d) => d.income > 0 || d.expense > 0);
   if (!hasAny) {
     return (
@@ -63,6 +76,9 @@ export function CashFlowTrendChart({ data }: { data: CashFlowDatum[] }) {
       </div>
     );
   }
+  const interactive = !!onSelectMonth;
+  const opacityFor = (index: number) => (selectedIndex == null || selectedIndex === index ? 1 : DIMMED_OPACITY);
+
   return (
     <ResponsiveContainer width="100%" height={288}>
       <ComposedChart data={data} margin={{ top: 4, right: 4, left: 4, bottom: 0 }} barCategoryGap="20%">
@@ -77,8 +93,32 @@ export function CashFlowTrendChart({ data }: { data: CashFlowDatum[] }) {
         />
         <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(11,11,11,0.04)" }} />
         <Legend wrapperStyle={{ fontSize: 11, color: "#0b0b0b", paddingTop: 8 }} iconType="circle" iconSize={8} />
-        <Bar dataKey="income" name="Income" fill={INCOME_COLOR} radius={[2, 2, 0, 0]} maxBarSize={28} />
-        <Bar dataKey="expense" name="Expense" fill={EXPENSE_COLOR} radius={[2, 2, 0, 0]} maxBarSize={28} />
+        <Bar
+          dataKey="income"
+          name="Income"
+          fill={INCOME_COLOR}
+          radius={[2, 2, 0, 0]}
+          maxBarSize={28}
+          onClick={interactive ? (_d: unknown, index: number) => onSelectMonth!(index) : undefined}
+          cursor={interactive ? "pointer" : undefined}
+        >
+          {data.map((_d, i) => (
+            <Cell key={i} fillOpacity={opacityFor(i)} />
+          ))}
+        </Bar>
+        <Bar
+          dataKey="expense"
+          name="Expense"
+          fill={EXPENSE_COLOR}
+          radius={[2, 2, 0, 0]}
+          maxBarSize={28}
+          onClick={interactive ? (_d: unknown, index: number) => onSelectMonth!(index) : undefined}
+          cursor={interactive ? "pointer" : undefined}
+        >
+          {data.map((_d, i) => (
+            <Cell key={i} fillOpacity={opacityFor(i)} />
+          ))}
+        </Bar>
         <Line
           dataKey="net"
           name="Net"
