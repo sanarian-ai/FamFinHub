@@ -2,9 +2,25 @@ import { prisma } from "@/lib/prisma";
 import { normalizeDescriptionKey } from "@/lib/categorize";
 import type { Prisma } from "@prisma/client";
 
+/**
+ * Every Dashboard/Insights row-fetch filters on this instead of a plain `txnDate` range, so a
+ * transaction with an `effectiveMonth` override (set from the Ledger — see actions.ts /
+ * schema.prisma's comment on the field) counts toward the month it was remapped to, not its
+ * real bank date. `txnDate` itself is never touched by this — it's the fallback for the
+ * overwhelming majority of rows that have no override.
+ */
+function effectiveDateWhere(start: Date, end: Date): Prisma.TransactionWhereInput {
+  return {
+    OR: [
+      { effectiveMonth: { gte: start, lt: end } },
+      { effectiveMonth: null, txnDate: { gte: start, lt: end } },
+    ],
+  };
+}
+
 export interface ExpenditureRow {
   amount: number; // positive magnitude (source amounts are negative outflows)
-  txnDate: Date;
+  effectiveDate: Date; // effectiveMonth override if set, else the real txnDate — see effectiveDateWhere
   categoryId: string;
   categoryName: string;
   natureId: string;
@@ -22,7 +38,7 @@ export interface ExpenditureRow {
  */
 function expenditureWhere(start: Date, end: Date, holder?: import("./period").Holder): Prisma.TransactionWhereInput {
   return {
-    txnDate: { gte: start, lt: end },
+    ...effectiveDateWhere(start, end),
     amount: { lt: 0 },
     category: { expenseType: { expenseNature: { is: { accountType: "Expenditure" } } } },
     ...(holder ? { account: { holder } } : {}),
@@ -35,6 +51,7 @@ export async function getExpenditureRows(start: Date, end: Date, holder?: import
     select: {
       amount: true,
       txnDate: true,
+      effectiveMonth: true,
       categoryId: true,
       category: {
         select: {
@@ -48,7 +65,7 @@ export async function getExpenditureRows(start: Date, end: Date, holder?: import
   });
   return txns.map((t) => ({
     amount: Math.abs(Number(t.amount)),
-    txnDate: t.txnDate,
+    effectiveDate: t.effectiveMonth ?? t.txnDate,
     categoryId: t.categoryId as string,
     categoryName: t.category?.name ?? "Uncategorized",
     natureId: t.category?.expenseType.expenseNature.id ?? "unknown",
@@ -112,7 +129,7 @@ function holderWhere(holder?: Holder): Prisma.TransactionWhereInput {
 
 function incomeWhere(start: Date, end: Date, holder?: Holder): Prisma.TransactionWhereInput {
   return {
-    txnDate: { gte: start, lt: end },
+    ...effectiveDateWhere(start, end),
     amount: { gt: 0 },
     category: { expenseType: { expenseNature: { is: { accountType: "Income" } } } },
     ...holderWhere(holder),
@@ -131,6 +148,7 @@ export async function getIncomeRows(start: Date, end: Date, holder?: Holder): Pr
     select: {
       amount: true,
       txnDate: true,
+      effectiveMonth: true,
       categoryId: true,
       category: {
         select: {
@@ -144,7 +162,7 @@ export async function getIncomeRows(start: Date, end: Date, holder?: Holder): Pr
   });
   return txns.map((t) => ({
     amount: Math.abs(Number(t.amount)),
-    txnDate: t.txnDate,
+    effectiveDate: t.effectiveMonth ?? t.txnDate,
     categoryId: t.categoryId as string,
     categoryName: t.category?.name ?? "Uncategorized",
     natureId: t.category?.expenseType.expenseNature.id ?? "unknown",
@@ -159,7 +177,7 @@ export async function getIncomeRows(start: Date, end: Date, holder?: Holder): Pr
 // need every negative-amount categorized row (kept separate from expenditureWhere above,
 // which existing Nature/Ledger/TopMovers views still rely on unchanged).
 function uncategorizedWhere(start: Date, end: Date, holder?: Holder): Prisma.TransactionWhereInput {
-  return { txnDate: { gte: start, lt: end }, categoryId: null, ...holderWhere(holder) };
+  return { ...effectiveDateWhere(start, end), categoryId: null, ...holderWhere(holder) };
 }
 
 export interface CashFlowSummary {
@@ -220,7 +238,7 @@ export async function getHolderSplit(start: Date, end: Date): Promise<HolderCash
 
 export interface FlowPoint {
   amount: number; // positive magnitude
-  txnDate: Date;
+  effectiveDate: Date; // effectiveMonth override if set, else the real txnDate
 }
 
 /**
@@ -233,17 +251,18 @@ export async function getCashFlowRows(
   holder?: Holder
 ): Promise<{ income: FlowPoint[]; expense: FlowPoint[] }> {
   const [incomeRows, expenseRows, uncatRows] = await Promise.all([
-    prisma.transaction.findMany({ where: incomeWhere(start, end, holder), select: { amount: true, txnDate: true } }),
-    prisma.transaction.findMany({ where: expenditureWhere(start, end, holder), select: { amount: true, txnDate: true } }),
-    prisma.transaction.findMany({ where: uncategorizedWhere(start, end, holder), select: { amount: true, txnDate: true } }),
+    prisma.transaction.findMany({ where: incomeWhere(start, end, holder), select: { amount: true, txnDate: true, effectiveMonth: true } }),
+    prisma.transaction.findMany({ where: expenditureWhere(start, end, holder), select: { amount: true, txnDate: true, effectiveMonth: true } }),
+    prisma.transaction.findMany({ where: uncategorizedWhere(start, end, holder), select: { amount: true, txnDate: true, effectiveMonth: true } }),
   ]);
 
-  const income: FlowPoint[] = incomeRows.map((r) => ({ amount: Number(r.amount), txnDate: r.txnDate }));
-  const expense: FlowPoint[] = expenseRows.map((r) => ({ amount: Math.abs(Number(r.amount)), txnDate: r.txnDate }));
+  const income: FlowPoint[] = incomeRows.map((r) => ({ amount: Number(r.amount), effectiveDate: r.effectiveMonth ?? r.txnDate }));
+  const expense: FlowPoint[] = expenseRows.map((r) => ({ amount: Math.abs(Number(r.amount)), effectiveDate: r.effectiveMonth ?? r.txnDate }));
   for (const r of uncatRows) {
     const a = Number(r.amount);
-    if (a > 0) income.push({ amount: a, txnDate: r.txnDate });
-    else expense.push({ amount: -a, txnDate: r.txnDate });
+    const effectiveDate = r.effectiveMonth ?? r.txnDate;
+    if (a > 0) income.push({ amount: a, effectiveDate });
+    else expense.push({ amount: -a, effectiveDate });
   }
   return { income, expense };
 }
@@ -251,7 +270,7 @@ export async function getCashFlowRows(
 export interface AccountTypeRow {
   amount: number; // positive magnitude
   accountType: "Expenditure" | "Investment" | "Income";
-  txnDate: Date; // lets callers re-slice a wider fetch (e.g. a trailing-12mo window) by month client-side
+  effectiveDate: Date; // effectiveMonth override if set, else txnDate — lets callers re-slice a wider fetch (e.g. a trailing-12mo window) by month client-side
 }
 
 /**
@@ -263,7 +282,7 @@ export interface AccountTypeRow {
 export async function getAccountTypeRows(start: Date, end: Date, holder?: Holder): Promise<AccountTypeRow[]> {
   const rows = await prisma.transaction.findMany({
     where: {
-      txnDate: { gte: start, lt: end },
+      ...effectiveDateWhere(start, end),
       categoryId: { not: null },
       category: { expenseType: { expenseNature: { is: { accountType: { not: "Transfer" } } } } },
       ...holderWhere(holder),
@@ -271,6 +290,7 @@ export async function getAccountTypeRows(start: Date, end: Date, holder?: Holder
     select: {
       amount: true,
       txnDate: true,
+      effectiveMonth: true,
       category: { select: { expenseType: { select: { expenseNature: { select: { accountType: true } } } } } },
     },
   });
@@ -279,7 +299,7 @@ export async function getAccountTypeRows(start: Date, end: Date, holder?: Holder
     .map((r) => ({
       amount: Math.abs(Number(r.amount)),
       accountType: r.category!.expenseType.expenseNature.accountType as AccountTypeRow["accountType"],
-      txnDate: r.txnDate,
+      effectiveDate: r.effectiveMonth ?? r.txnDate,
     }));
 }
 
@@ -312,11 +332,25 @@ export async function getLastImportSync(): Promise<Date | null> {
  * per selected year rather than shipping every year's rows upfront — see actions.ts.
  */
 export async function getAvailableYears(): Promise<number[]> {
-  const agg = await prisma.transaction.aggregate({ _min: { txnDate: true }, _max: { txnDate: true } });
-  const min = agg._min.txnDate;
-  const max = agg._max.txnDate;
-  if (!min || !max) return [];
+  // Two separate aggregates (rather than one raw COALESCE query) so this stays a typed Prisma
+  // call — combined in JS. effectiveMonth overrides are rare and always close to txnDate in
+  // practice, but a remap could in principle push a transaction into a year that had no real
+  // activity of its own, so both are considered.
+  const [txnAgg, effAgg] = await Promise.all([
+    prisma.transaction.aggregate({ _min: { txnDate: true }, _max: { txnDate: true } }),
+    prisma.transaction.aggregate({
+      _min: { effectiveMonth: true },
+      _max: { effectiveMonth: true },
+      where: { effectiveMonth: { not: null } },
+    }),
+  ]);
+  const candidates = [txnAgg._min.txnDate, txnAgg._max.txnDate, effAgg._min.effectiveMonth, effAgg._max.effectiveMonth].filter(
+    (d): d is Date => d != null
+  );
+  if (candidates.length === 0) return [];
+  const minYear = Math.min(...candidates.map((d) => d.getUTCFullYear()));
+  const maxYear = Math.max(...candidates.map((d) => d.getUTCFullYear()));
   const years: number[] = [];
-  for (let y = max.getUTCFullYear(); y >= min.getUTCFullYear(); y--) years.push(y);
+  for (let y = maxYear; y >= minYear; y--) years.push(y);
   return years;
 }

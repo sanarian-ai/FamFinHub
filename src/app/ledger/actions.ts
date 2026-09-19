@@ -35,3 +35,24 @@ export async function bulkUpdateCategory(transactionIds: string[], categoryId: s
 
   revalidatePath("/ledger");
 }
+
+/**
+ * Sets or clears which calendar month a transaction counts toward for Dashboard/Insights
+ * reporting (the "Counts toward" control in the Ledger table) — see schema.prisma's comment on
+ * `effectiveMonth`. `month` is a "YYYY-MM" string (from a native <input type="month">) or null
+ * to clear the override and fall back to the real txnDate. The real txnDate itself is never
+ * touched by this — it stays the immutable imported date.
+ */
+export async function updateTransactionEffectiveMonth(transactionId: string, month: string | null) {
+  if (!transactionId) return;
+  if (month != null && !/^\d{4}-\d{2}$/.test(month)) return;
+
+  const effectiveMonth = month ? new Date(`${month}-01T00:00:00.000Z`) : null;
+
+  await prisma.transaction.update({
+    where: { id: transactionId },
+    data: { effectiveMonth },
+  });
+
+  revalidatePath("/ledger");
+}

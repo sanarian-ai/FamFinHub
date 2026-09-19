@@ -57,11 +57,13 @@ export function sumByCategoryRanked(rows: ExpenditureRow[], topN = 8): RankedCat
   };
 }
 
-/** Rows whose txnDate falls inside a given month range — the client-side counterpart to the
- * server-side date filters, used once the full trailing-12-month row set has already been
- * shipped to the browser and a single month is picked by clicking the trend chart. */
-export function filterRowsInRange<T extends { txnDate: Date }>(rows: T[], range: PeriodRange): T[] {
-  return rows.filter((r) => r.txnDate >= range.start && r.txnDate < range.end);
+/** Rows whose effectiveDate falls inside a given month range — the client-side counterpart to
+ * the server-side date filters, used once the full trailing-12-month row set has already been
+ * shipped to the browser and a single month is picked by clicking the trend chart. Uses
+ * effectiveDate (the Ledger's "counts toward" override if set, else the real txnDate) so a
+ * remapped transaction buckets into the month it was moved to, not its real bank date. */
+export function filterRowsInRange<T extends { effectiveDate: Date }>(rows: T[], range: PeriodRange): T[] {
+  return rows.filter((r) => r.effectiveDate >= range.start && r.effectiveDate < range.end);
 }
 
 export interface AccountTotal {
@@ -120,7 +122,7 @@ export function topMovers(
 export function bucketByMonthAndNature(rows: ExpenditureRow[], months: PeriodRange[]) {
   const buckets = months.map((m) => ({ month: m, byNature: new Map<string, number>() }));
   for (const r of rows) {
-    const idx = buckets.findIndex((b) => r.txnDate >= b.month.start && r.txnDate < b.month.end);
+    const idx = buckets.findIndex((b) => r.effectiveDate >= b.month.start && r.effectiveDate < b.month.end);
     if (idx === -1) continue;
     const bucket = buckets[idx];
     bucket.byNature.set(r.natureName, (bucket.byNature.get(r.natureName) ?? 0) + r.amount);
@@ -163,7 +165,7 @@ export function bucketCashFlowByMonth(
   const buckets = months.map((m) => ({ month: m, income: 0, expense: 0 }));
   const place = (rows: FlowPoint[], key: "income" | "expense") => {
     for (const r of rows) {
-      const idx = buckets.findIndex((b) => r.txnDate >= b.month.start && r.txnDate < b.month.end);
+      const idx = buckets.findIndex((b) => r.effectiveDate >= b.month.start && r.effectiveDate < b.month.end);
       if (idx === -1) continue;
       buckets[idx][key] += r.amount;
     }

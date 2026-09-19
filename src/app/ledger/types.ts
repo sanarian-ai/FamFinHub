@@ -7,7 +7,8 @@ export type CategoryOption = {
 
 export type LedgerRow = {
   id: string;
-  txnDate: string; // ISO string
+  txnDate: string; // ISO string — the real, immutable imported date
+  effectiveMonth: string | null; // ISO string (UTC month-start) if remapped, else null — see actions.ts
   rawDescription: string;
   amount: number; // signed, negative = outflow
   currency: string;

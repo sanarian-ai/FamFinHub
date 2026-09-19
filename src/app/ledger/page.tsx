@@ -99,6 +99,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
   const rows: LedgerRow[] = transactions.map((t) => ({
     id: t.id,
     txnDate: t.txnDate.toISOString(),
+    effectiveMonth: t.effectiveMonth ? t.effectiveMonth.toISOString() : null,
     rawDescription: t.rawDescription,
     amount: Number(t.amount),
     currency: t.currency,

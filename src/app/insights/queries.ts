@@ -59,7 +59,7 @@ export async function getMonthlyByType(): Promise<MonthlyTypeRow[]> {
   const sql = IS_POSTGRES
     ? `
     SELECT
-      TO_CHAR(t."txnDate", 'YYYY-MM') as ym,
+      TO_CHAR(COALESCE(t."effectiveMonth", t."txnDate"), 'YYYY-MM') as ym,
       n.id as "natureId", n.name as "natureName",
       et.id as "typeId", et.name as "typeName",
       CAST(SUM(t.amount) AS DOUBLE PRECISION) as total
@@ -72,7 +72,7 @@ export async function getMonthlyByType(): Promise<MonthlyTypeRow[]> {
   `
     : `
     SELECT
-      strftime('%Y-%m', t.txnDate / 1000, 'unixepoch') as ym,
+      strftime('%Y-%m', COALESCE(t.effectiveMonth, t.txnDate) / 1000, 'unixepoch') as ym,
       n.id as natureId, n.name as natureName,
       et.id as typeId, et.name as typeName,
       CAST(SUM(t.amount) AS REAL) as total
@@ -93,7 +93,7 @@ export async function getMonthlyByAccount(): Promise<MonthlyAccountRow[]> {
   const sql = IS_POSTGRES
     ? `
     SELECT
-      TO_CHAR(t."txnDate", 'YYYY-MM') as ym,
+      TO_CHAR(COALESCE(t."effectiveMonth", t."txnDate"), 'YYYY-MM') as ym,
       a.id as "accountId", a.name as "accountName", a.holder as holder,
       CAST(SUM(t.amount) AS DOUBLE PRECISION) as total
     FROM transactions t
@@ -106,7 +106,7 @@ export async function getMonthlyByAccount(): Promise<MonthlyAccountRow[]> {
   `
     : `
     SELECT
-      strftime('%Y-%m', t.txnDate / 1000, 'unixepoch') as ym,
+      strftime('%Y-%m', COALESCE(t.effectiveMonth, t.txnDate) / 1000, 'unixepoch') as ym,
       a.id as accountId, a.name as accountName, a.holder as holder,
       CAST(SUM(t.amount) AS REAL) as total
     FROM transactions t

@@ -121,6 +121,13 @@ model Transaction {
   importBatchId   String?
   importBatch     ImportBatch? @relation(fields: [importBatchId], references: [id])
   dedupeHash      String      @unique // hash(date + amount + accountId + normalized description)
+  // Optional override: which calendar month this transaction counts toward for Dashboard/
+  // Insights reporting (e.g. a credit-card charge dated the 30th that really belongs to next
+  // month's statement). Stored as a UTC month-start (first-of-month) timestamp when set. txnDate
+  // above is NEVER changed by this — it stays the real, immutable imported date for provenance;
+  // this field is purely an additive "counts toward" tag, set from the Ledger. Null = no
+  // override, use txnDate as-is (the overwhelming majority of rows).
+  effectiveMonth  DateTime?
   suggestedCategoryId String?  // set when status=needs_review and a rule/LLM has a guess
   suggestionReason    String?  // human-readable "why" shown in the Review Queue
   legacyCalYear   Int?        // carried over from sheet for cross-checking during migration

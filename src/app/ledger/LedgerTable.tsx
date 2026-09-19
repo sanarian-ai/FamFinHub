@@ -3,9 +3,9 @@
 import { useMemo, useState, useTransition } from "react";
 import clsx from "clsx";
 import { Badge } from "@/components/ui";
-import { formatDate, formatINR } from "@/lib/format";
+import { formatDate, formatMonth, formatINR } from "@/lib/format";
 import CategoryPicker from "./CategoryPicker";
-import { updateTransactionCategory, bulkUpdateCategory } from "./actions";
+import { updateTransactionCategory, bulkUpdateCategory, updateTransactionEffectiveMonth } from "./actions";
 import type { CategoryOption, LedgerRow } from "./types";
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -25,9 +25,12 @@ export default function LedgerTable({
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
+  const [editingMonthRowId, setEditingMonthRowId] = useState<string | null>(null);
   const [bulkPickerOpen, setBulkPickerOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [optimisticCategory, setOptimisticCategory] = useState<Record<string, string>>({});
+  // undefined = "no optimistic value yet, use row.effectiveMonth"; null = "cleared"; string = new override
+  const [optimisticEffectiveMonth, setOptimisticEffectiveMonth] = useState<Record<string, string | null>>({});
 
   const categoryById = useMemo(() => {
     const m = new Map<string, CategoryOption>();
@@ -60,6 +63,15 @@ export default function LedgerTable({
     setEditingRowId(null);
     startTransition(async () => {
       await updateTransactionCategory(txnId, categoryId);
+    });
+  }
+
+  function handleEffectiveMonthChange(txnId: string, month: string | null) {
+    const iso = month ? `${month}-01T00:00:00.000Z` : null;
+    setOptimisticEffectiveMonth((prev) => ({ ...prev, [txnId]: iso }));
+    setEditingMonthRowId(null);
+    startTransition(async () => {
+      await updateTransactionEffectiveMonth(txnId, month);
     });
   }
 
@@ -123,6 +135,7 @@ export default function LedgerTable({
                 />
               </th>
               <th className="whitespace-nowrap px-3 py-2.5">Date</th>
+              <th className="whitespace-nowrap px-3 py-2.5">Counts toward</th>
               <th className="px-3 py-2.5">Description</th>
               <th className="whitespace-nowrap px-3 py-2.5 text-right">Amount</th>
               <th className="whitespace-nowrap px-3 py-2.5">Account</th>
@@ -134,7 +147,7 @@ export default function LedgerTable({
           <tbody>
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-3 py-10 text-center text-sm text-slate-500">
+                <td colSpan={9} className="px-3 py-10 text-center text-sm text-slate-500">
                   No transactions match these filters.
                 </td>
               </tr>
@@ -144,6 +157,7 @@ export default function LedgerTable({
               const effectiveCategory = effectiveCategoryId ? categoryById.get(effectiveCategoryId) : undefined;
               const categoryLabel = effectiveCategory?.name ?? row.categoryName ?? null;
               const isNegative = row.amount < 0;
+              const effectiveMonthIso = row.id in optimisticEffectiveMonth ? optimisticEffectiveMonth[row.id] : row.effectiveMonth;
               return (
                 <tr key={row.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50/70">
                   <td className="px-3 py-2 align-top">
@@ -155,6 +169,49 @@ export default function LedgerTable({
                     />
                   </td>
                   <td className="whitespace-nowrap px-3 py-2 align-top text-slate-600">{formatDate(row.txnDate)}</td>
+                  <td className="relative whitespace-nowrap px-3 py-2 align-top">
+                    {editingMonthRowId === row.id ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="month"
+                          autoFocus
+                          defaultValue={effectiveMonthIso ? effectiveMonthIso.slice(0, 7) : undefined}
+                          onChange={(e) => handleEffectiveMonthChange(row.id, e.target.value || null)}
+                          onBlur={() => setEditingMonthRowId(null)}
+                          className="rounded-md border border-slate-200 px-1.5 py-1 text-xs"
+                          disabled={isPending}
+                        />
+                      </div>
+                    ) : effectiveMonthIso ? (
+                      <span className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
+                        <button
+                          type="button"
+                          onClick={() => setEditingMonthRowId(row.id)}
+                          title="Real transaction date is unchanged — click to change this override"
+                        >
+                          → {formatMonth(effectiveMonthIso)}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleEffectiveMonthChange(row.id, null)}
+                          className="text-indigo-400 hover:text-indigo-700"
+                          aria-label="Clear month override"
+                          title="Clear override — revert to the real transaction date"
+                        >
+                          ✕
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setEditingMonthRowId(row.id)}
+                        className="text-xs text-slate-300 hover:text-slate-500"
+                        title="Map this transaction to a different month for Dashboard/Insights reporting"
+                      >
+                        remap…
+                      </button>
+                    )}
+                  </td>
                   <td className="max-w-xs px-3 py-2 align-top text-slate-800">
                     <div className="truncate" title={row.rawDescription}>
                       {row.rawDescription}
