@@ -10,17 +10,22 @@ import type { AccountTotal } from "./aggregate";
  * with their own account-level drill-in (existing AccountSplit component, just pre-filtered
  * per holder). Hidden entirely once the Household/Sangeeth/Ria toggle narrows to one person —
  * a "split" of one person is redundant, so the caller only renders this in household mode.
+ *
+ * Data is owned by the caller (CashFlowSection), not fetched here — it tracks whichever
+ * month/year range is selected in Breakdown analysis, same as the three breakdown cards above it.
  */
 export function HouseholdSplit({
   holders,
   accountsByHolder,
+  periodLabel,
 }: {
   holders: HolderCashFlow[];
   accountsByHolder: Record<string, AccountTotal[]>;
+  periodLabel: string;
 }) {
   return (
     <Card>
-      <h2 className="mb-1 text-sm font-semibold text-slate-900">Household split</h2>
+      <h2 className="mb-1 text-sm font-semibold text-slate-900">Household split — {periodLabel}</h2>
       <p className="mb-4 text-xs text-slate-400">Sangeeth vs. Ria — income, spend, and their own accounts.</p>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         {holders.map((h) => (

@@ -11,7 +11,7 @@ import {
   getCashFlowRows,
   getAccountTypeRows,
   getAvailableYears,
-  getHolderSplit,
+  getUncategorizedFlowRows,
   getUnattributedTotal,
   getLastImportSync,
 } from "./dashboard-parts/queries";
@@ -34,8 +34,6 @@ import { type CashFlowDatum } from "./dashboard-parts/CashFlowTrendChart";
 import { CashFlowSection } from "./dashboard-parts/CashFlowSection";
 import { AccountSplit } from "./dashboard-parts/AccountSplit";
 import { TopMovers } from "./dashboard-parts/TopMovers";
-import { ContributionSplitBars } from "./dashboard-parts/ContributionSplitBars";
-import { HouseholdSplit } from "./dashboard-parts/HouseholdSplit";
 import { DataQualityStrip } from "./dashboard-parts/DataQualityStrip";
 
 export const dynamic = "force-dynamic"; // always reflect the live database
@@ -85,9 +83,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     availableYears,
     moverCurrentRows,
     moverPrevRows,
-    holderSplit,
-    sangeethAccountRows,
-    riaAccountRows,
+    trailingUncategorizedRows,
   ] = await Promise.all([
     getCashFlowSummary(current.start, current.end, holder),
     getCashFlowSummary(prevPeriod.start, prevPeriod.end, holder),
@@ -104,9 +100,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     getAvailableYears(),
     getExpenditureRows(currentMonth.start, currentMonth.end, holder),
     getExpenditureRows(prevMonth.start, prevMonth.end, holder),
-    person === "household" ? getHolderSplit(current.start, current.end) : Promise.resolve(null),
-    person === "household" ? getExpenditureRows(current.start, current.end, "Sangeeth") : Promise.resolve([]),
-    person === "household" ? getExpenditureRows(current.start, current.end, "Ria") : Promise.resolve([]),
+    // Household-wide (unfiltered) — CashFlowSection groups these by accountHolder itself once a
+    // month/year range is selected, to derive the Household split card's data live. See
+    // getUncategorizedFlowRows's doc comment for why this can't just reuse trailingExpenditureRows.
+    person === "household" ? getUncategorizedFlowRows(trailingStart, trailingEnd) : Promise.resolve([]),
   ]);
 
   const accountTotals = sumByAccount(currentExpenditureRows);
@@ -120,11 +117,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     expense: b.expense,
     net: b.net,
   }));
-
-  const accountsByHolder: Record<string, ReturnType<typeof sumByAccount>> =
-    person === "household"
-      ? { Sangeeth: sumByAccount(sangeethAccountRows), Ria: sumByAccount(riaAccountRows) }
-      : {};
 
   return (
     <div>
@@ -204,12 +196,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         />
       </div>
 
-      {person === "household" && holderSplit && (
-        <div className="mb-6">
-          <ContributionSplitBars holders={holderSplit} />
-        </div>
-      )}
-
       <CashFlowSection
         months={months}
         cashFlowTrendData={cashFlowTrendData}
@@ -217,17 +203,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         trailingIncomeRows={trailingIncomeRows}
         trailingAccountTypeRows={trailingAccountTypeRows}
         trailingInvestmentRows={trailingInvestmentRows}
+        trailingUncategorizedRows={trailingUncategorizedRows}
         availableYears={availableYears}
         holder={holder}
       />
 
-      {person === "household" && holderSplit && (
-        <div className="mb-6">
-          <HouseholdSplit holders={holderSplit} accountsByHolder={accountsByHolder} />
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className={person === "household" ? "lg:col-span-2" : undefined}>
           <h2 className="mb-1 text-sm font-semibold text-slate-900">Top movers</h2>
           <p className="mb-2 text-xs text-slate-400">

@@ -7,10 +7,12 @@ import { Card, StatTile } from "@/components/ui";
 import { CashFlowTrendChart, type CashFlowDatum } from "./CashFlowTrendChart";
 import { BreakdownCard } from "./BreakdownCard";
 import { FLOW_COLORS } from "./colors";
-import { sumByNature, sumByCategoryRanked, sumByAccountType, filterRowsInRange, type RankedCategoryTotals } from "./aggregate";
+import { sumByNature, sumByCategoryRanked, sumByAccountType, sumByAccount, filterRowsInRange, type RankedCategoryTotals } from "./aggregate";
 import { getYearBreakdownAction, type YearBreakdown } from "./actions";
-import type { ExpenditureRow, IncomeRow, InvestmentRow, AccountTypeRow } from "./queries";
+import { HouseholdSplit } from "./HouseholdSplit";
+import type { ExpenditureRow, IncomeRow, InvestmentRow, AccountTypeRow, UncategorizedFlowRow, HolderCashFlow } from "./queries";
 import type { PeriodRange, Holder } from "./period";
+import { HOLDERS } from "./period";
 
 type Granularity = "month" | "year";
 type IndexRange = { start: number; end: number }; // inclusive both ends
@@ -48,6 +50,7 @@ export function CashFlowSection({
   trailingIncomeRows,
   trailingAccountTypeRows,
   trailingInvestmentRows,
+  trailingUncategorizedRows,
   holder,
 }: {
   months: PeriodRange[];
@@ -58,6 +61,9 @@ export function CashFlowSection({
   trailingIncomeRows: IncomeRow[];
   trailingAccountTypeRows: AccountTypeRow[];
   trailingInvestmentRows: InvestmentRow[];
+  /** Household-wide, unfiltered by holder — only populated (by page.tsx) in household view;
+   *  empty array in solo view, where the Household split card never renders. */
+  trailingUncategorizedRows: UncategorizedFlowRow[];
   holder?: Holder;
 }) {
   const [granularity, setGranularity] = useState<Granularity>("month");
@@ -103,6 +109,38 @@ export function CashFlowSection({
   const monthAccountTypeData = useMemo(() => sumByAccountType(monthAccountTypeRows), [monthAccountTypeRows]);
   const monthAccountTypeTotal = useMemo(() => monthAccountTypeData.reduce((s, d) => s + d.total, 0), [monthAccountTypeData]);
 
+  // --- Household split (Month mode): derived from the same trailing rows already in memory,
+  // sliced to the selected range, grouped by accountHolder — no round trip. Uncategorized rows
+  // are folded in by sign, replicating getCashFlowSummary's rule ("headline totals must be
+  // correct irrespective of the bucket"), which is why trailingUncategorizedRows exists as its
+  // own household-wide fetch (see page.tsx / queries.ts) rather than being derivable from the
+  // Expenditure/Income rows alone. Meaningless (and unused) in solo view, where holder is set.
+  const MIN_INCOME_FOR_SAVINGS_RATE = 5000;
+  const monthUncategorizedRows = useMemo(
+    () => filterRowsInRange(trailingUncategorizedRows, selectedMonthRange),
+    [trailingUncategorizedRows, selectedMonthRange]
+  );
+  const monthHolderSplit: HolderCashFlow[] = useMemo(() => {
+    return HOLDERS.map((h) => {
+      let income = monthIncomeRows.filter((r) => r.accountHolder === h).reduce((s, r) => s + r.amount, 0);
+      let expense = monthExpenditureRows.filter((r) => r.accountHolder === h).reduce((s, r) => s + r.amount, 0);
+      for (const r of monthUncategorizedRows) {
+        if (r.accountHolder !== h) continue;
+        if (r.amount > 0) income += r.amount;
+        else expense += -r.amount;
+      }
+      const net = income - expense;
+      const savingsRate = income > MIN_INCOME_FOR_SAVINGS_RATE ? (net / income) * 100 : null;
+      return { holder: h, income, expense, net, savingsRate };
+    });
+  }, [monthIncomeRows, monthExpenditureRows, monthUncategorizedRows]);
+  const monthAccountsByHolder = useMemo(() => {
+    return Object.fromEntries(HOLDERS.map((h) => [h, sumByAccount(monthExpenditureRows.filter((r) => r.accountHolder === h))])) as Record<
+      Holder,
+      ReturnType<typeof sumByAccount>
+    >;
+  }, [monthExpenditureRows]);
+
   // --- Year mode: fetch on demand (once per exact year span, then cached) via the Server Action.
   useEffect(() => {
     if (granularity !== "year") return;
@@ -138,6 +176,8 @@ export function CashFlowSection({
   const rangeEnd = granularity === "year" ? yearData?.rangeEnd ?? selectedMonthRange.end : selectedMonthRange.end;
   const periodLabel =
     granularity === "year" ? yearData?.label ?? (yearRange.start === yearRange.end ? String(yearRange.start) : `${yearRange.start}–${yearRange.end}`) : selectedMonthRange.label;
+  const holderSplit = granularity === "year" ? yearData?.holderSplit ?? [] : monthHolderSplit;
+  const accountsByHolder = granularity === "year" ? yearData?.accountsByHolder ?? {} : monthAccountsByHolder;
 
   function selectSingleMonth(index: number) {
     setGranularity("month");
@@ -314,6 +354,12 @@ export function CashFlowSection({
             />
           </Card>
         </div>
+
+        {holder === undefined && holderSplit.length > 0 && (
+          <div className={clsx("mt-6 transition-opacity", yearLoading && "opacity-50")}>
+            <HouseholdSplit holders={holderSplit} accountsByHolder={accountsByHolder} periodLabel={periodLabel} />
+          </div>
+        )}
       </div>
     </>
   );

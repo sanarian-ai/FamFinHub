@@ -1,8 +1,8 @@
 "use server";
 
-import { getExpenditureRows, getIncomeRows, getInvestmentRows, getAccountTypeRows } from "./queries";
-import { sumByNature, sumByCategoryRanked, sumByAccountType, type NatureTotal, type AccountTypeTotal, type RankedCategoryTotals } from "./aggregate";
-import { calYearRange, type Holder } from "./period";
+import { getExpenditureRows, getIncomeRows, getInvestmentRows, getAccountTypeRows, getCashFlowSummary, type HolderCashFlow } from "./queries";
+import { sumByNature, sumByCategoryRanked, sumByAccountType, sumByAccount, type NatureTotal, type AccountTypeTotal, type RankedCategoryTotals, type AccountTotal } from "./aggregate";
+import { calYearRange, HOLDERS, type Holder } from "./period";
 
 export interface YearBreakdown {
   startYear: number;
@@ -21,6 +21,10 @@ export interface YearBreakdown {
   investmentCategoryData: RankedCategoryTotals;
   accountTypeData: AccountTypeTotal[];
   accountTypeTotal: number;
+  /** Sangeeth vs. Ria for this range — empty when `holder` narrows the call to one person already
+   *  (a split of one person is meaningless; see CashFlowSection/HouseholdSplit). */
+  holderSplit: HolderCashFlow[];
+  accountsByHolder: Record<Holder, AccountTotal[]>;
 }
 
 /**
@@ -45,13 +49,25 @@ export async function getYearBreakdownAction(startYear: number, endYear: number,
   const rangeEnd = calYearRange(new Date(Date.UTC(endYear, 0, 1))).end;
   const label = startYear === endYear ? `Jan–Dec ${startYear}` : `${startYear}–${endYear}`;
 
-  const [expenditureRows, incomeRows, investmentRows, accountTypeRows] = await Promise.all([
+  // Household view (holder undefined) additionally needs the Sangeeth/Ria split for the
+  // Household split card below the breakdown cards — see HouseholdSplit / CashFlowSection.
+  // Solo view (holder already set) skips this: splitting one person further is meaningless.
+  const isHousehold = holder === undefined;
+
+  const [expenditureRows, incomeRows, investmentRows, accountTypeRows, holderSummaries, holderExpenditureRows] = await Promise.all([
     getExpenditureRows(rangeStart, rangeEnd, holder),
     getIncomeRows(rangeStart, rangeEnd, holder),
     getInvestmentRows(rangeStart, rangeEnd, holder),
     getAccountTypeRows(rangeStart, rangeEnd, holder),
+    isHousehold
+      ? Promise.all(HOLDERS.map(async (h) => ({ holder: h, ...(await getCashFlowSummary(rangeStart, rangeEnd, h)) })))
+      : Promise.resolve([] as HolderCashFlow[]),
+    isHousehold ? Promise.all(HOLDERS.map((h) => getExpenditureRows(rangeStart, rangeEnd, h))) : Promise.resolve([]),
   ]);
   const accountTypeData = sumByAccountType(accountTypeRows);
+  const accountsByHolder = isHousehold
+    ? (Object.fromEntries(HOLDERS.map((h, i) => [h, sumByAccount(holderExpenditureRows[i])])) as Record<Holder, AccountTotal[]>)
+    : ({} as Record<Holder, AccountTotal[]>);
   return {
     startYear,
     endYear,
@@ -69,5 +85,7 @@ export async function getYearBreakdownAction(startYear: number, endYear: number,
     investmentCategoryData: sumByCategoryRanked(investmentRows),
     accountTypeData,
     accountTypeTotal: accountTypeData.reduce((s, d) => s + d.total, 0),
+    holderSplit: holderSummaries,
+    accountsByHolder,
   };
 }

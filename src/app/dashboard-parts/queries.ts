@@ -316,6 +316,31 @@ export async function getCashFlowRows(
   return { income, expense };
 }
 
+export interface UncategorizedFlowRow {
+  amount: number; // signed — caller folds by sign (positive = income-like, negative = expense-like), same rule as getCashFlowSummary
+  effectiveDate: Date;
+  accountHolder: string | null;
+}
+
+/**
+ * Not-yet-categorized rows for a range, tagged by account holder but NOT filtered to one —
+ * used by CashFlowSection's Month mode to derive the household split's uncategorized fold-in
+ * (see getCashFlowSummary) client-side from data already in the browser, the same way
+ * trailingExpenditureRows/trailingIncomeRows already are. Household-wide only (no holder param):
+ * the caller filters by accountHolder itself once the selected range narrows.
+ */
+export async function getUncategorizedFlowRows(start: Date, end: Date): Promise<UncategorizedFlowRow[]> {
+  const rows = await prisma.transaction.findMany({
+    where: uncategorizedWhere(start, end),
+    select: { amount: true, txnDate: true, effectiveMonth: true, account: { select: { holder: true } } },
+  });
+  return rows.map((r) => ({
+    amount: Number(r.amount),
+    effectiveDate: r.effectiveMonth ?? r.txnDate,
+    accountHolder: r.account?.holder ?? null,
+  }));
+}
+
 export interface AccountTypeRow {
   amount: number; // positive magnitude
   accountType: "Expenditure" | "Investment" | "Income";
