@@ -6,7 +6,7 @@ import clsx from "clsx";
 import { Badge, Card } from "@/components/ui";
 import { formatINR, formatDate } from "@/lib/format";
 import { ReviewGroupActions, type CategoryOption, type LiveSuggestion } from "./ReviewGroupActions";
-import { bulkCategorizeGroupsAction } from "./actions";
+import { bulkCategorizeWithOptionalRuleAction } from "./actions";
 
 export type Group = {
   key: string;
@@ -20,7 +20,10 @@ export type Group = {
   currencies: string[];
 };
 
+export type KeywordChip = { token: string; count: number };
+
 const CONTEXT_WINDOW_DAYS = 5;
+const MIN_RULE_PATTERN_LENGTH = 3;
 
 function isoDateUTC(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -42,17 +45,39 @@ function ledgerContextLink(earliest: Date, latest: Date): string {
 }
 
 /**
- * Wraps the Review Queue's group cards in a multi-select bulk bar — select several
- * description-groups (checkbox per card) and categorize them all in one action, instead of
- * one group at a time. Per-group actions (accept suggestion, pick a category, discard
- * forever) are unchanged and still live in ReviewGroupActions below each card.
+ * Wraps the Review Queue's group cards in a keyword search + multi-select bulk bar.
+ *
+ * Search is a plain "contains" filter over each group's representative description,
+ * client-side (the queue is a few hundred rows at most — no need for a server round trip
+ * per keystroke). Filtering narrows which groups are selectable; "Select all N filtered"
+ * plus the existing per-group checkboxes both feed the same bulk-categorize action. When a
+ * search term is active, the bulk bar also offers creating a standing `contains` CategoryRule
+ * from that term, so future imports with the same keyword (e.g. every "RAZ*Swiggy" /
+ * "SWIGGY INSTAMART" processor-prefix variant) skip the queue entirely going forward.
  */
-export function ReviewQueueList({ groups, categories }: { groups: Group[]; categories: CategoryOption[] }) {
+export function ReviewQueueList({
+  groups,
+  categories,
+  keywordChips,
+}: {
+  groups: Group[];
+  categories: CategoryOption[];
+  keywordChips: KeywordChip[];
+}) {
+  const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pickerOpen, setPickerOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [createRule, setCreateRule] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  const searchTerm = search.trim().toLowerCase();
+  const filteredGroups = useMemo(() => {
+    if (!searchTerm) return groups;
+    return groups.filter((g) => g.representativeDescription.toLowerCase().includes(searchTerm));
+  }, [groups, searchTerm]);
+  const filteredTxnCount = filteredGroups.reduce((s, g) => s + g.count, 0);
 
   function toggle(key: string) {
     setSelected((prev) => {
@@ -63,7 +88,11 @@ export function ReviewQueueList({ groups, categories }: { groups: Group[]; categ
     });
   }
 
-  const filtered = useMemo(() => {
+  function selectAllFiltered() {
+    setSelected(new Set(filteredGroups.map((g) => g.key)));
+  }
+
+  const categoryFiltered = useMemo(() => {
     const q = query.trim().toLowerCase();
     const pool = q ? categories.filter((c) => c.name.toLowerCase().includes(q) || c.expenseType.toLowerCase().includes(q)) : categories;
     return pool.slice(0, 40);
@@ -71,15 +100,21 @@ export function ReviewQueueList({ groups, categories }: { groups: Group[]; categ
 
   const selectedCount = selected.size;
   const selectedTxnCount = groups.filter((g) => selected.has(g.key)).reduce((s, g) => s + g.count, 0);
+  const canCreateRule = searchTerm.length >= MIN_RULE_PATTERN_LENGTH;
 
   function applyCategory(categoryId: string) {
     setError(null);
     startTransition(async () => {
       try {
-        await bulkCategorizeGroupsAction(Array.from(selected), categoryId);
+        await bulkCategorizeWithOptionalRuleAction(
+          Array.from(selected),
+          categoryId,
+          createRule && canCreateRule ? searchTerm : undefined
+        );
         setSelected(new Set());
         setPickerOpen(false);
         setQuery("");
+        setCreateRule(false);
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong — please try again.");
       }
@@ -88,6 +123,48 @@ export function ReviewQueueList({ groups, categories }: { groups: Group[]; categ
 
   return (
     <div className="space-y-4">
+      <Card>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search descriptions (contains)… e.g. swiggy"
+          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
+        />
+        {keywordChips.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {keywordChips.map((c) => (
+              <button
+                key={c.token}
+                type="button"
+                onClick={() => setSearch((prev) => (prev.trim().toLowerCase() === c.token ? "" : c.token))}
+                className={clsx(
+                  "rounded-full border px-2.5 py-1 text-xs font-medium transition",
+                  searchTerm === c.token
+                    ? "border-indigo-300 bg-indigo-100 text-indigo-800"
+                    : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                )}
+              >
+                {c.token} ({c.count})
+              </button>
+            ))}
+          </div>
+        )}
+        {searchTerm && (
+          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-slate-100 pt-3 text-sm">
+            <span className="text-slate-600">
+              {filteredGroups.length} group{filteredGroups.length === 1 ? "" : "s"} · {filteredTxnCount} transaction
+              {filteredTxnCount === 1 ? "" : "s"} match &ldquo;{searchTerm}&rdquo;
+            </span>
+            {filteredGroups.length > 0 && (
+              <button type="button" onClick={selectAllFiltered} className="font-medium text-indigo-600 hover:underline">
+                Select all {filteredGroups.length}
+              </button>
+            )}
+          </div>
+        )}
+      </Card>
+
       {selectedCount > 0 && (
         <Card className="sticky top-2 z-10 border-indigo-200 bg-indigo-50">
           <div className="flex flex-wrap items-center gap-3">
@@ -104,6 +181,20 @@ export function ReviewQueueList({ groups, categories }: { groups: Group[]; categ
               </button>
             ) : (
               <div className="w-full rounded-lg border border-indigo-200 bg-white p-3">
+                {canCreateRule && (
+                  <label className="mb-2 flex items-start gap-2 rounded-md bg-indigo-50 px-2.5 py-2 text-xs text-indigo-900">
+                    <input
+                      type="checkbox"
+                      checked={createRule}
+                      onChange={(e) => setCreateRule(e.target.checked)}
+                      className="mt-0.5 h-3.5 w-3.5 rounded border-indigo-300"
+                    />
+                    <span>
+                      Also always map descriptions containing <span className="font-semibold">&ldquo;{searchTerm}&rdquo;</span> to
+                      this category — future imports with this keyword will skip the Review Queue.
+                    </span>
+                  </label>
+                )}
                 <input
                   autoFocus
                   type="text"
@@ -113,7 +204,7 @@ export function ReviewQueueList({ groups, categories }: { groups: Group[]; categ
                   className="w-full rounded-md border border-slate-300 px-2.5 py-1.5 text-sm focus:border-indigo-400 focus:outline-none focus:ring-1 focus:ring-indigo-400"
                 />
                 <div className="mt-2 max-h-48 overflow-y-auto rounded-md border border-slate-200">
-                  {filtered.map((c) => (
+                  {categoryFiltered.map((c) => (
                     <button
                       key={c.id}
                       type="button"
@@ -128,7 +219,14 @@ export function ReviewQueueList({ groups, categories }: { groups: Group[]; categ
                 </div>
               </div>
             )}
-            <button type="button" onClick={() => setSelected(new Set())} className="text-xs text-indigo-700 hover:underline">
+            <button
+              type="button"
+              onClick={() => {
+                setSelected(new Set());
+                setCreateRule(false);
+              }}
+              className="text-xs text-indigo-700 hover:underline"
+            >
               Clear selection
             </button>
           </div>
@@ -136,61 +234,67 @@ export function ReviewQueueList({ groups, categories }: { groups: Group[]; categ
         </Card>
       )}
 
-      {groups.map((g) => (
-        <Card key={g.key}>
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 items-start gap-3">
-              <input
-                type="checkbox"
-                checked={selected.has(g.key)}
-                onChange={() => toggle(g.key)}
-                className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300"
-                aria-label={`Select ${g.representativeDescription}`}
-              />
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="break-words font-medium text-slate-900">{g.representativeDescription}</h3>
-                  <Badge tone="amber">
-                    {g.count} transaction{g.count === 1 ? "" : "s"}
-                  </Badge>
-                </div>
-                <div className="mt-1 text-sm text-slate-500">
-                  {formatDate(g.earliest)} – {formatDate(g.latest)} · Total{" "}
-                  {g.currencies.length === 1 && g.currencies[0] !== "INR" ? (
-                    <>
-                      {g.currencies[0]} {Math.abs(g.totalAmount).toFixed(2)}{" "}
-                      <span className="align-middle">
-                        <Badge tone="amber">FX — not yet in INR</Badge>
-                      </span>
-                    </>
-                  ) : (
-                    formatINR(g.totalAmount)
-                  )}
-                </div>
-                {g.suggestionReason && <p className="mt-2 text-xs italic text-slate-500">Why flagged: {g.suggestionReason}</p>}
-                <div className="mt-2 flex flex-wrap gap-3 text-xs">
-                  <Link href={ledgerLinkForGroup(g.representativeDescription)} target="_blank" className="font-medium text-sky-600 hover:text-sky-800 hover:underline">
-                    View transaction{g.count === 1 ? "" : "s"} in Ledger &rarr;
-                  </Link>
-                  <Link href={ledgerContextLink(g.earliest, g.latest)} target="_blank" className="font-medium text-slate-500 hover:text-slate-700 hover:underline">
-                    View nearby dates (&plusmn;{CONTEXT_WINDOW_DAYS}d) &rarr;
-                  </Link>
+      {filteredGroups.length === 0 && searchTerm ? (
+        <Card>
+          <p className="text-sm text-slate-500">No pending groups match &ldquo;{searchTerm}&rdquo;.</p>
+        </Card>
+      ) : (
+        filteredGroups.map((g) => (
+          <Card key={g.key}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="flex min-w-0 items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={selected.has(g.key)}
+                  onChange={() => toggle(g.key)}
+                  className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300"
+                  aria-label={`Select ${g.representativeDescription}`}
+                />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="break-words font-medium text-slate-900">{g.representativeDescription}</h3>
+                    <Badge tone="amber">
+                      {g.count} transaction{g.count === 1 ? "" : "s"}
+                    </Badge>
+                  </div>
+                  <div className="mt-1 text-sm text-slate-500">
+                    {formatDate(g.earliest)} – {formatDate(g.latest)} · Total{" "}
+                    {g.currencies.length === 1 && g.currencies[0] !== "INR" ? (
+                      <>
+                        {g.currencies[0]} {Math.abs(g.totalAmount).toFixed(2)}{" "}
+                        <span className="align-middle">
+                          <Badge tone="amber">FX — not yet in INR</Badge>
+                        </span>
+                      </>
+                    ) : (
+                      formatINR(g.totalAmount)
+                    )}
+                  </div>
+                  {g.suggestionReason && <p className="mt-2 text-xs italic text-slate-500">Why flagged: {g.suggestionReason}</p>}
+                  <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                    <Link href={ledgerLinkForGroup(g.representativeDescription)} target="_blank" className="font-medium text-sky-600 hover:text-sky-800 hover:underline">
+                      View transaction{g.count === 1 ? "" : "s"} in Ledger &rarr;
+                    </Link>
+                    <Link href={ledgerContextLink(g.earliest, g.latest)} target="_blank" className="font-medium text-slate-500 hover:text-slate-700 hover:underline">
+                      View nearby dates (&plusmn;{CONTEXT_WINDOW_DAYS}d) &rarr;
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
 
-          <div className="mt-4 border-t border-slate-100 pt-4">
-            <ReviewGroupActions
-              groupKey={g.key}
-              representativeDescription={g.representativeDescription}
-              count={g.count}
-              suggestion={g.suggestion}
-              categories={categories}
-            />
-          </div>
-        </Card>
-      ))}
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <ReviewGroupActions
+                groupKey={g.key}
+                representativeDescription={g.representativeDescription}
+                count={g.count}
+                suggestion={g.suggestion}
+                categories={categories}
+              />
+            </div>
+          </Card>
+        ))
+      )}
     </div>
   );
 }

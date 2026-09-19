@@ -108,12 +108,18 @@ export async function restoreDismissalAction(id: string) {
 }
 
 /**
- * Bulk version of categorizeGroupAction — categorizes every transaction across several
- * selected description-groups at once, in one query round trip. Added per the confirmed
- * decision to let the Review Queue select multiple rows/groups and clear them together,
- * rather than one description-group per action.
+ * Bulk-categorizes every transaction across several selected description-groups at once,
+ * with an optional standing "contains" rule creation —
+ * used by the Review Queue's keyword search: filter to everything containing e.g. "swiggy",
+ * select all matching groups, categorize them, and optionally create one CategoryRule so
+ * future imports with that keyword never reach the queue at all. Runs both writes in a
+ * single transaction so a bulk categorize never partially applies without its rule.
  */
-export async function bulkCategorizeGroupsAction(groupKeys: string[], categoryId: string) {
+export async function bulkCategorizeWithOptionalRuleAction(
+  groupKeys: string[],
+  categoryId: string,
+  containsRulePattern?: string
+) {
   if (!categoryId || !groupKeys || groupKeys.length === 0) return;
 
   const rows = await prisma.transaction.findMany({
@@ -122,12 +128,36 @@ export async function bulkCategorizeGroupsAction(groupKeys: string[], categoryId
   });
   const keySet = new Set(groupKeys);
   const ids = rows.filter((r) => keySet.has(normalizeDescriptionKey(r.rawDescription))).map((r) => r.id);
-  if (ids.length === 0) return;
 
-  await prisma.transaction.updateMany({
-    where: { id: { in: ids } },
-    data: { categoryId, status: "categorized", suggestedCategoryId: null, suggestionReason: null },
-  });
+  const trimmedPattern = containsRulePattern?.trim().toLowerCase();
+  // Guard against an accidental 1-2 character rule that would silently over-match unrelated
+  // future transactions — same "never fail silently, never over-broadly" bar as the rest of
+  // this app's rule mining.
+  const shouldCreateRule = !!trimmedPattern && trimmedPattern.length >= 3;
+
+  const ops = [];
+  if (ids.length > 0) {
+    ops.push(
+      prisma.transaction.updateMany({
+        where: { id: { in: ids } },
+        data: { categoryId, status: "categorized", suggestedCategoryId: null, suggestionReason: null },
+      })
+    );
+  }
+  if (shouldCreateRule) {
+    ops.push(
+      prisma.categoryRule.create({
+        data: {
+          matchType: "contains",
+          pattern: trimmedPattern!,
+          categoryId,
+          priority: 150, // after all exact rules (100) — an exact historical match always wins first
+          source: "user_defined",
+        },
+      })
+    );
+  }
+  if (ops.length > 0) await prisma.$transaction(ops);
 
   revalidatePath("/review");
   revalidatePath("/");

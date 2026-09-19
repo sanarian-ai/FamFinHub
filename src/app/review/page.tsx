@@ -7,7 +7,7 @@ import {
 import { PageHeader, EmptyState } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import type { CategoryOption, LiveSuggestion } from "./ReviewGroupActions";
-import { ReviewQueueList } from "./ReviewQueueList";
+import { ReviewQueueList, type KeywordChip } from "./ReviewQueueList";
 import { ReviewFilters } from "./ReviewFilters";
 import { RestoreDismissalButton } from "./RestoreDismissalButton";
 
@@ -28,6 +28,59 @@ type Group = {
   suggestion: LiveSuggestion;
   currencies: string[];
 };
+
+// Stopwords + noise tokens that would otherwise dominate the chip list without helping anyone
+// narrow down a group (bank boilerplate, generic transaction-type words, pure numbers/dates).
+const KEYWORD_STOPWORDS = new Set([
+  "the", "and", "for", "from", "with", "this", "that", "your", "you", "are", "was", "were",
+  "txn", "trans", "transaction", "payment", "paid", "pay", "upi", "neft", "imps", "rtgs",
+  "ref", "no", "id", "pvt", "ltd", "limited", "india", "inr", "rs", "to", "on", "at", "of",
+  "in", "via", "dr", "cr", "debit", "credit", "card", "account", "acct", "bank", "date",
+  "value", "avl", "bal", "balance", "info", "not", "available", "pos", "atm", "ecom",
+  // Every UPI description embeds the REMITTER's bank name ("HDFC BANK", "AXIS BANK",
+  // "State Bank", "INDUSIND B", "YES BANKL") — that's structural boilerplate about which
+  // bank routed the money, not a signal about the merchant, so it would otherwise dominate
+  // the chip list without helping anyone group transactions. Verified against production
+  // data 2026-09-19: hdfc/axis/indusind/state/bankl/icici were 6 of the top 10 chips before
+  // this filter, crowding out merchant tokens like "manipal"/"paytm".
+  "hdfc", "icici", "axis", "indusind", "kotak", "idfc", "rbl", "hsbc", "citi", "canara",
+  "federal", "karur", "karnataka", "punjab", "baroda", "boi", "pnb", "deutsche", "standard",
+  "chartered", "dbs", "yes", "bandhan", "uco", "iob", "maharashtra", "vijaya", "dena",
+  "corporation", "andhra", "allahabad", "syndicate", "oriental", "bob", "sbi", "bankl",
+  "state", "national", "bankn",
+]);
+
+const MIN_KEYWORD_TOKEN_LENGTH = 4;
+const MIN_KEYWORD_GROUP_COUNT = 2;
+const MAX_KEYWORD_CHIPS = 10;
+
+/**
+ * Surfaces the most common meaningful words across the review queue's group descriptions as
+ * clickable filter chips, so a user can jump straight to "swiggy" or "amazon" without typing.
+ * Counts distinct GROUPS a token appears in (not raw transactions), so one huge recurring
+ * group can't crowd out a token that's genuinely common across many different merchants.
+ */
+function extractKeywordChips(groups: Group[]): KeywordChip[] {
+  const tokenGroupCounts = new Map<string, number>();
+  for (const g of groups) {
+    const tokens = new Set(
+      g.representativeDescription
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((t) => t.length >= MIN_KEYWORD_TOKEN_LENGTH)
+        .filter((t) => !/^\d+$/.test(t))
+        .filter((t) => !KEYWORD_STOPWORDS.has(t)),
+    );
+    for (const t of tokens) {
+      tokenGroupCounts.set(t, (tokenGroupCounts.get(t) ?? 0) + 1);
+    }
+  }
+  return Array.from(tokenGroupCounts.entries())
+    .filter(([, count]) => count >= MIN_KEYWORD_GROUP_COUNT)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, MAX_KEYWORD_CHIPS)
+    .map(([token, count]) => ({ token, count }));
+}
 
 export default async function ReviewPage({
   searchParams,
@@ -178,6 +231,10 @@ export default async function ReviewPage({
       b.count - a.count || Math.abs(b.totalAmount) - Math.abs(a.totalAmount),
   );
 
+  // Computed from the full (unfiltered-by-search) group list so the chip set stays stable as
+  // the user types into the search box — chips are a starting point, not a moving target.
+  const keywordChips = extractKeywordChips(groups);
+
   const filterActive = selectedYear != null || selectedMonth != null;
 
   return (
@@ -209,7 +266,7 @@ export default async function ReviewPage({
       ) : groups.length === 0 ? (
         <EmptyState>No transactions need review for this filter.</EmptyState>
       ) : (
-        <ReviewQueueList groups={groups} categories={categoryOptions} />
+        <ReviewQueueList groups={groups} categories={categoryOptions} keywordChips={keywordChips} />
       )}
 
       {dismissals.length > 0 && (
