@@ -17,6 +17,13 @@ enum AccountTypeEnum {
   Expenditure
   Investment
   Income
+  // Money moving between the household's own accounts — e.g. paying off a credit card from
+  // savings. Not real spend (the spend already happened when the card was used) and not real
+  // income/investment growth, so it must stay fully outside every Expenditure/Investment/Income
+  // total. Deliberately its own AccountType, not a boolean flag on Transaction, so every existing
+  // query that already filters positively by accountType (never by "everything else") excludes
+  // these rows automatically, with no per-query exclusion logic to remember or forget.
+  Transfer
 }
 
 enum TxnStatus {

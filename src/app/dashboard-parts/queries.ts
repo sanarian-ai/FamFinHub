@@ -217,10 +217,20 @@ export interface AccountTypeRow {
   accountType: "Expenditure" | "Investment" | "Income";
 }
 
-/** Every categorized row in a period, tagged by its nature's accountType — powers the "by Account Type" breakdown toggle. */
+/**
+ * Every categorized row in a period, tagged by its nature's accountType — powers the "by
+ * Account Type" breakdown toggle. Transfer-type rows (money moved between the household's own
+ * accounts, e.g. a credit-card bill payment from savings) are excluded here explicitly — they
+ * aren't spend, investment, or income, and this breakdown is specifically framed as those three.
+ */
 export async function getAccountTypeRows(start: Date, end: Date, holder?: Holder): Promise<AccountTypeRow[]> {
   const rows = await prisma.transaction.findMany({
-    where: { txnDate: { gte: start, lt: end }, categoryId: { not: null }, ...holderWhere(holder) },
+    where: {
+      txnDate: { gte: start, lt: end },
+      categoryId: { not: null },
+      category: { expenseType: { expenseNature: { is: { accountType: { not: "Transfer" } } } } },
+      ...holderWhere(holder),
+    },
     select: {
       amount: true,
       category: { select: { expenseType: { select: { expenseNature: { select: { accountType: true } } } } } },

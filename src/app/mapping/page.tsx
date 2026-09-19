@@ -13,7 +13,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const ACCOUNT_TYPES = ["Expenditure", "Investment", "Income"] as const;
+const ACCOUNT_TYPES = ["Expenditure", "Investment", "Income", "Transfer"] as const;
 
 export default async function MappingTreePage() {
   const [natures, categoryAgg] = await Promise.all([
