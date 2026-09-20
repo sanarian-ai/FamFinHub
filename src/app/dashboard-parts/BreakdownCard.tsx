@@ -28,6 +28,7 @@ export function BreakdownCard({
   categoryRangeEnd,
   periodLabel,
   title,
+  divisor = 1,
 }: {
   natureData: NatureTotal[];
   natureTotal: number;
@@ -41,6 +42,10 @@ export function BreakdownCard({
   /** Overrides the tab-driven heading — used when the card's own title (e.g. "This month's
    * expense") should stay fixed regardless of which tab is active. */
   title?: string;
+  /** Passed straight through to whichever sub-component is active (NatureDonut/CategoryBars/
+   * AccountTypeBars) — see their own docs for what it does. Lets the page show either the
+   * period's total or its per-month average across all three tabs from one shared toggle. */
+  divisor?: number;
 }) {
   const tabs: Tab[] = ["nature", ...(categoryData ? (["category"] as const) : []), ...(accountTypeData ? (["accountType"] as const) : [])];
   const [tab, setTab] = useState<Tab>("nature");
@@ -76,7 +81,7 @@ export function BreakdownCard({
         )}
       </div>
       <p className="mb-4 text-xs text-slate-400">{caption[activeTab]}</p>
-      {activeTab === "nature" && <NatureDonut data={natureData} total={natureTotal} />}
+      {activeTab === "nature" && <NatureDonut data={natureData} total={natureTotal} divisor={divisor} />}
       {activeTab === "category" && categoryData && categoryRangeStart && categoryRangeEnd && (
         <CategoryBars
           data={categoryData}
@@ -84,10 +89,11 @@ export function BreakdownCard({
           accent={categoryAccent ?? "#6b6a66"}
           rangeStart={categoryRangeStart}
           rangeEnd={categoryRangeEnd}
+          divisor={divisor}
         />
       )}
       {activeTab === "accountType" && accountTypeData && (
-        <AccountTypeBars data={accountTypeData} total={accountTypeTotal ?? 0} />
+        <AccountTypeBars data={accountTypeData} total={accountTypeTotal ?? 0} divisor={divisor} />
       )}
     </div>
   );

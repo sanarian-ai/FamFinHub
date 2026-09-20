@@ -21,12 +21,16 @@ export function CategoryBars({
   accent,
   rangeStart,
   rangeEnd,
+  divisor = 1,
 }: {
   data: RankedCategoryTotals;
   total: number;
   accent: string;
   rangeStart: Date;
   rangeEnd: Date;
+  /** When > 1, displayed amounts show total/divisor (labeled "/mo") instead of the raw total.
+   * `pct` and bar width stay derived from the true (undivided) totals — identical either way. */
+  divisor?: number;
 }) {
   if (data.items.length === 0 || total === 0) {
     return <div className="flex h-56 items-center justify-center text-sm text-slate-400">Nothing categorized in this period yet.</div>;
@@ -50,7 +54,8 @@ export function CategoryBars({
               <div className="mb-1 flex items-center justify-between gap-2">
                 <span className="min-w-0 truncate text-slate-700">{c.name}</span>
                 <span className="shrink-0 whitespace-nowrap font-medium text-slate-900">
-                  {formatINR(c.total)}
+                  {formatINR(c.total / divisor)}
+                  {divisor > 1 && <span className="text-slate-400">/mo</span>}
                   <span className="ml-1.5 text-xs font-normal text-slate-400">{pct.toFixed(0)}%</span>
                 </span>
               </div>
@@ -66,7 +71,10 @@ export function CategoryBars({
           <span>
             +{data.otherCount} more categor{data.otherCount === 1 ? "y" : "ies"}
           </span>
-          <span>{formatINR(data.otherTotal)}</span>
+          <span>
+            {formatINR(data.otherTotal / divisor)}
+            {divisor > 1 && <span className="text-slate-400">/mo</span>}
+          </span>
         </li>
       )}
     </ul>

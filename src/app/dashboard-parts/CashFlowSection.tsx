@@ -189,6 +189,13 @@ export function CashFlowSection({
   const avgExpense = monthCount > 0 ? expenseTotal / monthCount : 0;
   const avgInvestment = monthCount > 0 ? investmentTotal / monthCount : 0;
 
+  // Total/Avg toggle for the three Expense/Income/Investment breakdown cards below (Nature,
+  // Category, and Account Type tabs alike) — shares one switch rather than three, since a
+  // mixed state (e.g. Expense showing totals while Income shows averages) would just be
+  // confusing. Only offered once there's more than one month selected (showAverage).
+  const [numberMode, setNumberMode] = useState<"total" | "avg">("total");
+  const displayDivisor = numberMode === "avg" && showAverage ? monthCount : 1;
+
   function selectSingleMonth(index: number) {
     setGranularity("month");
     setMonthRange({ start: index, end: index });
@@ -223,6 +230,26 @@ export function CashFlowSection({
               </button>
             ))}
           </div>
+
+          {showAverage && (
+            <div className="inline-flex rounded-md border border-slate-200 bg-slate-50 p-0.5 text-xs">
+              {(
+                [
+                  { key: "total", label: "Total" },
+                  { key: "avg", label: "Avg/mo" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setNumberMode(opt.key)}
+                  className={clsx("rounded px-2 py-1 font-medium transition-colors", numberMode === opt.key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500")}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {granularity === "month" ? (
             <div className="flex items-center gap-1 text-xs text-slate-500">
@@ -352,6 +379,7 @@ export function CashFlowSection({
               categoryRangeStart={rangeStart}
               categoryRangeEnd={rangeEnd}
               periodLabel={periodLabel}
+              divisor={displayDivisor}
             />
           </Card>
           <Card>
@@ -364,6 +392,7 @@ export function CashFlowSection({
               categoryRangeStart={rangeStart}
               categoryRangeEnd={rangeEnd}
               periodLabel={periodLabel}
+              divisor={displayDivisor}
             />
           </Card>
           <Card>
@@ -376,6 +405,7 @@ export function CashFlowSection({
               categoryRangeStart={rangeStart}
               categoryRangeEnd={rangeEnd}
               periodLabel={periodLabel}
+              divisor={displayDivisor}
             />
           </Card>
         </div>

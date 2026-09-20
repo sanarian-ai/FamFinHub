@@ -6,7 +6,7 @@ import { natureColor } from "./colors";
 import { formatINR } from "@/lib/format";
 import type { NatureTotal } from "./aggregate";
 
-function CustomTooltip({ active, payload }: any) {
+function CustomTooltip({ active, payload, divisor = 1 }: any) {
   if (!active || !payload?.length) return null;
   const p = payload[0];
   return (
@@ -15,12 +15,26 @@ function CustomTooltip({ active, payload }: any) {
         <span className="inline-block h-2 w-2 rounded-full" style={{ background: p.payload.fill }} />
         {p.name}
       </div>
-      <div className="mt-0.5 text-slate-600">{formatINR(p.value)}</div>
+      <div className="mt-0.5 text-slate-600">
+        {formatINR(p.value / divisor)}
+        {divisor > 1 && <span className="text-slate-400">/mo</span>}
+      </div>
     </div>
   );
 }
 
-export function NatureDonut({ data, total }: { data: NatureTotal[]; total: number }) {
+export function NatureDonut({
+  data,
+  total,
+  divisor = 1,
+}: {
+  data: NatureTotal[];
+  total: number;
+  /** When > 1, legend values and the hover tooltip show total/divisor (labeled "/mo") instead
+   * of the raw total. Percentages and donut-slice angles are unaffected — dividing every row
+   * by the same constant leaves every ratio between rows identical. */
+  divisor?: number;
+}) {
   if (data.length === 0 || total === 0) {
     return <div className="flex h-56 items-center justify-center text-sm text-slate-400">No expenditure this period.</div>;
   }
@@ -43,7 +57,7 @@ export function NatureDonut({ data, total }: { data: NatureTotal[]; total: numbe
                 <Cell key={d.id} fill={natureColor(d.name)} />
               ))}
             </Pie>
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip content={<CustomTooltip divisor={divisor} />} />
           </PieChart>
         </ResponsiveContainer>
       </div>
@@ -64,7 +78,8 @@ export function NatureDonut({ data, total }: { data: NatureTotal[]; total: numbe
                 <span className="truncate">{d.name}</span>
               </span>
               <span className="shrink-0 whitespace-nowrap font-medium text-slate-900">
-                {formatINR(d.total)}
+                {formatINR(d.total / divisor)}
+                {divisor > 1 && <span className="text-slate-400">/mo</span>}
                 <span className="ml-1.5 text-xs font-normal text-slate-400">
                   {((d.total / total) * 100).toFixed(0)}%
                 </span>

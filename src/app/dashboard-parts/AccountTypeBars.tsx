@@ -4,7 +4,17 @@ import { formatINR } from "@/lib/format";
 import { ACCOUNT_TYPE_COLORS } from "./colors";
 import type { AccountTypeTotal } from "./aggregate";
 
-export function AccountTypeBars({ data, total }: { data: AccountTypeTotal[]; total: number }) {
+export function AccountTypeBars({
+  data,
+  total,
+  divisor = 1,
+}: {
+  data: AccountTypeTotal[];
+  total: number;
+  /** When > 1, displayed amounts show total/divisor (labeled "/mo") instead of the raw total.
+   * `pct` and segment width stay derived from the true (undivided) totals — identical either way. */
+  divisor?: number;
+}) {
   if (data.length === 0 || total === 0) {
     return <div className="flex h-56 items-center justify-center text-sm text-slate-400">No categorized activity this period.</div>;
   }
@@ -18,7 +28,7 @@ export function AccountTypeBars({ data, total }: { data: AccountTypeTotal[]; tot
             <div
               key={d.type}
               style={{ width: `${pct}%`, background: ACCOUNT_TYPE_COLORS[d.type] }}
-              title={`${d.type}: ${formatINR(d.total)} (${pct.toFixed(0)}%)`}
+              title={`${d.type}: ${formatINR(d.total / divisor)}${divisor > 1 ? "/mo" : ""} (${pct.toFixed(0)}%)`}
             />
           );
         })}
@@ -31,7 +41,8 @@ export function AccountTypeBars({ data, total }: { data: AccountTypeTotal[]; tot
               {d.type}
             </span>
             <span className="shrink-0 whitespace-nowrap font-medium text-slate-900">
-              {formatINR(d.total)}
+              {formatINR(d.total / divisor)}
+              {divisor > 1 && <span className="text-slate-400">/mo</span>}
               <span className="ml-1.5 text-xs font-normal text-slate-400">{((d.total / total) * 100).toFixed(0)}%</span>
             </span>
           </li>
