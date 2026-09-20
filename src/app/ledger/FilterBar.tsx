@@ -1,19 +1,22 @@
-import type { CategoryOption } from "./types";
+import type { CategoryOption, NatureOption } from "./types";
 
 type Account = { id: string; name: string; holder: string; isActive: boolean };
 
 export default function FilterBar({
   accounts,
   categories,
+  natures,
   values,
 }: {
   accounts: Account[];
   categories: CategoryOption[];
+  natures: NatureOption[];
   values: {
     from: string;
     to: string;
     accountId: string;
     categoryId: string;
+    natureId: string;
     status: string;
     q: string;
     includeHistorical: boolean;
@@ -27,6 +30,15 @@ export default function FilterBar({
     const last = groups[groups.length - 1];
     if (last && last.label === label) last.items.push(c);
     else groups.push({ label, items: [c] });
+  }
+
+  // Grouped by Account Type (Expenditure/Investment/Income/Transfer) — only ~14 natures total,
+  // so this is one level of grouping rather than a searchable picker like Category's (237 values).
+  const natureGroups: { label: string; items: NatureOption[] }[] = [];
+  for (const n of natures) {
+    const last = natureGroups[natureGroups.length - 1];
+    if (last && last.label === n.accountType) last.items.push(n);
+    else natureGroups.push({ label: n.accountType, items: [n] });
   }
 
   const inputCls =
@@ -51,6 +63,22 @@ export default function FilterBar({
             <option key={a.id} value={a.id}>
               {a.name} ({a.holder}){!a.isActive ? " — historical" : ""}
             </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Nature</label>
+        <select name="natureId" defaultValue={values.natureId} className={inputCls}>
+          <option value="">All natures</option>
+          {natureGroups.map((g) => (
+            <optgroup key={g.label} label={g.label}>
+              {g.items.map((n) => (
+                <option key={n.id} value={n.id}>
+                  {n.name}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </div>

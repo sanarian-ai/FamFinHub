@@ -5,6 +5,12 @@ export type CategoryOption = {
   natureName: string;
 };
 
+export type NatureOption = {
+  id: string;
+  name: string;
+  accountType: string;
+};
+
 export type LedgerRow = {
   id: string;
   txnDate: string; // ISO string — the real, immutable imported date

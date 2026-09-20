@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui";
 import FilterBar from "./FilterBar";
 import LedgerTable from "./LedgerTable";
 import Pager from "./Pager";
-import type { CategoryOption, LedgerRow } from "./types";
+import type { CategoryOption, LedgerRow, NatureOption } from "./types";
 
 export const dynamic = "force-dynamic";
 
@@ -23,19 +23,26 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
   const to = first(params.to);
   const accountId = first(params.accountId);
   const categoryId = first(params.categoryId);
+  const natureId = first(params.natureId);
   const status = first(params.status);
   const q = first(params.q).trim();
   const includeHistorical = first(params.includeHistorical) === "1";
   const requestedPage = parseInt(first(params.page), 10);
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
 
-  const [accounts, categoriesRaw] = await Promise.all([
+  const [accounts, categoriesRaw, naturesRaw] = await Promise.all([
     prisma.account.findMany({ orderBy: { name: "asc" } }),
     prisma.category.findMany({
       where: { isActive: true },
       include: { expenseType: { include: { expenseNature: true } } },
     }),
+    prisma.expenseNature.findMany({
+      where: { isActive: true },
+      orderBy: [{ accountType: "asc" }, { name: "asc" }],
+    }),
   ]);
+
+  const natures: NatureOption[] = naturesRaw.map((n) => ({ id: n.id, name: n.name, accountType: n.accountType }));
 
   const categories: CategoryOption[] = categoriesRaw
     .map((c) => ({
@@ -71,6 +78,16 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
 
   if (categoryId) {
     where.categoryId = categoryId;
+  }
+
+  // Independent of categoryId above — narrows by the parent Nature (e.g. "Household Fixed")
+  // rather than one leaf Category, so it can be combined with categoryId (redundant but
+  // harmless) or used alone to see everything under a nature. Also the destination for the
+  // Dashboard's Nature donut/legend links (see NatureDonut.tsx), which previously pointed at a
+  // `nature=` param this page never read — fixed to use natureId consistently with accountId /
+  // categoryId's naming.
+  if (natureId) {
+    where.category = { expenseType: { expenseNature: { id: natureId } } };
   }
 
   if (status === "categorized" || status === "needs_review") {
@@ -118,6 +135,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
   if (to) baseParams.set("to", to);
   if (accountId) baseParams.set("accountId", accountId);
   if (categoryId) baseParams.set("categoryId", categoryId);
+  if (natureId) baseParams.set("natureId", natureId);
   if (status) baseParams.set("status", status);
   if (q) baseParams.set("q", q);
   if (includeHistorical) baseParams.set("includeHistorical", "1");
@@ -132,7 +150,8 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
       <FilterBar
         accounts={accounts}
         categories={categories}
-        values={{ from, to, accountId, categoryId, status, q, includeHistorical }}
+        natures={natures}
+        values={{ from, to, accountId, categoryId, natureId, status, q, includeHistorical }}
       />
 
       <LedgerTable rows={rows} categories={categories} />

@@ -51,7 +51,7 @@ export function NatureDonut({ data, total }: { data: NatureTotal[]; total: numbe
         {data.map((d) => (
           <li key={d.id}>
             <Link
-              href={`/ledger?nature=${d.id}`}
+              href={`/ledger?natureId=${d.id}`}
               className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-50"
               title="View these transactions in the Ledger"
             >
