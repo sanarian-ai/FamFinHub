@@ -24,11 +24,50 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
   const accountId = first(params.accountId);
   const categoryId = first(params.categoryId);
   const natureId = first(params.natureId);
+  const accountTypeRaw = first(params.accountType);
   const status = first(params.status);
   const q = first(params.q).trim();
   const includeHistorical = first(params.includeHistorical) === "1";
   const requestedPage = parseInt(first(params.page), 10);
   const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+
+  // Same level as natureId (one above Category, filters everything under an Account Type —
+  // Expenditure/Investment/Income/Transfer — rather than one Nature) — the destination for the
+  // Dashboard's Account Type bars, which previously had no Ledger link at all.
+  const VALID_ACCOUNT_TYPES = ["Expenditure", "Investment", "Income", "Transfer"] as const;
+  const accountType = (VALID_ACCOUNT_TYPES as readonly string[]).includes(accountTypeRaw)
+    ? (accountTypeRaw as (typeof VALID_ACCOUNT_TYPES)[number])
+    : "";
+
+  // Header-click sorting. `sort` picks which column, `dir` which direction; both are validated
+  // against a fixed allow-list rather than trusted from the query string, since an invalid value
+  // would otherwise reach Prisma's orderBy directly.
+  const SORT_KEYS = ["date", "effectiveMonth", "description", "amount", "account", "category", "status", "source"] as const;
+  type SortKey = (typeof SORT_KEYS)[number];
+  const sortRaw = first(params.sort);
+  const sort: SortKey = (SORT_KEYS as readonly string[]).includes(sortRaw) ? (sortRaw as SortKey) : "date";
+  const dir: Prisma.SortOrder = first(params.dir) === "asc" ? "asc" : "desc";
+
+  function orderByFor(key: SortKey, direction: Prisma.SortOrder): Prisma.TransactionOrderByWithRelationInput {
+    switch (key) {
+      case "date":
+        return { txnDate: direction };
+      case "effectiveMonth":
+        return { effectiveMonth: direction };
+      case "description":
+        return { rawDescription: direction };
+      case "amount":
+        return { amount: direction };
+      case "account":
+        return { account: { name: direction } };
+      case "category":
+        return { category: { name: direction } };
+      case "status":
+        return { status: direction };
+      case "source":
+        return { source: direction };
+    }
+  }
 
   const [accounts, categoriesRaw, naturesRaw] = await Promise.all([
     prisma.account.findMany({ orderBy: { name: "asc" } }),
@@ -86,8 +125,15 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
   // Dashboard's Nature donut/legend links (see NatureDonut.tsx), which previously pointed at a
   // `nature=` param this page never read — fixed to use natureId consistently with accountId /
   // categoryId's naming.
-  if (natureId) {
-    where.category = { expenseType: { expenseNature: { id: natureId } } };
+  if (natureId || accountType) {
+    where.category = {
+      expenseType: {
+        expenseNature: {
+          ...(natureId ? { id: natureId } : {}),
+          ...(accountType ? { accountType } : {}),
+        },
+      },
+    };
   }
 
   if (status === "categorized" || status === "needs_review") {
@@ -108,7 +154,7 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
   const transactions = await prisma.transaction.findMany({
     where,
     include: { category: true, account: true },
-    orderBy: { txnDate: "desc" },
+    orderBy: orderByFor(sort, dir),
     skip: (clampedPage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
   });
@@ -129,16 +175,24 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
     source: t.source,
   }));
 
-  // Query params to preserve across pagination links (everything but `page`).
-  const baseParams = new URLSearchParams();
-  if (from) baseParams.set("from", from);
-  if (to) baseParams.set("to", to);
-  if (accountId) baseParams.set("accountId", accountId);
-  if (categoryId) baseParams.set("categoryId", categoryId);
-  if (natureId) baseParams.set("natureId", natureId);
-  if (status) baseParams.set("status", status);
-  if (q) baseParams.set("q", q);
-  if (includeHistorical) baseParams.set("includeHistorical", "1");
+  // Filters only — everything but `page` and the current sort — so header-sort links can
+  // start from a clean base and set their own sort/dir, independent of however the page is
+  // currently sorted.
+  const filterParams = new URLSearchParams();
+  if (from) filterParams.set("from", from);
+  if (to) filterParams.set("to", to);
+  if (accountId) filterParams.set("accountId", accountId);
+  if (categoryId) filterParams.set("categoryId", categoryId);
+  if (natureId) filterParams.set("natureId", natureId);
+  if (accountType) filterParams.set("accountType", accountType);
+  if (status) filterParams.set("status", status);
+  if (q) filterParams.set("q", q);
+  if (includeHistorical) filterParams.set("includeHistorical", "1");
+
+  // Filters + current sort — preserved across pagination links (everything but `page`).
+  const baseParams = new URLSearchParams(filterParams);
+  if (sort !== "date") baseParams.set("sort", sort);
+  if (dir !== "desc") baseParams.set("dir", dir);
 
   return (
     <div>
@@ -154,7 +208,13 @@ export default async function LedgerPage({ searchParams }: { searchParams: Promi
         values={{ from, to, accountId, categoryId, natureId, status, q, includeHistorical }}
       />
 
-      <LedgerTable rows={rows} categories={categories} />
+      <LedgerTable
+        rows={rows}
+        categories={categories}
+        filterQueryString={filterParams.toString()}
+        sort={sort}
+        dir={dir}
+      />
 
       <Pager page={clampedPage} totalPages={totalPages} totalCount={totalCount} pageSize={PAGE_SIZE} baseParams={baseParams} />
     </div>

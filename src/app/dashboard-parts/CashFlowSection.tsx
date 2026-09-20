@@ -376,8 +376,8 @@ export function CashFlowSection({
               accountTypeTotal={accountTypeTotal}
               categoryData={expenseCategoryData}
               categoryAccent={FLOW_COLORS.expense}
-              categoryRangeStart={rangeStart}
-              categoryRangeEnd={rangeEnd}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
               periodLabel={periodLabel}
               divisor={displayDivisor}
             />
@@ -389,8 +389,8 @@ export function CashFlowSection({
               natureTotal={incomeTotal}
               categoryData={incomeCategoryData}
               categoryAccent={FLOW_COLORS.income}
-              categoryRangeStart={rangeStart}
-              categoryRangeEnd={rangeEnd}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
               periodLabel={periodLabel}
               divisor={displayDivisor}
             />
@@ -402,8 +402,8 @@ export function CashFlowSection({
               natureTotal={investmentTotal}
               categoryData={investmentCategoryData}
               categoryAccent={FLOW_COLORS.investment}
-              categoryRangeStart={rangeStart}
-              categoryRangeEnd={rangeEnd}
+              rangeStart={rangeStart}
+              rangeEnd={rangeEnd}
               periodLabel={periodLabel}
               divisor={displayDivisor}
             />

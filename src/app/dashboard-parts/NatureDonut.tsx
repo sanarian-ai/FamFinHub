@@ -6,6 +6,10 @@ import { natureColor } from "./colors";
 import { formatINR } from "@/lib/format";
 import type { NatureTotal } from "./aggregate";
 
+function isoDateUTC(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
 function CustomTooltip({ active, payload, divisor = 1 }: any) {
   if (!active || !payload?.length) return null;
   const p = payload[0];
@@ -27,6 +31,8 @@ export function NatureDonut({
   data,
   total,
   divisor = 1,
+  rangeStart,
+  rangeEnd,
 }: {
   data: NatureTotal[];
   total: number;
@@ -34,10 +40,21 @@ export function NatureDonut({
    * of the raw total. Percentages and donut-slice angles are unaffected — dividing every row
    * by the same constant leaves every ratio between rows identical. */
   divisor?: number;
+  /** The selected period's [start, end) window — required so the "view in Ledger" link can be
+   * scoped to it. Previously omitted entirely, which meant every nature link showed that
+   * nature's ENTIRE transaction history regardless of which month/year was selected — a real
+   * bug, not just an inconvenience (found 2026-09-20: a period showing 25 transactions linked
+   * to a Ledger view of 6,101). rangeEnd is exclusive, same convention as CategoryBars. */
+  rangeStart: Date;
+  rangeEnd: Date;
 }) {
   if (data.length === 0 || total === 0) {
     return <div className="flex h-56 items-center justify-center text-sm text-slate-400">No expenditure this period.</div>;
   }
+  const from = isoDateUTC(rangeStart);
+  // rangeEnd is exclusive (the start of the next period) — Ledger's "to" filter is inclusive,
+  // so step back one day, same as CategoryBars.
+  const to = isoDateUTC(new Date(rangeEnd.getTime() - 24 * 60 * 60 * 1000));
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
       <div className="mx-auto h-52 w-52 shrink-0">
@@ -65,7 +82,7 @@ export function NatureDonut({
         {data.map((d) => (
           <li key={d.id}>
             <Link
-              href={`/ledger?natureId=${d.id}`}
+              href={`/ledger?natureId=${d.id}&from=${from}&to=${to}`}
               className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-slate-50"
               title="View these transactions in the Ledger"
             >

@@ -24,8 +24,8 @@ export function BreakdownCard({
   accountTypeTotal,
   categoryData,
   categoryAccent,
-  categoryRangeStart,
-  categoryRangeEnd,
+  rangeStart,
+  rangeEnd,
   periodLabel,
   title,
   divisor = 1,
@@ -36,8 +36,6 @@ export function BreakdownCard({
   accountTypeTotal?: number;
   categoryData?: RankedCategoryTotals;
   categoryAccent?: string;
-  categoryRangeStart?: Date;
-  categoryRangeEnd?: Date;
   periodLabel: string;
   /** Overrides the tab-driven heading — used when the card's own title (e.g. "This month's
    * expense") should stay fixed regardless of which tab is active. */
@@ -46,6 +44,11 @@ export function BreakdownCard({
    * AccountTypeBars) — see their own docs for what it does. Lets the page show either the
    * period's total or its per-month average across all three tabs from one shared toggle. */
   divisor?: number;
+  /** The selected period's [start, end) window — required, and passed to every tab's
+   * "view in Ledger" link (Nature/Category/Account Type alike), not just Category's. This
+   * card is only ever rendered from CashFlowSection, which always has a range on hand. */
+  rangeStart: Date;
+  rangeEnd: Date;
 }) {
   const tabs: Tab[] = ["nature", ...(categoryData ? (["category"] as const) : []), ...(accountTypeData ? (["accountType"] as const) : [])];
   const [tab, setTab] = useState<Tab>("nature");
@@ -81,19 +84,21 @@ export function BreakdownCard({
         )}
       </div>
       <p className="mb-4 text-xs text-slate-400">{caption[activeTab]}</p>
-      {activeTab === "nature" && <NatureDonut data={natureData} total={natureTotal} divisor={divisor} />}
-      {activeTab === "category" && categoryData && categoryRangeStart && categoryRangeEnd && (
+      {activeTab === "nature" && (
+        <NatureDonut data={natureData} total={natureTotal} divisor={divisor} rangeStart={rangeStart} rangeEnd={rangeEnd} />
+      )}
+      {activeTab === "category" && categoryData && (
         <CategoryBars
           data={categoryData}
           total={natureTotal}
           accent={categoryAccent ?? "#6b6a66"}
-          rangeStart={categoryRangeStart}
-          rangeEnd={categoryRangeEnd}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
           divisor={divisor}
         />
       )}
       {activeTab === "accountType" && accountTypeData && (
-        <AccountTypeBars data={accountTypeData} total={accountTypeTotal ?? 0} divisor={divisor} />
+        <AccountTypeBars data={accountTypeData} total={accountTypeTotal ?? 0} divisor={divisor} rangeStart={rangeStart} rangeEnd={rangeEnd} />
       )}
     </div>
   );

@@ -16,12 +16,62 @@ const SOURCE_LABEL: Record<string, string> = {
   migration: "Migrated",
 };
 
+/**
+ * One header cell that's also a sort link. First click on a column sorts by `defaultDir`
+ * (most recent/largest first for date/amount-ish columns, alphabetical for text columns);
+ * clicking the already-active column flips direction. Server-side sort (a `sort`/`dir` query
+ * param handled in page.tsx's Prisma orderBy) rather than client-side re-sort, since this table
+ * only ever holds one page (75 rows) of a much larger filtered set — sorting just the visible
+ * page would silently misrepresent the data.
+ */
+function SortableHeader({
+  label,
+  column,
+  defaultDir,
+  currentSort,
+  currentDir,
+  filterQueryString,
+  align,
+}: {
+  label: string;
+  column: string;
+  defaultDir: "asc" | "desc";
+  currentSort: string;
+  currentDir: "asc" | "desc";
+  filterQueryString: string;
+  align?: "right";
+}) {
+  const isActive = currentSort === column;
+  const nextDir: "asc" | "desc" = isActive ? (currentDir === "asc" ? "desc" : "asc") : defaultDir;
+  const params = new URLSearchParams(filterQueryString);
+  params.set("sort", column);
+  params.set("dir", nextDir);
+  const href = `/ledger?${params.toString()}`;
+  return (
+    <th className={clsx("whitespace-nowrap px-3 py-2.5", align === "right" && "text-right")}>
+      <a href={href} className={clsx("inline-flex items-center gap-1 hover:text-slate-800", align === "right" && "flex-row-reverse")}>
+        {label}
+        {isActive && <span className="text-slate-400">{currentDir === "asc" ? "▲" : "▼"}</span>}
+      </a>
+    </th>
+  );
+}
+
 export default function LedgerTable({
   rows,
   categories,
+  filterQueryString,
+  sort,
+  dir,
 }: {
   rows: LedgerRow[];
   categories: CategoryOption[];
+  /** Current filters (from/to/accountId/categoryId/natureId/accountType/status/q/
+   * includeHistorical), pre-serialized — NOT including `page` or the current sort — so each
+   * header link can start clean and set its own sort/dir. */
+  filterQueryString: string;
+  sort: string;
+  dir: "asc" | "desc";
 }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [editingRowId, setEditingRowId] = useState<string | null>(null);
@@ -134,14 +184,14 @@ export default function LedgerTable({
                   aria-label="Select all visible rows"
                 />
               </th>
-              <th className="whitespace-nowrap px-3 py-2.5">Date</th>
-              <th className="whitespace-nowrap px-3 py-2.5">Counts toward</th>
-              <th className="px-3 py-2.5">Description</th>
-              <th className="whitespace-nowrap px-3 py-2.5 text-right">Amount</th>
-              <th className="whitespace-nowrap px-3 py-2.5">Account</th>
-              <th className="px-3 py-2.5">Category</th>
-              <th className="whitespace-nowrap px-3 py-2.5">Status</th>
-              <th className="whitespace-nowrap px-3 py-2.5">Source</th>
+              <SortableHeader label="Date" column="date" defaultDir="desc" currentSort={sort} currentDir={dir} filterQueryString={filterQueryString} />
+              <SortableHeader label="Counts toward" column="effectiveMonth" defaultDir="desc" currentSort={sort} currentDir={dir} filterQueryString={filterQueryString} />
+              <SortableHeader label="Description" column="description" defaultDir="asc" currentSort={sort} currentDir={dir} filterQueryString={filterQueryString} />
+              <SortableHeader label="Amount" column="amount" defaultDir="desc" currentSort={sort} currentDir={dir} filterQueryString={filterQueryString} align="right" />
+              <SortableHeader label="Account" column="account" defaultDir="asc" currentSort={sort} currentDir={dir} filterQueryString={filterQueryString} />
+              <SortableHeader label="Category" column="category" defaultDir="asc" currentSort={sort} currentDir={dir} filterQueryString={filterQueryString} />
+              <SortableHeader label="Status" column="status" defaultDir="asc" currentSort={sort} currentDir={dir} filterQueryString={filterQueryString} />
+              <SortableHeader label="Source" column="source" defaultDir="asc" currentSort={sort} currentDir={dir} filterQueryString={filterQueryString} />
             </tr>
           </thead>
           <tbody>
