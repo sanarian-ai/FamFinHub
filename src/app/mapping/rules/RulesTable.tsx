@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import clsx from "clsx";
 import { Badge, Card, EmptyState } from "@/components/ui";
 import type { RuleMatchType, RuleSource } from "@prisma/client";
@@ -115,23 +115,44 @@ export function RulesTable({ rules, categories }: { rules: RuleRow[]; categories
   }
 
   // --- bulk edit draft ---
+  const [bulkPattern, setBulkPattern] = useState<string>("");
   const [bulkMatchType, setBulkMatchType] = useState<string>(NO_CHANGE);
   const [bulkCategoryId, setBulkCategoryId] = useState<string>(NO_CHANGE);
   const [bulkPriority, setBulkPriority] = useState<string>("");
   const [bulkActive, setBulkActive] = useState<string>(NO_CHANGE);
-  const bulkHasChange = bulkMatchType !== NO_CHANGE || bulkCategoryId !== NO_CHANGE || bulkPriority.trim() !== "" || bulkActive !== NO_CHANGE;
+  // Pattern is only safe to change when the selection is exactly one rule (see
+  // bulkUpdateCategoryRulesAction's doc comment) — several rules sharing one literal pattern
+  // would be a near-certain mistake, so the field is disabled outside that case.
+  const canEditPattern = selectedCount === 1;
+  const bulkHasChange =
+    (canEditPattern && bulkPattern.trim() !== "") ||
+    bulkMatchType !== NO_CHANGE ||
+    bulkCategoryId !== NO_CHANGE ||
+    bulkPriority.trim() !== "" ||
+    bulkActive !== NO_CHANGE;
 
   function resetBulkDraft() {
+    setBulkPattern("");
     setBulkMatchType(NO_CHANGE);
     setBulkCategoryId(NO_CHANGE);
     setBulkPriority("");
     setBulkActive(NO_CHANGE);
   }
 
+  // The selection itself changing (a different row checked/unchecked, not just the panel being
+  // opened) clears any in-progress draft — otherwise switching from "rule A selected, typed a
+  // new pattern" to "rule B selected" would silently carry rule A's typed pattern over to B.
+  const selectionKey = useMemo(() => Array.from(selected).sort().join(","), [selected]);
+  useEffect(() => {
+    resetBulkDraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectionKey]);
+
   function applyBulk() {
     if (!bulkHasChange || selectedCount === 0) return;
     setError(null);
     const changes: CategoryRuleBulkEdit = {};
+    if (canEditPattern && bulkPattern.trim() !== "") changes.pattern = bulkPattern;
     if (bulkMatchType !== NO_CHANGE) changes.matchType = bulkMatchType as RuleMatchType;
     if (bulkCategoryId !== NO_CHANGE) changes.categoryId = bulkCategoryId;
     if (bulkPriority.trim() !== "") {
@@ -202,6 +223,18 @@ export function RulesTable({ rules, categories }: { rules: RuleRow[]; categories
               <div className="w-full rounded-lg border border-indigo-200 bg-white p-3">
                 <div className="flex flex-wrap items-end gap-3">
                   <label className="flex flex-col text-xs font-medium text-slate-600">
+                    Pattern
+                    <input
+                      type="text"
+                      value={bulkPattern}
+                      onChange={(e) => setBulkPattern(e.target.value)}
+                      disabled={!canEditPattern}
+                      placeholder={canEditPattern ? "no change" : "select 1 rule to edit"}
+                      title={canEditPattern ? undefined : "Pattern can only be edited when exactly one rule is selected"}
+                      className="mt-1 w-48 rounded-md border border-slate-300 px-2 py-1.5 font-mono text-xs disabled:bg-slate-50 disabled:text-slate-400"
+                    />
+                  </label>
+                  <label className="flex flex-col text-xs font-medium text-slate-600">
                     Match Type
                     <select
                       value={bulkMatchType}
@@ -267,8 +300,10 @@ export function RulesTable({ rules, categories }: { rules: RuleRow[]; categories
                   </button>
                 </div>
                 <p className="mt-2 text-xs text-slate-400">
-                  Only fields you change are applied — leave the rest as &ldquo;no change&rdquo;. Pattern isn&rsquo;t bulk-editable; edit
-                  one rule&rsquo;s pattern at a time below.
+                  Only fields you change are applied — leave the rest as &ldquo;no change&rdquo;.{" "}
+                  {canEditPattern
+                    ? "Pattern applies to this one selected rule."
+                    : "Pattern can only be changed when exactly one rule is selected."}
                 </p>
               </div>
             )}

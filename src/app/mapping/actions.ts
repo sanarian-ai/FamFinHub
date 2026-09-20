@@ -204,6 +204,11 @@ export async function updateCategoryRuleAction(id: string, changes: CategoryRule
 
 export interface CategoryRuleBulkEdit {
   matchType?: RuleMatchType;
+  /** Only ever valid when exactly one id is selected — see the guard below. Sangeeth's real
+   *  use case: narrow an auto-generated exact-match pattern (a raw transaction description) down
+   *  to a reusable "contains" fragment for that one rule, from the same panel used for the other
+   *  fields, rather than needing the separate per-row Edit link for this specific edit. */
+  pattern?: string;
   categoryId?: string;
   priority?: number;
   isActive?: boolean;
@@ -214,14 +219,28 @@ export interface CategoryRuleBulkEdit {
  * rules to a different category, or flipping several from "exact" to "contains" in one go.
  * Every field is optional and independent ("no change" in the UI just omits it here) so a
  * single call can carry any subset of match type / category / priority / active without the
- * caller needing several round trips. Pattern is deliberately NOT bulk-editable — rules almost
- * always need distinct patterns, so setting them all to the same literal text would be a
- * near-certain mistake; pattern changes stay single-row (see updateCategoryRuleAction).
+ * caller needing several round trips.
+ *
+ * Pattern is the one field that isn't freely bulk-editable — rules almost always need distinct
+ * patterns, so setting several rules to the same literal text would be a near-certain mistake —
+ * but it IS allowed when the selection is exactly one rule, which is no different from a
+ * single-row pattern edit (updateCategoryRuleAction) and is a real workflow: generalizing one
+ * auto-created exact-match rule into a reusable "contains" pattern. Re-validated here, not just
+ * in the UI, so a pattern change can never silently fan out across more than one row.
  */
 export async function bulkUpdateCategoryRulesAction(ids: string[], changes: CategoryRuleBulkEdit) {
   if (!ids || ids.length === 0) return;
+  if (changes.pattern !== undefined && ids.length !== 1) {
+    throw new Error("Pattern can only be edited one rule at a time — narrow the selection to a single rule first.");
+  }
+
   const data: Record<string, unknown> = {};
   if (changes.matchType !== undefined) data.matchType = changes.matchType;
+  if (changes.pattern !== undefined) {
+    const pattern = changes.pattern.trim();
+    if (!pattern) throw new Error("Pattern can't be empty.");
+    data.pattern = pattern;
+  }
   if (changes.categoryId !== undefined) data.categoryId = changes.categoryId;
   if (changes.priority !== undefined && Number.isFinite(changes.priority)) data.priority = changes.priority;
   if (changes.isActive !== undefined) data.isActive = changes.isActive;
