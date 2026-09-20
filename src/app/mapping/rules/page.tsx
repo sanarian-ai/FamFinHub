@@ -3,7 +3,8 @@ import { PageHeader, Card } from "@/components/ui";
 import MappingTabs from "../MappingTabs";
 import TestStringTool from "./TestStringTool";
 import { createCategoryRule } from "../actions";
-import { RulesTable, MATCH_TYPES } from "./RulesTable";
+import { RulesTable } from "./RulesTable";
+import { MATCH_TYPES } from "./constants";
 
 export const dynamic = "force-dynamic";
 

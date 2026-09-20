@@ -10,8 +10,7 @@ import {
   bulkUpdateCategoryRulesAction,
   type CategoryRuleBulkEdit,
 } from "../actions";
-
-export const MATCH_TYPES = ["exact", "contains", "regex"] as const;
+import { MATCH_TYPES } from "./constants";
 
 const SOURCE_TONE: Record<string, "slate" | "amber" | "emerald" | "rose" | "blue"> = {
   seeded_from_history: "slate",
