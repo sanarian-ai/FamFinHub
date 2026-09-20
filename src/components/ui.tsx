@@ -34,6 +34,7 @@ function deltaLine(delta: number | null | undefined, deltaLabel: string | undefi
 export function StatTile({
   label,
   value,
+  note,
   delta,
   deltaLabel,
   delta2,
@@ -42,6 +43,8 @@ export function StatTile({
 }: {
   label: string;
   value: string;
+  /** A plain (non-percentage, non-colored) secondary line under the value — e.g. a per-month average over a multi-month range. */
+  note?: string;
   delta?: number | null;
   deltaLabel?: string;
   /** A second comparator line — e.g. vs. the same period last year, alongside vs. last period. */
@@ -54,6 +57,7 @@ export function StatTile({
     <Card>
       <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
       <div className="mt-1 text-2xl font-semibold text-slate-900">{value}</div>
+      {note && <div className="mt-1 text-xs font-medium text-slate-400">{note}</div>}
       {deltaLine(delta, deltaLabel, positiveIsBad)}
       {deltaLine(delta2, deltaLabel2, positiveIsBad)}
     </Card>

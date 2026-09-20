@@ -12,7 +12,7 @@ import { getYearBreakdownAction, type YearBreakdown } from "./actions";
 import { HouseholdSplit } from "./HouseholdSplit";
 import type { ExpenditureRow, IncomeRow, InvestmentRow, AccountTypeRow, UncategorizedFlowRow, HolderCashFlow } from "./queries";
 import type { PeriodRange, Holder } from "./period";
-import { HOLDERS } from "./period";
+import { HOLDERS, monthsBetween } from "./period";
 
 type Granularity = "month" | "year";
 type IndexRange = { start: number; end: number }; // inclusive both ends
@@ -179,6 +179,16 @@ export function CashFlowSection({
   const holderSplit = granularity === "year" ? yearData?.holderSplit ?? [] : monthHolderSplit;
   const accountsByHolder = granularity === "year" ? yearData?.accountsByHolder ?? {} : monthAccountsByHolder;
 
+  // Per-month average across the selected range — shown alongside the total whenever more than
+  // one month is selected (a single month's "average" would just repeat its total). Works the
+  // same way in both modes: a year is 12 months, a 2-year span is 24, so this needs no
+  // granularity-specific branch, just the [rangeStart, rangeEnd) window already computed above.
+  const monthCount = useMemo(() => monthsBetween(rangeStart, rangeEnd), [rangeStart, rangeEnd]);
+  const showAverage = monthCount > 1;
+  const avgIncome = monthCount > 0 ? incomeTotal / monthCount : 0;
+  const avgExpense = monthCount > 0 ? expenseTotal / monthCount : 0;
+  const avgInvestment = monthCount > 0 ? investmentTotal / monthCount : 0;
+
   function selectSingleMonth(index: number) {
     setGranularity("month");
     setMonthRange({ start: index, end: index });
@@ -309,9 +319,24 @@ export function CashFlowSection({
         </div>
 
         <div className={clsx("mb-4 grid grid-cols-1 gap-4 sm:grid-cols-3 transition-opacity", yearLoading && "opacity-50")}>
-          <StatTile label={`Income — ${periodLabel}`} value={formatINR(incomeTotal)} positiveIsBad={false} />
-          <StatTile label={`Expense — ${periodLabel}`} value={formatINR(expenseTotal)} positiveIsBad={true} />
-          <StatTile label={`Investment — ${periodLabel}`} value={formatINR(investmentTotal)} positiveIsBad={false} />
+          <StatTile
+            label={`Income — ${periodLabel}`}
+            value={formatINR(incomeTotal)}
+            note={showAverage ? `Avg ${formatINR(avgIncome)}/mo` : undefined}
+            positiveIsBad={false}
+          />
+          <StatTile
+            label={`Expense — ${periodLabel}`}
+            value={formatINR(expenseTotal)}
+            note={showAverage ? `Avg ${formatINR(avgExpense)}/mo` : undefined}
+            positiveIsBad={true}
+          />
+          <StatTile
+            label={`Investment — ${periodLabel}`}
+            value={formatINR(investmentTotal)}
+            note={showAverage ? `Avg ${formatINR(avgInvestment)}/mo` : undefined}
+            positiveIsBad={false}
+          />
         </div>
 
         <div className={clsx("grid grid-cols-1 gap-6 lg:grid-cols-3 transition-opacity", yearLoading && "opacity-50")}>

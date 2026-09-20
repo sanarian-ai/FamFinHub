@@ -89,6 +89,13 @@ export function trailingMonths(anchor: Date, n = 12): PeriodRange[] {
   return months;
 }
 
+/** Whole calendar months spanned by [start, end) — e.g. Jul 1 to Oct 1 is 3. Works for both a
+ *  multi-month Month-mode range and a multi-year Year-mode range (a year is just 12 of these),
+ *  so callers don't need to special-case granularity to compute a per-month average. */
+export function monthsBetween(start: Date, end: Date): number {
+  return (end.getUTCFullYear() - start.getUTCFullYear()) * 12 + (end.getUTCMonth() - start.getUTCMonth());
+}
+
 export function monthShortLabel(date: Date): string {
   return new Intl.DateTimeFormat("en-IN", { month: "short", year: "2-digit" }).format(date);
 }
