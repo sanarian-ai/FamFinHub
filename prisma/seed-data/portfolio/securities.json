@@ -1,0 +1,100 @@
+[
+ {
+  "symbol": "AAPL",
+  "name": "Apple Inc. Common Stock",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "ADBE",
+  "name": "Adobe Inc. Common Stock",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "AMZN",
+  "name": "Amazon.com Inc.",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "ASML",
+  "name": "ASML Holding N.V. New York Registry Shares",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "BKNG",
+  "name": "Booking Holdings Inc. Common Stock",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "GOOGL",
+  "name": "Alphabet Inc. Class A Common Stock",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "MA",
+  "name": "Mastercard Incorporated",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "META",
+  "name": "Meta Platforms Inc. Class A",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "MSFT",
+  "name": "Microsoft Corporation Common Stock",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "NFLX",
+  "name": "Netflix, Inc. Common Stock",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "NVDA",
+  "name": "NVIDIA Corporation Common Stock",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "UBER",
+  "name": "Uber Technologies Inc.",
+  "kind": "STOCK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "SPY",
+  "name": "SPDR S&P 500 ETF Trust",
+  "kind": "BENCHMARK",
+  "currency": "USD",
+  "exchange": "US"
+ },
+ {
+  "symbol": "QQQ",
+  "name": "Invesco QQQ Trust",
+  "kind": "BENCHMARK",
+  "currency": "USD",
+  "exchange": "US"
+ }
+]

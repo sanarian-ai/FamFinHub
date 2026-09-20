@@ -1,0 +1,86 @@
+[
+ {
+  "account": "INDMONEY_ALPACA",
+  "symbol": "GOOGL",
+  "qty": "196.4190376",
+  "asOf": "2026-09-20",
+  "source": "indmoney_holdings"
+ },
+ {
+  "account": "INDMONEY_ALPACA",
+  "symbol": "META",
+  "qty": "96.6725182",
+  "asOf": "2026-09-20",
+  "source": "indmoney_holdings"
+ },
+ {
+  "account": "INDMONEY_ALPACA",
+  "symbol": "AMZN",
+  "qty": "210.0454282",
+  "asOf": "2026-09-20",
+  "source": "indmoney_holdings"
+ },
+ {
+  "account": "INDMONEY_ALPACA",
+  "symbol": "MSFT",
+  "qty": "28.3249826",
+  "asOf": "2026-09-20",
+  "source": "indmoney_holdings"
+ },
+ {
+  "account": "INDMONEY_ALPACA",
+  "symbol": "ASML",
+  "qty": "6.2212554",
+  "asOf": "2026-09-20",
+  "source": "indmoney_holdings"
+ },
+ {
+  "account": "INDMONEY_ALPACA",
+  "symbol": "NVDA",
+  "qty": "2.0673632",
+  "asOf": "2026-09-20",
+  "source": "indmoney_holdings"
+ },
+ {
+  "account": "INDMONEY_ALPACA",
+  "symbol": "UBER",
+  "qty": "1.3057621",
+  "asOf": "2026-09-20",
+  "source": "indmoney_holdings"
+ },
+ {
+  "account": "INDMONEY_ALPACA",
+  "symbol": "MA",
+  "qty": "0.017683",
+  "asOf": "2026-09-20",
+  "source": "indmoney_holdings"
+ },
+ {
+  "account": "INDMONEY_ALPACA",
+  "symbol": "NFLX",
+  "qty": "0.1030917",
+  "asOf": "2026-09-20",
+  "source": "indmoney_holdings"
+ },
+ {
+  "account": "IBKR",
+  "symbol": "AMZN",
+  "qty": "41",
+  "asOf": "2026-09-20",
+  "source": "ibkr_positions"
+ },
+ {
+  "account": "IBKR",
+  "symbol": "META",
+  "qty": "33.5327",
+  "asOf": "2026-09-20",
+  "source": "ibkr_positions"
+ },
+ {
+  "account": "IBKR",
+  "symbol": "UBER",
+  "qty": "136.3747",
+  "asOf": "2026-09-20",
+  "source": "ibkr_positions"
+ }
+]

@@ -1,0 +1,16 @@
+[
+ {
+  "key": "INDMONEY_ALPACA",
+  "broker": "INDMONEY_ALPACA",
+  "name": "INDmoney US Stocks (Alpaca)",
+  "holder": "Sangeeth",
+  "baseCurrency": "USD"
+ },
+ {
+  "key": "IBKR",
+  "broker": "IBKR",
+  "name": "Interactive Brokers",
+  "holder": "Sangeeth",
+  "baseCurrency": "USD"
+ }
+]

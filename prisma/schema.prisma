@@ -138,6 +138,8 @@ model Transaction {
   @@index([txnDate])
   @@index([categoryId])
   @@index([accountId])
+  fundingLinks    FundingLink[]
+
   @@index([status])
   @@map("transactions")
 }
@@ -186,4 +188,274 @@ model ImportBatch {
   transactions Transaction[]
 
   @@map("import_batches")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────
+// Portfolio tracking (US stocks first) — see project doc "us-portfolio-data-architecture.md".
+// Additive only: nothing above is altered except the FundingLink back-relation on Transaction.
+// Raw broker quantities/prices are stored exactly as the broker reported them; stock splits live
+// in CorporateAction and are applied at read time. PriceDaily is AS-TRADED (unadjusted).
+// Lots, disposals, IRR and tax views are derived, never stored.
+// ─────────────────────────────────────────────────────────────────────────────────────────
+
+enum PortfolioBroker {
+  INDMONEY_ALPACA
+  IBKR
+}
+
+enum TradeSide {
+  BUY
+  SELL
+}
+
+enum SecurityKind {
+  STOCK
+  ETF
+  BENCHMARK
+}
+
+enum CashEventType {
+  DIVIDEND
+  WITHHOLDING_TAX
+  FEE
+  DEPOSIT
+  WITHDRAWAL
+  INTEREST
+}
+
+enum PortfolioSource {
+  indmoney_report
+  ibkr_api
+  manual
+}
+
+enum CorporateActionType {
+  SPLIT
+  REVERSE_SPLIT
+  SYMBOL_CHANGE
+}
+
+enum PortfolioReviewType {
+  UNMAPPED_FUNDING
+  UNITS_MISMATCH
+  MISSING_PRICE
+  MISSING_FX
+  DUPLICATE_SUSPECT
+  OTHER
+}
+
+enum PortfolioReviewStatus {
+  open
+  resolved
+  dismissed
+}
+
+model PortfolioAccount {
+  id           String                 @id @default(cuid())
+  key          String                 @unique // stable slug used by ingest, e.g. INDMONEY_ALPACA, IBKR
+  broker       PortfolioBroker
+  name         String
+  holder       String // family member; Sangeeth only for now, field retained for later
+  baseCurrency String                 @default("USD")
+  isActive     Boolean                @default(true)
+  createdAt    DateTime               @default(now())
+  transactions PortfolioTransaction[]
+  cashEvents   CashEvent[]
+  snapshots    PositionSnapshot[]
+  fundingLinks FundingLink[]
+
+  @@map("portfolio_accounts")
+}
+
+model Security {
+  id           String                 @id @default(cuid())
+  symbol       String                 @unique
+  name         String
+  kind         SecurityKind           @default(STOCK)
+  currency     String                 @default("USD")
+  exchange     String?
+  createdAt    DateTime               @default(now())
+  transactions PortfolioTransaction[]
+  cashEvents   CashEvent[]
+  actions      CorporateAction[]
+  prices       PriceDaily[]
+  snapshots    PositionSnapshot[]
+
+  @@map("securities")
+}
+
+model PortfolioTransaction {
+  id            String                @id @default(cuid())
+  accountId     String
+  account       PortfolioAccount      @relation(fields: [accountId], references: [id])
+  securityId    String
+  security      Security              @relation(fields: [securityId], references: [id])
+  side          TradeSide
+  qty           Decimal               @db.Decimal(20, 8) // as reported by broker (pre-split units for pre-split trades)
+  price         Decimal               @db.Decimal(20, 6) // as reported by broker
+  fee           Decimal               @default(0) @db.Decimal(20, 8)
+  currency      String                @default("USD")
+  execTs        DateTime // UTC execution timestamp
+  tradeDate     DateTime              @db.Date // US session date (America/New_York)
+  source        PortfolioSource
+  brokerRef     String // broker id: INDmoney Broker Reference Id / IBKR trade_id
+  importBatchId String?
+  importBatch   PortfolioImportBatch? @relation(fields: [importBatchId], references: [id])
+  createdAt     DateTime              @default(now())
+
+  @@unique([source, brokerRef])
+  @@index([accountId, tradeDate])
+  @@index([securityId, tradeDate])
+  @@map("portfolio_transactions")
+}
+
+model CashEvent {
+  id            String                @id @default(cuid())
+  accountId     String
+  account       PortfolioAccount      @relation(fields: [accountId], references: [id])
+  securityId    String?
+  security      Security?             @relation(fields: [securityId], references: [id])
+  type          CashEventType
+  amount        Decimal               @db.Decimal(20, 6) // signed, account currency
+  currency      String                @default("USD")
+  eventDate     DateTime              @db.Date
+  source        PortfolioSource
+  brokerRef     String
+  notes         String?
+  importBatchId String?
+  importBatch   PortfolioImportBatch? @relation(fields: [importBatchId], references: [id])
+  createdAt     DateTime              @default(now())
+
+  @@unique([source, brokerRef])
+  @@index([accountId, eventDate])
+  @@map("cash_events")
+}
+
+model CorporateAction {
+  id            String              @id @default(cuid())
+  securityId    String
+  security      Security            @relation(fields: [securityId], references: [id])
+  type          CorporateActionType
+  effectiveDate DateTime            @db.Date // first session trading on the new basis
+  ratio         Decimal             @db.Decimal(20, 8) // new shares per old share
+  source        String?
+  createdAt     DateTime            @default(now())
+
+  @@unique([securityId, effectiveDate, type])
+  @@map("corporate_actions")
+}
+
+model PriceDaily {
+  id               String   @id @default(cuid())
+  securityId       String
+  security         Security @relation(fields: [securityId], references: [id])
+  date             DateTime @db.Date
+  close            Decimal  @db.Decimal(20, 6) // as-traded, NOT split-adjusted
+  dividendPerShare Decimal? @db.Decimal(20, 6) // as-traded
+  source           String   @default("yfinance")
+  createdAt        DateTime @default(now())
+
+  @@unique([securityId, date])
+  @@map("prices_daily")
+}
+
+model FxDaily {
+  id     String   @id @default(cuid())
+  date   DateTime @db.Date
+  pair   String // e.g. USDINR
+  rate   Decimal  @db.Decimal(14, 6)
+  source String   @default("yfinance")
+
+  @@unique([pair, date])
+  @@map("fx_daily")
+}
+
+// Official/tax reference rates (e.g. SBI TT buying rate) for Schedule FA / capital-gains INR conversion.
+model TaxFxRate {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  pair      String
+  rate      Decimal  @db.Decimal(14, 6)
+  rateBasis String // e.g. SBI_TT_BUY
+  source    String?
+
+  @@unique([pair, date, rateBasis])
+  @@map("tax_fx_rates")
+}
+
+// Broker-reported holdings at a point in time — used ONLY to reconcile units rebuilt from trades.
+model PositionSnapshot {
+  id         String           @id @default(cuid())
+  accountId  String
+  account    PortfolioAccount @relation(fields: [accountId], references: [id])
+  securityId String
+  security   Security         @relation(fields: [securityId], references: [id])
+  asOf       DateTime         @db.Date
+  qty        Decimal          @db.Decimal(20, 8) // current (post-split) units
+  source     String
+  createdAt  DateTime         @default(now())
+
+  @@unique([accountId, securityId, asOf])
+  @@map("position_snapshots")
+}
+
+// Links an INR outflow in the expense ledger to a USD funding of a portfolio account.
+model FundingLink {
+  id            String           @id @default(cuid())
+  transactionId String
+  transaction   Transaction      @relation(fields: [transactionId], references: [id])
+  accountId     String
+  account       PortfolioAccount @relation(fields: [accountId], references: [id])
+  usdAmount     Decimal?         @db.Decimal(20, 6)
+  fundedOn      DateTime?        @db.Date
+  notes         String?
+  createdAt     DateTime         @default(now())
+
+  @@unique([transactionId, accountId])
+  @@map("funding_links")
+}
+
+model TaxRuleSet {
+  id                String    @id @default(cuid())
+  jurisdiction      String // e.g. IN
+  assetClass        String // e.g. FOREIGN_LISTED_EQUITY
+  effectiveFrom     DateTime  @db.Date
+  effectiveTo       DateTime? @db.Date
+  ltThresholdMonths Int
+  ltRate            Decimal?  @db.Decimal(6, 4)
+  stRateNote        String? // ST gains taxed at slab; kept as note
+  notes             String?
+  createdAt         DateTime  @default(now())
+
+  @@map("tax_rule_sets")
+}
+
+model PortfolioImportBatch {
+  id           String                 @id @default(cuid())
+  source       PortfolioSource
+  startedAt    DateTime               @default(now())
+  finishedAt   DateTime?
+  status       String                 @default("running") // running | completed | failed
+  rowsIn       Int                    @default(0)
+  rowsInserted Int                    @default(0)
+  rowsSkipped  Int                    @default(0)
+  notes        String?
+  transactions PortfolioTransaction[]
+  cashEvents   CashEvent[]
+
+  @@map("portfolio_import_batches")
+}
+
+model PortfolioReviewItem {
+  id         String                @id @default(cuid())
+  type       PortfolioReviewType
+  status     PortfolioReviewStatus @default(open)
+  refTable   String?
+  refId      String?
+  detail     String
+  createdAt  DateTime              @default(now())
+  resolvedAt DateTime?
+
+  @@index([status])
+  @@map("portfolio_review_items")
 }

@@ -11,9 +11,11 @@ export default withAuth({
  *                    a scheduled Claude task with no browser/cookie; it has its own static
  *                    x-api-key check (see src/app/api/ingest/route.ts) and must NOT go through
  *                    this session gate or the scheduled import would break entirely.
+ *  - /api/portfolio/ingest — portfolio sync endpoint, same machine-to-machine pattern and x-api-key check
+ *                    (see src/app/api/portfolio/ingest/route.ts).
  *  - /sign-in      — would otherwise redirect-loop against itself
  *  - _next/static, favicon — static assets
  */
 export const config = {
-  matcher: ["/((?!api/auth|api/ingest|sign-in|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api/auth|api/ingest|api/portfolio/ingest|sign-in|_next/static|_next/image|favicon.ico).*)"],
 };

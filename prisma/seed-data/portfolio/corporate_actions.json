@@ -1,0 +1,23 @@
+[
+ {
+  "symbol": "BKNG",
+  "effectiveDate": "2026-04-06",
+  "type": "SPLIT",
+  "ratio": 25.0,
+  "source": "yfinance"
+ },
+ {
+  "symbol": "NFLX",
+  "effectiveDate": "2025-11-17",
+  "type": "SPLIT",
+  "ratio": 10.0,
+  "source": "yfinance"
+ },
+ {
+  "symbol": "NVDA",
+  "effectiveDate": "2024-06-10",
+  "type": "SPLIT",
+  "ratio": 10.0,
+  "source": "yfinance"
+ }
+]
