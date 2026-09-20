@@ -1,19 +1,11 @@
 import { prisma } from "@/lib/prisma";
-import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
+import { PageHeader, Card } from "@/components/ui";
 import MappingTabs from "../MappingTabs";
 import TestStringTool from "./TestStringTool";
-import { createCategoryRule, toggleCategoryRuleActive } from "../actions";
+import { createCategoryRule } from "../actions";
+import { RulesTable, MATCH_TYPES } from "./RulesTable";
 
 export const dynamic = "force-dynamic";
-
-const MATCH_TYPES = ["exact", "contains", "regex"] as const;
-
-const SOURCE_TONE: Record<string, "slate" | "amber" | "emerald" | "rose" | "blue"> = {
-  seeded_from_history: "slate",
-  user_defined: "blue",
-  llm_suggested: "amber",
-  review_queue_created: "emerald",
-};
 
 export default async function MappingRulesPage() {
   const [rules, categories] = await Promise.all([
@@ -99,59 +91,7 @@ export default async function MappingRulesPage() {
         </form>
       </Card>
 
-      <Card className="p-0">
-        <div className="overflow-x-auto">
-          {rules.length === 0 ? (
-            <div className="p-5">
-              <EmptyState>No category rules yet.</EmptyState>
-            </div>
-          ) : (
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-xs uppercase tracking-wide text-slate-500">
-                  <th className="px-4 py-3 font-medium">Pattern</th>
-                  <th className="px-4 py-3 font-medium">Match Type</th>
-                  <th className="px-4 py-3 font-medium">Category</th>
-                  <th className="px-4 py-3 font-medium">Priority</th>
-                  <th className="px-4 py-3 font-medium">Source</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                  <th className="px-4 py-3 font-medium"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {rules.map((rule) => (
-                  <tr key={rule.id} className={`border-b border-slate-100 ${!rule.isActive ? "opacity-50" : ""}`}>
-                    <td className="px-4 py-2 font-mono text-xs">{rule.pattern}</td>
-                    <td className="px-4 py-2 text-slate-600">{rule.matchType}</td>
-                    <td className="px-4 py-2 text-slate-800">
-                      {rule.category.name}
-                      <div className="text-xs text-slate-400">
-                        {rule.category.expenseType.expenseNature.name} / {rule.category.expenseType.name}
-                      </div>
-                    </td>
-                    <td className="px-4 py-2 text-slate-600">{rule.priority}</td>
-                    <td className="px-4 py-2">
-                      <Badge tone={SOURCE_TONE[rule.source] ?? "slate"}>{rule.source}</Badge>
-                    </td>
-                    <td className="px-4 py-2">
-                      {rule.isActive ? <Badge tone="emerald">active</Badge> : <Badge tone="rose">inactive</Badge>}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <form action={toggleCategoryRuleActive}>
-                        <input type="hidden" name="id" value={rule.id} />
-                        <input type="hidden" name="nextActive" value={(!rule.isActive).toString()} />
-                        <button type="submit" className="text-xs font-medium text-slate-500 hover:text-slate-800 hover:underline">
-                          {rule.isActive ? "Deactivate" : "Activate"}
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </Card>
+      <RulesTable rules={rules} categories={categories} />
     </div>
   );
 }

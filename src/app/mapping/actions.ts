@@ -171,6 +171,66 @@ export async function toggleCategoryRuleActive(formData: FormData) {
   revalidateMapping();
 }
 
+export interface CategoryRuleEdit {
+  matchType: RuleMatchType;
+  pattern: string;
+  categoryId: string;
+  priority: number;
+  isActive: boolean;
+}
+
+/** Single-row edit — the Rules table had no way to change an existing rule's pattern, match
+ *  type, category, or priority before this (only Activate/Deactivate). Called directly from
+ *  the client (RulesTable), not as a form action, so it can share loading/error handling with
+ *  the bulk edit below. */
+export async function updateCategoryRuleAction(id: string, changes: CategoryRuleEdit) {
+  if (!id) throw new Error("Missing rule id.");
+  const pattern = changes.pattern.trim();
+  if (!pattern) throw new Error("Pattern can't be empty.");
+  if (!changes.categoryId) throw new Error("Choose a category.");
+
+  await prisma.categoryRule.update({
+    where: { id },
+    data: {
+      matchType: changes.matchType,
+      pattern,
+      categoryId: changes.categoryId,
+      priority: Number.isFinite(changes.priority) ? changes.priority : 100,
+      isActive: changes.isActive,
+    },
+  });
+  revalidateMapping();
+}
+
+export interface CategoryRuleBulkEdit {
+  matchType?: RuleMatchType;
+  categoryId?: string;
+  priority?: number;
+  isActive?: boolean;
+}
+
+/**
+ * Applies the same change(s) to every selected rule at once — e.g. re-pointing a batch of
+ * rules to a different category, or flipping several from "exact" to "contains" in one go.
+ * Every field is optional and independent ("no change" in the UI just omits it here) so a
+ * single call can carry any subset of match type / category / priority / active without the
+ * caller needing several round trips. Pattern is deliberately NOT bulk-editable — rules almost
+ * always need distinct patterns, so setting them all to the same literal text would be a
+ * near-certain mistake; pattern changes stay single-row (see updateCategoryRuleAction).
+ */
+export async function bulkUpdateCategoryRulesAction(ids: string[], changes: CategoryRuleBulkEdit) {
+  if (!ids || ids.length === 0) return;
+  const data: Record<string, unknown> = {};
+  if (changes.matchType !== undefined) data.matchType = changes.matchType;
+  if (changes.categoryId !== undefined) data.categoryId = changes.categoryId;
+  if (changes.priority !== undefined && Number.isFinite(changes.priority)) data.priority = changes.priority;
+  if (changes.isActive !== undefined) data.isActive = changes.isActive;
+  if (Object.keys(data).length === 0) return;
+
+  await prisma.categoryRule.updateMany({ where: { id: { in: ids } }, data });
+  revalidateMapping();
+}
+
 export type TestStringResult =
   | { matched: true; categoryName: string; expenseTypeName: string; expenseNatureName: string; rulePattern: string; ruleMatchType: string; rulePriority: number }
   | { matched: false };
