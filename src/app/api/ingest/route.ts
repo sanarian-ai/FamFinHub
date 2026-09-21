@@ -25,6 +25,14 @@ type IngestTxn = {
   source: "gmail_daily" | "gmail_monthly_reconcile" | "manual" | "csv_import";
   categoryName?: string; // if the caller (Claude task) already resolved a category via its own reasoning
   suggestionReason?: string; // why, if uncertain — shown in the Review Queue
+  // Stable per-transaction identifier from the source — a Gmail message id for a gmail_daily
+  // alert email, or a bank-provided line reference / statement line index for a
+  // gmail_monthly_reconcile delta. Folded into the dedupe hash when present (see
+  // src/lib/dedupe.ts) so two genuinely distinct transactions that happen to share
+  // date+amount+account+description (e.g. two identical-fare Uber rides the same day) don't
+  // collide, while re-sending the same email/line still correctly dedupes. Omit only when no
+  // stable ref exists for this row (e.g. manual entry).
+  sourceRef?: string;
 };
 
 export async function POST(req: NextRequest) {
@@ -70,6 +78,7 @@ export async function POST(req: NextRequest) {
         t.amount,
         t.accountName,
         t.rawDescription,
+        t.sourceRef,
       );
 
       const existing = await prisma.transaction.findUnique({
