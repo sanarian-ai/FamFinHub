@@ -193,11 +193,11 @@ export async function ingestPortfolio(prisma: PrismaClient, body: Row): Promise<
   return { dryRun, importBatchId, results, reconciliation: rec.rows, reviewItemsOpened: reviewOpened + rec.opened };
 }
 
-/** Rebuilt units (from trades, split-adjusted, up to the snapshot date) vs the latest broker snapshot per position. */
-export async function reconcile(prisma: PrismaClient): Promise<{ rows: ReconRow[]; opened: number }> {
+/** Read-only: rebuilt units (from trades, split-adjusted, up to the snapshot date) vs the latest broker snapshot per position. */
+export async function computeReconciliation(prisma: PrismaClient): Promise<ReconRow[]> {
   const snaps = await prisma.positionSnapshot.findMany({ orderBy: { asOf: "desc" }, distinct: ["accountId", "securityId"], include: { account: { select: { key: true } }, security: { select: { symbol: true, actions: true } } } });
   const tx = await prisma.portfolioTransaction.findMany({ select: { accountId: true, securityId: true, side: true, qty: true, tradeDate: true } });
-  const rows: ReconRow[] = []; let opened = 0;
+  const rows: ReconRow[] = [];
   for (const s of snaps) {
     const acts = s.security.actions.map((a) => ({ effectiveDate: a.effectiveDate.toISOString().slice(0, 10), ratio: Number(a.ratio) }));
     let u = 0;
@@ -205,15 +205,23 @@ export async function reconcile(prisma: PrismaClient): Promise<{ rows: ReconRow[
       if (t.accountId !== s.accountId || t.securityId !== s.securityId || t.tradeDate > s.asOf) continue;
       u += (t.side === "BUY" ? 1 : -1) * Number(t.qty) * splitFactor(acts, t.tradeDate.toISOString().slice(0, 10));
     }
-    const reported = Number(s.qty), diff = u - reported, ok = Math.abs(diff) <= RECONCILE_TOL;
-    const row = { account: s.account.key, symbol: s.security.symbol, asOf: s.asOf.toISOString().slice(0, 10), rebuilt: u, reported, diff, ok };
-    rows.push(row);
+    const reported = Number(s.qty), diff = u - reported;
+    rows.push({ account: s.account.key, symbol: s.security.symbol, asOf: s.asOf.toISOString().slice(0, 10), rebuilt: u, reported, diff, ok: Math.abs(diff) <= RECONCILE_TOL });
+  }
+  return rows;
+}
+
+/** Reconciles and records the outcome as review items (opened, refreshed while open, auto-resolved when matched). */
+export async function reconcile(prisma: PrismaClient): Promise<{ rows: ReconRow[]; opened: number }> {
+  const rows = await computeReconciliation(prisma);
+  let opened = 0;
+  for (const row of rows) {
     const refId = `${row.account}|${row.symbol}`;
     const open = await prisma.portfolioReviewItem.findFirst({ where: { type: "UNITS_MISMATCH", status: "open", refId } });
-    const detail = `${refId}: rebuilt ${u.toFixed(6)} vs broker ${reported.toFixed(6)} as of ${row.asOf} (diff ${diff.toFixed(6)})`;
-    if (!ok && !open) { await prisma.portfolioReviewItem.create({ data: { type: "UNITS_MISMATCH", refTable: "position_snapshots", refId, detail } }); opened++; }
-    else if (!ok && open) await prisma.portfolioReviewItem.update({ where: { id: open.id }, data: { detail } });
-    else if (ok && open) await prisma.portfolioReviewItem.update({ where: { id: open.id }, data: { status: "resolved", resolvedAt: new Date() } });
+    const detail = `${refId}: rebuilt ${row.rebuilt.toFixed(6)} vs broker ${row.reported.toFixed(6)} as of ${row.asOf} (diff ${row.diff.toFixed(6)})`;
+    if (!row.ok && !open) { await prisma.portfolioReviewItem.create({ data: { type: "UNITS_MISMATCH", refTable: "position_snapshots", refId, detail } }); opened++; }
+    else if (!row.ok && open) await prisma.portfolioReviewItem.update({ where: { id: open.id }, data: { detail } });
+    else if (row.ok && open) await prisma.portfolioReviewItem.update({ where: { id: open.id }, data: { status: "resolved", resolvedAt: new Date() } });
   }
   return { rows, opened };
 }

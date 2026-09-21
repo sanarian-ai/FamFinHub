@@ -99,7 +99,7 @@ export function inceptionStart(ctx: Ctx, accounts?: string[]): string {
   return isoDate(t(firstTradeDate(ctx, accounts)) - DAY);
 }
 
-function idxOn(dates: string[], d: string): number {
+export function idxOn(dates: string[], d: string): number {
   let lo = 0, hi = dates.length - 1, r = 0;
   while (lo <= hi) { const m = (lo + hi) >> 1; if (dates[m] <= d) { r = m; lo = m + 1; } else hi = m - 1; }
   return r;

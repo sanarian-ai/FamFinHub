@@ -7,6 +7,7 @@ import SignOutButton from "./SignOutButton";
 const links = [
   { href: "/", label: "Dashboard", icon: "📊" },
   { href: "/ledger", label: "Ledger", icon: "📒" },
+  { href: "/portfolio", label: "Portfolio", icon: "💼" },
   { href: "/review", label: "Review Queue", icon: "🔎", badge: true },
   { href: "/insights", label: "Insights & Trends", icon: "📈" },
   { href: "/mapping", label: "Mapping Admin", icon: "🗂️" },
