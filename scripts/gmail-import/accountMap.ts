@@ -10,18 +10,31 @@
  *  - "3107" appears on credit-card alerts CC'd to riaishere@gmail.com, confirmed by Sangeeth
  *    to be Ria's add-on card on the same ICICI credit account -> logged as iciciRiaCredit,
  *    same convention the historical sheet migration already used.
- *  - "3206" — Appa's supplementary card, found only via the Mar-Jun statement PDF audit (Sep 2026);
- *    no alert email for it has been seen in this inbox yet, so this mapping is untested against
- *    a live alert and should be verified the first time one arrives.
+ *  - "3206" — Appa's supplementary card. Confirmed against a real live alert 2026-09-16
+ *    ("PAX INNOVATION ICT SER", INR 2.00) — this mapping is now verified, not just inferred.
  *
- * Not yet mapped: Ria's ICICI debit account and SBI credit card — those alerts don't reach
- * this inbox (per the Phase 3/5 audit) until Ria's Gmail forwarding is set up.
+ * Provisional, not yet confirmed against a live alert:
+ *  - "3129" — Ria's ICICI account number ends in this per her own forwarded statement subject
+ *    lines (2026-09-21 audit); mapped to iciciRiaSavings on that inference. Ria's Gmail
+ *    forwarding for live per-transaction alerts was only just set up (2026-09-21) — verify this
+ *    mapping the first time an actual forwarded alert (not a statement) arrives.
+ *
+ * Explicitly NOT mapped — do not guess:
+ *  - "3305" — a live credit-card alert for this card arrived 2026-09-16 alongside the XX3206
+ *    confirmation, but whose card this is has not been established. Any daily-import run must
+ *    report this as excluded/unmapped rather than silently drop or guess-assign it.
+ *
+ * Not yet mapped: SBI credit card (Ria's) — no per-transaction alert template has ever been
+ * seen for it, only monthly statements; it is handled via monthly reconciliation only, not this
+ * last-digit map.
  */
 export const ACCOUNT_LAST_DIGIT_MAP: Record<string, string> = {
   "630": "iciciSavings",
   "3008": "iciciCredit",
   "3107": "iciciRiaCredit",
-  "3206": "iciciCard3206", // Appa's supplementary card — surfaced once in the May19-Jun18 statement audit, no alert emails seen yet
+  "3206": "iciciCard3206", // Appa's supplementary card — confirmed against a live alert 2026-09-16
+  "3129": "iciciRiaSavings", // provisional — inferred from Ria's forwarded statement subject, not yet confirmed against a live alert
+  // "3305" deliberately absent — unidentified card, must not be guess-mapped (see comment above)
 };
 
 export function resolveAccountName(lastDigits: string): string | null {
