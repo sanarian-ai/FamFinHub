@@ -90,6 +90,7 @@ model Category {
   isActive      Boolean       @default(true)
   transactions  Transaction[]
   rules         CategoryRule[]
+  retirementLinks RetirementBaselineLink[]
 
   @@map("categories")
 }
@@ -458,4 +459,129 @@ model PortfolioReviewItem {
 
   @@index([status])
   @@map("portfolio_review_items")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────
+// Retirement planning — see project docs "retirement-in-financer-criteria-and-integration.md"
+// and "retirement-financer-m1-engine-log.md". Additive only: the sole change above is the
+// RetirementBaselineLink back-relation on Category (no column or table altered).
+// Design rules: (1) baseline spend is typed by the user and never overwritten by a sync; the
+// ledger is shown beside it as a trailing-12-month reference, computed at read time and never
+// stored. (2) Every save creates an immutable RetirementPlanVersion snapshot, so a result can
+// always be reproduced from the exact inputs that produced it. (3) All money is ₹ lakh, the
+// engine's unit (src/lib/retirement).
+// ─────────────────────────────────────────────────────────────────────────────────────────
+
+enum RetirementBaselineGroup {
+  spend // the 12 sub-buckets (monthly, today's money)
+  fixed // health, insurance, school, EMI
+  asset // opening pool, EPF/NPS
+  income // rent, Generali sum assured base
+}
+
+enum RetirementBaselineUnit {
+  monthly
+  annual
+  lump
+}
+
+enum RetirementEventKind {
+  expense // today's money, inflated at CPI to the event year
+  inflow // nominal amount in the event year
+}
+
+model RetirementPlan {
+  id                String                   @id @default(cuid())
+  name              String
+  // Household by default; a per-person plan can be added later without a schema change.
+  scope             String                   @default("household")
+  // Working copies edited on screen. Engine Params and Assumptions as JSON, validated in
+  // src/lib/retirement/store.ts before every write. A saved version snapshots these.
+  params            Json
+  assumptions       Json
+  // Drift flag: a baseline row is flagged when its trailing-12-month ledger actual differs from
+  // the typed value by more than this percentage. User-set, plan-wide.
+  driftThresholdPct Decimal                  @default(10) @db.Decimal(5, 2)
+  createdAt         DateTime                 @default(now())
+  updatedAt         DateTime                 @updatedAt
+  archivedAt        DateTime?
+  baselineItems     RetirementBaselineItem[]
+  lifeEvents        RetirementLifeEvent[]
+  versions          RetirementPlanVersion[]
+
+  @@map("retirement_plans")
+}
+
+model RetirementBaselineItem {
+  id             String                   @id @default(cuid())
+  planId         String
+  plan           RetirementPlan           @relation(fields: [planId], references: [id], onDelete: Cascade)
+  // Stable key the engine reads: sub.food, sub.home, ... health, insurance, school, emi,
+  // openingPool, rent, epf, genSumAssured.
+  key            String
+  label          String
+  group          RetirementBaselineGroup
+  unit           RetirementBaselineUnit
+  valueL         Decimal                  @db.Decimal(14, 4) // ₹ lakh per `unit`, today's money
+  // When the user last confirmed this number. A ledger sync never touches it.
+  lastReviewedAt DateTime                 @default(now())
+  note           String?
+  sortOrder      Int                      @default(0)
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @updatedAt
+  ledgerLinks    RetirementBaselineLink[]
+
+  @@unique([planId, key])
+  @@map("retirement_baseline_items")
+}
+
+// Which ledger categories feed the trailing-12-month reference shown beside a baseline row.
+// A real FK to Category (categories are deactivated, never hard-deleted), so a mapping cannot
+// silently dangle. Reference only: this table never changes a baseline value.
+model RetirementBaselineLink {
+  itemId     String
+  item       RetirementBaselineItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category               @relation(fields: [categoryId], references: [id])
+
+  @@id([itemId, categoryId])
+  @@index([categoryId])
+  @@map("retirement_baseline_links")
+}
+
+model RetirementLifeEvent {
+  id        String              @id @default(cuid())
+  planId    String
+  plan      RetirementPlan      @relation(fields: [planId], references: [id], onDelete: Cascade)
+  year      Int
+  label     String
+  kind      RetirementEventKind
+  amountL   Decimal             @db.Decimal(14, 4)
+  note      String?
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@index([planId, year])
+  @@map("retirement_life_events")
+}
+
+// Immutable. Created on every explicit "save version"; never updated.
+model RetirementPlanVersion {
+  id            String         @id @default(cuid())
+  planId        String
+  plan          RetirementPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  version       Int
+  label         String?
+  // Full input state at save time: params, assumptions, baseline items (with lastReviewedAt),
+  // life events. Enough to reproduce the result with the engine version below.
+  snapshot      Json
+  engineVersion String
+  // Result recorded at save time so versions can be compared without recomputing.
+  successPct    Decimal?       @db.Decimal(5, 2)
+  band          String? // Adequate | Just enough | Inadequate
+  depletionYear Int? // deterministic path depletion year, null if it lasts to 2082
+  createdAt     DateTime       @default(now())
+
+  @@unique([planId, version])
+  @@map("retirement_plan_versions")
 }
