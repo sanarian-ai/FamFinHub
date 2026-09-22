@@ -1,8 +1,15 @@
 /** All money in ₹ lakh (100 lakh = 1 Cr). Years are calendar years; 2026 is a Q4 stub (valuation date 1 Oct 2026). */
 
+/**
+ * Revised 2026-09-22: home upkeep split into homeMaint/houseStaff (Essential core); shopping and
+ * personal care merged into lifestyle; other (gym + advisory fees) dissolved — gym joins
+ * houseStaff, advisory and service fees become finSvc. Each key equals one or more whole ledger
+ * Expense Types (see retirement-baseline-ledger-mapping-proposal.md) except a documented few
+ * (Health Insurance -> health, TUIG EMI -> emi from the Property Purchase Type).
+ */
 export type SubKey =
-  | "food" | "home" | "transport" | "utilities"
-  | "shopping" | "dining" | "learning" | "giving" | "subs" | "care" | "travel" | "other";
+  | "food" | "homeMaint" | "houseStaff" | "transport" | "utilities"
+  | "lifestyle" | "dining" | "learning" | "giving" | "subs" | "travel" | "finSvc";
 
 export interface SubBucket { k: SubKey; n: string; b: "core" | "flex"; }
 

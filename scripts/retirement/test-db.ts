@@ -48,10 +48,10 @@ async function main() {
   });
 
   await t("'keep my number' advances the review date and leaves the value", async () => {
-    const b = (await loadPlan(db, planId)).items.find((i) => i.key === "sub.home")!;
+    const b = (await loadPlan(db, planId)).items.find((i) => i.key === "sub.homeMaint")!;
     await new Promise((r) => setTimeout(r, 20));
-    await markBaselineReviewed(db, planId, "sub.home");
-    const a = (await loadPlan(db, planId)).items.find((i) => i.key === "sub.home")!;
+    await markBaselineReviewed(db, planId, "sub.homeMaint");
+    const a = (await loadPlan(db, planId)).items.find((i) => i.key === "sub.homeMaint")!;
     assert.equal(a.valueL, b.valueL); assert.ok(a.lastReviewedAt > b.lastReviewedAt);
   });
 
@@ -108,7 +108,7 @@ async function main() {
     const snap = stored!.snapshot as unknown as Snapshot;
     const re = evaluate(stateFromSnapshot(snap));
     assert.equal(re.successPct, rows[0].successPct); assert.equal(re.band, rows[0].band);
-    assert.equal(snap.baseline.find((i) => i.key === "sub.travel")!.valueL, 1.02);
+    assert.equal(snap.baseline.find((i) => i.key === "sub.travel")!.valueL, 1.0206);
   });
 
   await t("five concurrent saves get gap-free unique version numbers", async () => {

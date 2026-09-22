@@ -39,7 +39,7 @@ t("editing the baseline changes the verdict and never mutates the defaults", () 
   const s = defaultPlanState(); const before = evaluate(s).successPct;
   s.baseline.subMonthlyL.travel = 2.0;
   assert.ok(evaluate(s).successPct < before);
-  assert.equal(DEFAULT_BASELINE.subMonthlyL.travel, 1.02);
+  assert.equal(DEFAULT_BASELINE.subMonthlyL.travel, 1.0206);
 });
 
 t("defaults validate", () => { validateParams(DEFAULT_PARAMS); validateAssumptions(DEFAULT_ASSUMPTIONS); });
