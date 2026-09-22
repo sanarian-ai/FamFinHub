@@ -11,7 +11,7 @@ const links = [
   { href: "/review", label: "Review Queue", icon: "🔎", badge: true },
   { href: "/insights", label: "Insights & Trends", icon: "📈" },
   { href: "/mapping", label: "Mapping Admin", icon: "🗂️" },
-  { href: "/retirement/baseline", label: "Retirement", icon: "🏖️" },
+  { href: "/retirement/plan", label: "Retirement", icon: "🏖️" },
 ];
 
 export default async function Nav() {

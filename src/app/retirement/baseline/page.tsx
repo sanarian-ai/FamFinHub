@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { loadPlan } from "@/lib/retirement";
 import type { RetirementDb } from "@/lib/retirement";
@@ -49,6 +50,11 @@ export default async function BaselinePage() {
       <PageHeader
         title="Retirement baseline"
         subtitle={`${plan.name} · drift flagged at ${plan.driftThresholdPct}% · values are manual — the ledger is shown for reference only and is never written automatically.`}
+        actions={
+          <Link href="/retirement/plan" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+            View plan verdict →
+          </Link>
+        }
       />
       {SECTIONS.map((section) => (
         <Card key={section.title}>
