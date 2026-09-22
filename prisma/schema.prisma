@@ -483,6 +483,7 @@ enum RetirementBaselineGroup {
   fixed // health, insurance, school, EMI
   asset // opening pool, EPF/NPS
   income // rent, Generali sum assured base
+  netWorth // tracked-only: net worth by asset class (not fed into compute())
 }
 
 enum RetirementBaselineUnit {
