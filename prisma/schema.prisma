@@ -202,6 +202,7 @@ model ImportBatch {
 enum PortfolioBroker {
   INDMONEY_ALPACA
   IBKR
+  KABIR_PMS // Kabir Capital Advisors LLP - Two Rules Value Fund (India equity PMS, held in Ria's demat via Nuvama)
 }
 
 enum TradeSide {
@@ -213,6 +214,7 @@ enum SecurityKind {
   STOCK
   ETF
   BENCHMARK
+  MUTUAL_FUND // liquid/arbitrage funds a PMS parks idle cash in; not a portfolio "holding" the client chose
 }
 
 enum CashEventType {
@@ -228,12 +230,16 @@ enum PortfolioSource {
   indmoney_report
   ibkr_api
   manual
+  kabir_pms_report // Nuvama Wealthspectrum portal exports, read via Chrome under the user's logged-in session
 }
 
 enum CorporateActionType {
   SPLIT
   REVERSE_SPLIT
   SYMBOL_CHANGE
+  BONUS // Indian-equity corporate actions; not yet observed in the Kabir PMS data (added ahead of need)
+  RIGHTS
+  DEMERGER
 }
 
 enum PortfolioReviewType {

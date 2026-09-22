@@ -5,11 +5,19 @@ import { Prisma, type PrismaClient } from "@prisma/client";
 import { splitFactor } from "./splits";
 
 export const MAX_ROWS = 5000;
-const SOURCES = ["indmoney_report", "ibkr_api", "manual"] as const;
+const SOURCES = ["indmoney_report", "ibkr_api", "manual", "kabir_pms_report"] as const;
 const SIDES = ["BUY", "SELL"] as const;
 const CASH_TYPES = ["DIVIDEND", "WITHHOLDING_TAX", "FEE", "DEPOSIT", "WITHDRAWAL", "INTEREST"] as const;
-const ACTION_TYPES = ["SPLIT", "REVERSE_SPLIT", "SYMBOL_CHANGE"] as const;
-const KINDS = ["STOCK", "ETF", "BENCHMARK"] as const;
+const ACTION_TYPES = ["SPLIT", "REVERSE_SPLIT", "SYMBOL_CHANGE", "BONUS", "RIGHTS", "DEMERGER"] as const;
+const KINDS = ["STOCK", "ETF", "BENCHMARK", "MUTUAL_FUND"] as const;
+// The session-date convention differs by market: US sources settle to the America/New_York session
+// date, the Kabir PMS (NSE/BSE, via Nuvama) to the Asia/Kolkata session date.
+const SESSION_TZ: Record<string, string> = {
+  indmoney_report: "America/New_York",
+  ibkr_api: "America/New_York",
+  manual: "America/New_York",
+  kabir_pms_report: "Asia/Kolkata",
+};
 export const RECONCILE_TOL = 1e-4; // units
 
 type Row = Record<string, any>;
@@ -23,7 +31,7 @@ export type IngestResult = {
 const isDate = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !isNaN(Date.parse(`${s}T00:00:00Z`)) && new Date(`${s}T00:00:00Z`).toISOString().slice(0, 10) === s;
 const isNum = (x: unknown) => (typeof x === "number" || (typeof x === "string" && x.trim() !== "")) && Number.isFinite(Number(x));
 const dec = (x: unknown) => new Prisma.Decimal(String(x));
-const nyDate = (ts: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(ts);
+const sessionDate = (ts: Date, source: string) => new Intl.DateTimeFormat("en-CA", { timeZone: SESSION_TZ[source] ?? "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" }).format(ts);
 const d = (s: string) => new Date(`${s}T00:00:00Z`);
 const chunks = <T,>(a: T[], n: number) => Array.from({ length: Math.ceil(a.length / n) }, (_, i) => a.slice(i * n, i * n + n));
 const empty = (n: number): TypeResult => ({ received: n, inserted: 0, skipped: 0, rejected: [] });
@@ -98,8 +106,8 @@ export async function ingestPortfolio(prisma: PrismaClient, body: Row): Promise<
     if (!err && (typeof r.execTs !== "string" || isNaN(ts.getTime()))) err = "execTs must be an ISO-8601 UTC timestamp";
     let tradeDate = "";
     if (!err) {
-      tradeDate = nyDate(ts);
-      if (r.tradeDate !== undefined && r.tradeDate !== tradeDate) err = `tradeDate ${r.tradeDate} inconsistent with execTs (US session date is ${tradeDate})`;
+      tradeDate = sessionDate(ts, r.source);
+      if (r.tradeDate !== undefined && r.tradeDate !== tradeDate) err = `tradeDate ${r.tradeDate} inconsistent with execTs (${SESSION_TZ[r.source] ?? "America/New_York"} session date is ${tradeDate})`;
     }
     if (err) return results.transactions.rejected.push({ row: i, error: err });
     txOk.push({ accountId: accId.get(r.account)!, securityId: secId.get(r.symbol)!, side: r.side, qty: dec(r.qty), price: dec(r.price), fee: dec(r.fee ?? 0), execTs: ts, tradeDate: d(tradeDate), source: r.source, brokerRef: r.brokerRef });
