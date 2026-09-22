@@ -61,7 +61,7 @@ const SECURITIES: Record<string, { symbol: string; kind: "STOCK" | "MUTUAL_FUND"
   "NUVOCO VISTAS CORPORATION LIMITED": { symbol: "NUVOCO", kind: "STOCK" },
   "ONWARD TECHNOLOGIES LTD.": { symbol: "ONWARDTEC", kind: "STOCK" },
   "ORIENT BELL Ltd": { symbol: "ORIENTBELL", kind: "STOCK" },
-  "P.E. Analytics Limited": { symbol: "PEANALYTICS", kind: "STOCK" },
+  "P.E. Analytics Limited": { symbol: "PROPEQUITY", kind: "STOCK" },
   "PNGS REVA DIAMOND JEWELLERY LIMITED": { symbol: "PNGSREVA", kind: "STOCK" },
   "RPSG VENTURES LTD": { symbol: "RPSGVENT", kind: "STOCK" },
   "Religare Enterprises Ltd": { symbol: "RELIGARE", kind: "STOCK" },
@@ -69,7 +69,7 @@ const SECURITIES: Record<string, { symbol: string; kind: "STOCK" | "MUTUAL_FUND"
   "SBI Arbitrage Opportunities Fund - Direct Plan Growth Option": { symbol: "SBIARB", kind: "MUTUAL_FUND" },
   "TRUE COLORS LIMITED": { symbol: "TRUECOLORS", kind: "STOCK" },
   "TeamLease Services Ltd": { symbol: "TEAMLEASE", kind: "STOCK" },
-  "Technocraft Industries India Ltd": { symbol: "TECHNOCRAFT", kind: "STOCK" },
+  "Technocraft Industries India Ltd": { symbol: "TIIL", kind: "STOCK" },
 };
 
 function symbolOf(name: string): string {

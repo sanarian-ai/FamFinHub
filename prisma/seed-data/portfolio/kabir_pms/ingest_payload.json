@@ -136,7 +136,7 @@
       "exchange": "NSE"
     },
     {
-      "symbol": "PEANALYTICS",
+      "symbol": "PROPEQUITY",
       "name": "P.E. Analytics Limited",
       "kind": "STOCK",
       "currency": "INR",
@@ -192,7 +192,7 @@
       "exchange": "NSE"
     },
     {
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "name": "Technocraft Industries India Ltd",
       "kind": "STOCK",
       "currency": "INR",
@@ -250,7 +250,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "side": "BUY",
       "qty": 8,
       "price": 1998.6988,
@@ -258,7 +258,7 @@
       "execTs": "2026-01-23T10:00:00Z",
       "tradeDate": "2026-01-23",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-01-23:TECHNOCRAFT:BUY"
+      "brokerRef": "KBR:2026-01-23:TIIL:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -298,7 +298,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "side": "BUY",
       "qty": 10,
       "price": 2049.092,
@@ -306,7 +306,7 @@
       "execTs": "2026-01-29T10:00:00Z",
       "tradeDate": "2026-01-29",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-01-29:TECHNOCRAFT:BUY"
+      "brokerRef": "KBR:2026-01-29:TIIL:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -346,7 +346,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "side": "BUY",
       "qty": 9,
       "price": 1918.3956,
@@ -354,7 +354,7 @@
       "execTs": "2026-02-02T10:00:00Z",
       "tradeDate": "2026-02-02",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-02-02:TECHNOCRAFT:BUY"
+      "brokerRef": "KBR:2026-02-02:TIIL:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -382,7 +382,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "PEANALYTICS",
+      "symbol": "PROPEQUITY",
       "side": "BUY",
       "qty": 600,
       "price": 198.4278,
@@ -390,7 +390,7 @@
       "execTs": "2026-02-13T10:00:00Z",
       "tradeDate": "2026-02-13",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-02-13:PEANALYTICS:BUY"
+      "brokerRef": "KBR:2026-02-13:PROPEQUITY:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -490,7 +490,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "side": "BUY",
       "qty": 12,
       "price": 2312,
@@ -498,7 +498,7 @@
       "execTs": "2026-02-19T10:00:00Z",
       "tradeDate": "2026-02-19",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-02-19:TECHNOCRAFT:BUY"
+      "brokerRef": "KBR:2026-02-19:TIIL:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -586,7 +586,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "PEANALYTICS",
+      "symbol": "PROPEQUITY",
       "side": "BUY",
       "qty": 600,
       "price": 192.57,
@@ -594,7 +594,7 @@
       "execTs": "2026-02-25T10:00:00Z",
       "tradeDate": "2026-02-25",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-02-25:PEANALYTICS:BUY"
+      "brokerRef": "KBR:2026-02-25:PROPEQUITY:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -742,7 +742,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "PEANALYTICS",
+      "symbol": "PROPEQUITY",
       "side": "BUY",
       "qty": 600,
       "price": 174,
@@ -750,11 +750,11 @@
       "execTs": "2026-03-04T10:00:00Z",
       "tradeDate": "2026-03-04",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-03-04:PEANALYTICS:BUY"
+      "brokerRef": "KBR:2026-03-04:PROPEQUITY:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "side": "BUY",
       "qty": 36,
       "price": 2140.2325,
@@ -762,7 +762,7 @@
       "execTs": "2026-03-04T10:00:00Z",
       "tradeDate": "2026-03-04",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-03-04:TECHNOCRAFT:BUY"
+      "brokerRef": "KBR:2026-03-04:TIIL:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -958,7 +958,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "side": "BUY",
       "qty": 5,
       "price": 2075.122,
@@ -966,11 +966,11 @@
       "execTs": "2026-03-11T10:00:00Z",
       "tradeDate": "2026-03-11",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-03-11:TECHNOCRAFT:BUY"
+      "brokerRef": "KBR:2026-03-11:TIIL:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "side": "BUY",
       "qty": 26,
       "price": 2049.5612,
@@ -978,7 +978,7 @@
       "execTs": "2026-03-12T10:00:00Z",
       "tradeDate": "2026-03-12",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-03-12:TECHNOCRAFT:BUY"
+      "brokerRef": "KBR:2026-03-12:TIIL:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -1114,7 +1114,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "side": "BUY",
       "qty": 10,
       "price": 1980.667,
@@ -1122,7 +1122,7 @@
       "execTs": "2026-03-16T10:00:00Z",
       "tradeDate": "2026-03-16",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-03-16:TECHNOCRAFT:BUY"
+      "brokerRef": "KBR:2026-03-16:TIIL:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -1198,7 +1198,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "PEANALYTICS",
+      "symbol": "PROPEQUITY",
       "side": "BUY",
       "qty": 600,
       "price": 195,
@@ -1206,7 +1206,7 @@
       "execTs": "2026-03-20T10:00:00Z",
       "tradeDate": "2026-03-20",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-03-20:PEANALYTICS:BUY"
+      "brokerRef": "KBR:2026-03-20:PROPEQUITY:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -1306,7 +1306,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "PEANALYTICS",
+      "symbol": "PROPEQUITY",
       "side": "BUY",
       "qty": 600,
       "price": 192.05,
@@ -1314,11 +1314,11 @@
       "execTs": "2026-03-23T10:00:00Z",
       "tradeDate": "2026-03-23",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-03-23:PEANALYTICS:BUY"
+      "brokerRef": "KBR:2026-03-23:PROPEQUITY:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "side": "BUY",
       "qty": 28,
       "price": 2062.0046,
@@ -1326,7 +1326,7 @@
       "execTs": "2026-03-23T10:00:00Z",
       "tradeDate": "2026-03-23",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-03-23:TECHNOCRAFT:BUY"
+      "brokerRef": "KBR:2026-03-23:TIIL:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -1354,7 +1354,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "PEANALYTICS",
+      "symbol": "PROPEQUITY",
       "side": "BUY",
       "qty": 600,
       "price": 178.8304,
@@ -1362,7 +1362,7 @@
       "execTs": "2026-03-24T10:00:00Z",
       "tradeDate": "2026-03-24",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-03-24:PEANALYTICS:BUY"
+      "brokerRef": "KBR:2026-03-24:PROPEQUITY:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -2362,7 +2362,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "side": "BUY",
       "qty": 50,
       "price": 2451.9998,
@@ -2370,7 +2370,7 @@
       "execTs": "2026-07-16T10:00:00Z",
       "tradeDate": "2026-07-16",
       "source": "kabir_pms_report",
-      "brokerRef": "KBR:2026-07-16:TECHNOCRAFT:BUY"
+      "brokerRef": "KBR:2026-07-16:TIIL:BUY"
     },
     {
       "account": "KABIR_PMS_RIA",
@@ -2861,13 +2861,13 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "type": "DIVIDEND",
       "amount": 2880,
       "currency": "INR",
       "eventDate": "2026-06-12",
       "source": "kabir_pms_report",
-      "brokerRef": "DIV:2026-06-04:TECHNOCRAFT",
+      "brokerRef": "DIV:2026-06-04:TIIL",
       "notes": null
     },
     {
@@ -3016,7 +3016,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "PEANALYTICS",
+      "symbol": "PROPEQUITY",
       "asOf": "2026-09-18",
       "qty": 3600,
       "snapshotSource": "kabir_pms_report"
@@ -3065,7 +3065,7 @@
     },
     {
       "account": "KABIR_PMS_RIA",
-      "symbol": "TECHNOCRAFT",
+      "symbol": "TIIL",
       "asOf": "2026-09-18",
       "qty": 194,
       "snapshotSource": "kabir_pms_report"

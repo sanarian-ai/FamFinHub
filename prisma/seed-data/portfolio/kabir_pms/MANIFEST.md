@@ -28,8 +28,22 @@ CSV and an XLS attempt; retried once, not looped further per the user's instruct
 
 ## Symbols
 
-Indian-equity ISIN/NSE-ticker lookup was not available in this session, so every `symbol` below
-is an internal placeholder derived from the security's legal name (see `parse.ts` SYMBOL_MAP),
-not a confirmed exchange ticker. This is fine for P2 (ingest + reconciliation, which key off the
-internal symbol) but must be corrected to real NSE symbols before the daily price-feed task (P5)
-is wired up, since that task needs a real ticker to fetch quotes.
+All 24 equities now carry confirmed, currently-listed NSE ticker symbols (resolved 22 Sep 2026 via
+web research against nseindia.com and cross-checked secondary sources; True Colors Limited and
+PNGS Reva Diamond Jewellery Limited confirmed directly by the user: NSE:TRUECOLORS / BSE:544531 and
+NSE:PNGSREVA / BSE:544718 respectively). Two of the original internal placeholders did not match the
+real ticker and were renamed in place (Security.symbol updated by id, transactions/cashEvents/
+snapshots re-point automatically via the unchanged securityId — no re-ingest needed):
+
+| Legal name | Placeholder (P2 backfill) | Confirmed NSE ticker |
+|---|---|---|
+| P.E. Analytics Limited | PEANALYTICS | PROPEQUITY |
+| Technocraft Industries India Ltd | TECHNOCRAFT | TIIL |
+
+All other 22 placeholders already matched the real NSE ticker exactly, so no rename was needed for
+them. Two rename-history notes worth knowing if cross-checking old broker paperwork: Alldigi Tech
+Limited was formerly Allsec Technologies (ticker ALLSEC → ALLDIGI), and RPSG Ventures Ltd was
+formerly CESC Ventures Limited. One same-initials trap: KCP Ltd (ticker KCP) is unrelated to KCP
+Sugar and Industries Corporation Ltd (ticker KCPSUGIND) — this holding is the former.
+
+Symbols are now real tickers, ready for the daily price-feed task (P5).
