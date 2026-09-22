@@ -1,31 +1,13 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { addLifeEvent, band, compute, computeSensitivities, deleteLifeEvent, loadPlan, simulate } from "@/lib/retirement";
+import { band, compute, computeSensitivities, loadPlan, simulate } from "@/lib/retirement";
 import type { Band, RetirementDb, SensitivityResult } from "@/lib/retirement";
 
 // Same cast pattern as retirement/baseline/actions.ts and scripts/retirement/test-db.ts — the
 // narrow RetirementDb interface has no index signature, so the generated Prisma client (a
 // structural superset) needs an explicit cast.
 const db = prisma as unknown as RetirementDb;
-
-function revalidatePlan() {
-  revalidatePath("/retirement/plan");
-}
-
-export async function addLifeEventAction(
-  planId: string,
-  e: { year: number; kind: "expense" | "inflow"; amount: number; label: string; note?: string },
-): Promise<void> {
-  await addLifeEvent(db, planId, e);
-  revalidatePlan();
-}
-
-export async function deleteLifeEventAction(planId: string, eventId: string): Promise<void> {
-  await deleteLifeEvent(db, planId, eventId);
-  revalidatePlan();
-}
 
 export interface EvaluationResult {
   successPct: number;
@@ -43,6 +25,11 @@ export interface EvaluationResult {
  * calls this on render; only EvaluationPanel's button does, client-side, on click. Read-only (no
  * revalidatePath) — it returns data to the client rather than persisting anything, by design: OK
  * for the number to just be blank again on the next visit until re-triggered.
+ *
+ * Life-event editing lives on /retirement/baseline now (../baseline/actions.ts,
+ * ../baseline/LifeEventEditor.tsx) — grouped there with the baseline sub-bucket editor as the
+ * "infrequent configuration" page, so this file only has to hold the plan screen's one on-demand
+ * calculation.
  */
 export async function runEvaluationAction(planId: string, paths = 10000): Promise<EvaluationResult> {
   const plan = await loadPlan(db, planId);

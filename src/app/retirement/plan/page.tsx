@@ -9,7 +9,6 @@ import { prisma } from "@/lib/prisma";
 // duplicated so there is exactly one place that knows the plan's name.
 import { getBaselinePlanId } from "../baseline/data";
 import { EvaluationPanel } from "./EvaluationPanel";
-import { LifeEventEditor } from "./LifeEventEditor";
 
 const db = prisma as unknown as RetirementDb;
 
@@ -72,7 +71,7 @@ export default async function PlanPage({
         subtitle={`${plan.name} · valuation 1 Oct 2026`}
         actions={
           <Link href="/retirement/baseline" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            Review baseline inputs &rarr;
+            Baseline &amp; life events &rarr;
           </Link>
         }
       />
@@ -130,8 +129,6 @@ export default async function PlanPage({
           </table>
         </div>
       </Card>
-
-      <LifeEventEditor planId={planId} events={plan.events} />
     </div>
   );
 }

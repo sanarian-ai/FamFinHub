@@ -5,6 +5,7 @@ import type { RetirementDb } from "@/lib/retirement";
 import { prisma } from "@/lib/prisma";
 import { getBaselinePlanId, getLedgerActuals } from "./data";
 import { BaselineRow, type RowUnit } from "./BaselineRow";
+import { LifeEventEditor } from "./LifeEventEditor";
 
 const db = prisma as unknown as RetirementDb;
 
@@ -99,6 +100,7 @@ export default async function BaselinePage() {
           </table>
         </Card>
       ))}
+      <LifeEventEditor planId={planId} events={plan.events} />
     </div>
   );
 }

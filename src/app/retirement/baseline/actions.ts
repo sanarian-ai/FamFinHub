@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { markBaselineReviewed, setBaselineValue } from "@/lib/retirement";
+import { addLifeEvent, deleteLifeEvent, markBaselineReviewed, setBaselineValue } from "@/lib/retirement";
 import type { RetirementDb } from "@/lib/retirement";
 import { getLedgerActuals } from "./data";
 
@@ -39,5 +39,18 @@ export async function useLedgerValueAction(planId: string, key: string, unit: "m
   if (!a) throw new Error("No ledger reference for " + key);
   const value = unit === "monthly" ? a.totalL / 12 : a.totalL;
   await setBaselineValue(db, planId, key, Math.round(value * 10000) / 10000);
+  revalidateBaseline();
+}
+
+export async function addLifeEventAction(
+  planId: string,
+  e: { year: number; kind: "expense" | "inflow"; amount: number; label: string; note?: string },
+): Promise<void> {
+  await addLifeEvent(db, planId, e);
+  revalidateBaseline();
+}
+
+export async function deleteLifeEventAction(planId: string, eventId: string): Promise<void> {
+  await deleteLifeEvent(db, planId, eventId);
   revalidateBaseline();
 }
