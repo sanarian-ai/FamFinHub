@@ -67,11 +67,13 @@ export default async function PlanPage() {
             note="Net worth tracker, current value — tap for the breakdown"
           />
         </Link>
-        <StatTile
-          label="Cost of retirement"
-          value={`₹${fmtCr(funded.pvExpensesL)} Cr`}
-          note={`PV of all future expenses, discounted at ${funded.discountRatePct}%`}
-        />
+        <Link href="/retirement/expenses" className="block transition hover:opacity-80">
+          <StatTile
+            label="Cost of retirement"
+            value={`₹${fmtCr(funded.pvExpensesL)} Cr`}
+            note={`PV of all future expenses, at ${funded.discountRatePct}% — tap for the breakdown`}
+          />
+        </Link>
         <StatTile
           label="Runs out (deterministic path)"
           value={depletionYear ? String(depletionYear) : "Never by 2082"}

@@ -3,7 +3,7 @@
  * Deterministic (no Monte Carlo involved), so exact numbers below are golden values.
  */
 import assert from "node:assert/strict";
-import { compute, computeFundedStatus, defaultPlanState, presentValueOfExpenses } from "../../src/lib/retirement";
+import { compute, computeFundedStatus, defaultPlanState, presentValueByCategory, presentValueOfExpenses } from "../../src/lib/retirement";
 
 let pass = 0, fail = 0;
 function t(name: string, fn: () => void) {
@@ -47,6 +47,19 @@ t("golden: default plan's PV of expenses at its own params.r", () => {
   const pv = presentValueOfExpenses(result.rows, s.params.r);
   console.log(`  (golden pv = ${pv.toFixed(4)} L at r=${s.params.r}%)`);
   assert.equal(Math.round(pv * 100) / 100, 2503.18);
+});
+
+t("presentValueByCategory: the 8 category PVs sum to presentValueOfExpenses exactly", () => {
+  const total = presentValueOfExpenses(result.rows, s.params.r);
+  const byCat = presentValueByCategory(result.rows, s.params.r);
+  assert.equal(byCat.length, 8);
+  const sum = byCat.reduce((a, c) => a + c.pvL, 0);
+  assert.ok(Math.abs(sum - total) < 1e-6);
+});
+
+t("presentValueByCategory: every category PV is non-negative", () => {
+  const byCat = presentValueByCategory(result.rows, s.params.r);
+  for (const c of byCat) assert.ok(c.pvL >= 0, `${c.key} is negative`);
 });
 
 console.log(`retirement funded status: ${pass} passed, ${fail} failed`);
