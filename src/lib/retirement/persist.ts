@@ -73,7 +73,7 @@ export async function loadPlan(db: RetirementDb, planId: string): Promise<Loaded
  * (NETWORTH_KEYS, never touched by compute()) — both live in the same RetirementBaselineItem table.
  */
 export async function setBaselineValue(db: RetirementDb, planId: string, key: string, valueL: number, note?: string | null) {
-  if (!BASELINE_KEYS.includes(key) && !NETWORTH_KEYS.includes(key)) throw new Error("Unknown baseline key: " + key);
+  if (!BASELINE_KEYS.includes(key) && !key.startsWith("networth.")) throw new Error("Unknown baseline key: " + key);
   if (!Number.isFinite(valueL) || valueL < 0) throw new Error("Baseline value must be a non-negative number");
   return db.retirementBaselineItem.update({
     where: { planId_key: { planId, key } },
@@ -83,8 +83,45 @@ export async function setBaselineValue(db: RetirementDb, planId: string, key: st
 
 /** "I looked at the ledger reference and I am keeping my number." Value unchanged. */
 export async function markBaselineReviewed(db: RetirementDb, planId: string, key: string) {
-  if (!BASELINE_KEYS.includes(key) && !NETWORTH_KEYS.includes(key)) throw new Error("Unknown baseline key: " + key);
+  if (!BASELINE_KEYS.includes(key) && !key.startsWith("networth.")) throw new Error("Unknown baseline key: " + key);
   return db.retirementBaselineItem.update({ where: { planId_key: { planId, key } }, data: { lastReviewedAt: new Date() } });
+}
+
+/**
+ * Adds a user-defined, tracked-only net-worth bucket alongside the 13 built-in NETWORTH_CLASSES.
+ * Key is derived from the label (slugified, prefixed networth.custom. so it can never collide with
+ * a built-in key) - never touched by compute(), same as every other networth.* item.
+ */
+export async function addNetWorthItem(db: RetirementDb, planId: string, label: string, valueL: number): Promise<string> {
+  const trimmed = label.trim();
+  if (!trimmed) throw new Error("Label is required");
+  if (trimmed.length > 60) throw new Error("Label must be 60 characters or fewer");
+  if (!Number.isFinite(valueL) || valueL < 0) throw new Error("Value must be a non-negative number");
+  const slug = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  if (!slug) throw new Error("Label must contain at least one letter or number");
+  const key = `networth.custom.${slug}`;
+  const existing = await db.retirementBaselineItem.findFirst({ where: { planId, key } });
+  if (existing) throw new Error(`An asset bucket with a matching name already exists: ${trimmed}`);
+  const siblings = await db.retirementBaselineItem.findMany({ where: { planId, group: "netWorth" } });
+  const sortOrder = siblings.reduce((max: number, i: { sortOrder: number }) => Math.max(max, i.sortOrder), -1) + 1;
+  await db.retirementBaselineItem.create({
+    data: { planId, key, label: trimmed, group: "netWorth", unit: "lump", valueL, sortOrder },
+  });
+  return key;
+}
+
+/**
+ * Removes a net-worth bucket the user added themselves. Restricted to keys outside the 13 built-in
+ * NETWORTH_KEYS - the seeded classes can never be deleted through this path, only ones created via
+ * addNetWorthItem, so a slip here can't silently zero out part of the tracked-net-worth figure that
+ * has no "add it back" flow.
+ */
+export async function removeNetWorthItem(db: RetirementDb, planId: string, key: string): Promise<void> {
+  if (NETWORTH_KEYS.includes(key)) throw new Error("This is one of the built-in asset classes and can't be removed here.");
+  if (!key.startsWith("networth.")) throw new Error("Not a net-worth item: " + key);
+  const item = await db.retirementBaselineItem.findFirst({ where: { planId, key } });
+  if (!item) throw new Error("Asset bucket not found: " + key);
+  await db.retirementBaselineItem.delete({ where: { id: item.id } });
 }
 
 export async function setPlanInputs(db: RetirementDb, planId: string, params: unknown, assumptions: unknown, driftThresholdPct?: number) {

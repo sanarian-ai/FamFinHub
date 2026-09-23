@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { addLifeEvent, deleteLifeEvent, markBaselineReviewed, setBaselineValue } from "@/lib/retirement";
+import { addLifeEvent, addNetWorthItem, deleteLifeEvent, markBaselineReviewed, removeNetWorthItem, setBaselineValue } from "@/lib/retirement";
 import type { RetirementDb } from "@/lib/retirement";
 import { getLedgerActuals, getNetWorthActuals } from "./data";
 
@@ -66,4 +66,22 @@ export async function addLifeEventAction(
 export async function deleteLifeEventAction(planId: string, eventId: string): Promise<void> {
   await deleteLifeEvent(db, planId, eventId);
   revalidateBaseline();
+}
+
+/** Adds a custom net-worth bucket the user names themselves, alongside the 13 built-in classes. */
+export async function addNetWorthItemAction(planId: string, label: string, valueL: number): Promise<void> {
+  await addNetWorthItem(db, planId, label, valueL);
+  revalidateBaseline();
+  revalidatePath("/retirement/assets");
+  revalidatePath("/retirement/plan");
+  revalidatePath("/retirement/expenses");
+}
+
+/** Removes a net-worth bucket the user added themselves (the 13 built-in classes can't be removed here). */
+export async function removeNetWorthItemAction(planId: string, key: string): Promise<void> {
+  await removeNetWorthItem(db, planId, key);
+  revalidateBaseline();
+  revalidatePath("/retirement/assets");
+  revalidatePath("/retirement/plan");
+  revalidatePath("/retirement/expenses");
 }

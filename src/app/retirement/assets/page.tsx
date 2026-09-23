@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge, Card, PageHeader, EmptyState } from "@/components/ui";
-import { loadPlan, NETWORTH_CLASSES } from "@/lib/retirement";
+import { loadPlan } from "@/lib/retirement";
 import type { RetirementDb } from "@/lib/retirement";
 import type { Params } from "@/lib/retirement";
 import { prisma } from "@/lib/prisma";
@@ -47,15 +47,18 @@ export default async function AssetsPage() {
 
   const plan = await loadPlan(db, planId);
   const { state } = plan;
-  const itemsByKey = new Map(plan.items.map((i) => [i.key, i]));
 
-  const rows = NETWORTH_CLASSES.map((cls) => {
-    const item = itemsByKey.get(cls.key);
-    const valueL = item?.valueL ?? 0;
-    const unlockField = UNLOCK_YEAR_FIELD[cls.key];
-    const unlockYear = unlockField ? (state.params[unlockField] as number) : null;
-    return { ...cls, valueL, unlockYear };
-  });
+  // Every tracked net-worth bucket - the 13 built-in classes plus any the user has added on the
+  // baseline screen (see AddNetWorthBucket.tsx). A custom bucket has no entry in UNLOCK_YEAR_FIELD,
+  // so it defaults to Liquid now; there's no general way to infer a custom bucket's liquidity.
+  const rows = plan.items
+    .filter((i) => i.group === "netWorth")
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((item) => {
+      const unlockField = UNLOCK_YEAR_FIELD[item.key];
+      const unlockYear = unlockField ? (state.params[unlockField] as number) : null;
+      return { key: item.key, label: item.label, valueL: item.valueL, unlockYear };
+    });
 
   const liquidRows = rows.filter((r) => r.unlockYear == null);
   const lockedRows = rows.filter((r) => r.unlockYear != null);
@@ -136,7 +139,7 @@ export default async function AssetsPage() {
 
       <div className="text-sm">
         <Link href="/retirement/baseline" className="font-medium text-slate-600 hover:text-slate-900">
-          Edit values on the baseline screen &rarr;
+          Edit values, or add/remove asset buckets, on the baseline screen &rarr;
         </Link>
       </div>
     </div>

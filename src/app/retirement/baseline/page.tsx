@@ -7,7 +7,8 @@ import { getBaselinePlanId, getLedgerActuals, getNetWorthActuals } from "./data"
 import { BaselineRow, type RowUnit } from "./BaselineRow";
 import { NetWorthRow } from "./NetWorthRow";
 import { LifeEventEditor } from "./LifeEventEditor";
-import { NETWORTH_CLASSES } from "@/lib/retirement";
+import { NETWORTH_KEYS } from "@/lib/retirement";
+import { AddNetWorthBucket } from "./AddNetWorthBucket";
 
 const db = prisma as unknown as RetirementDb;
 
@@ -120,25 +121,28 @@ export default async function BaselinePage() {
             </tr>
           </thead>
           <tbody>
-            {NETWORTH_CLASSES.map((cls) => {
-              const item = itemsByKey.get(cls.key);
-              if (!item) return null;
-              const live = netWorthLive[cls.key];
-              return (
-                <NetWorthRow
-                  key={cls.key}
-                  planId={planId}
-                  itemKey={cls.key}
-                  label={cls.label}
-                  valueL={item.valueL}
-                  lastReviewedAt={fmtDate(item.lastReviewedAt)}
-                  liveValueL={live?.valueL ?? null}
-                  liveAsOf={live?.asOf ?? null}
-                />
-              );
-            })}
+            {plan.items
+              .filter((i) => i.group === "netWorth")
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((item) => {
+                const live = netWorthLive[item.key];
+                return (
+                  <NetWorthRow
+                    key={item.key}
+                    planId={planId}
+                    itemKey={item.key}
+                    label={item.label}
+                    valueL={item.valueL}
+                    lastReviewedAt={fmtDate(item.lastReviewedAt)}
+                    liveValueL={live?.valueL ?? null}
+                    liveAsOf={live?.asOf ?? null}
+                    removable={!NETWORTH_KEYS.includes(item.key)}
+                  />
+                );
+              })}
           </tbody>
         </table>
+        <AddNetWorthBucket planId={planId} />
       </Card>
       <LifeEventEditor planId={planId} events={plan.events} />
     </div>

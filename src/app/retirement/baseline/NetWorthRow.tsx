@@ -1,15 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { markReviewedAction, saveBaselineValueAction, useLiveNetWorthValueAction } from "./actions";
+import { markReviewedAction, removeNetWorthItemAction, saveBaselineValueAction, useLiveNetWorthValueAction } from "./actions";
 
 const fmtL = (v: number) => v.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 
 export function NetWorthRow({
-  planId, itemKey, label, valueL, lastReviewedAt, liveValueL, liveAsOf,
+  planId, itemKey, label, valueL, lastReviewedAt, liveValueL, liveAsOf, removable = false,
 }: {
   planId: string; itemKey: string; label: string; valueL: number; lastReviewedAt: string;
   liveValueL: number | null; liveAsOf: string | null;
+  /** True for a bucket the user added themselves — the 13 built-in classes are never removable here. */
+  removable?: boolean;
 }) {
   const [value, setValue] = useState(String(valueL));
   const [pending, startTransition] = useTransition();
@@ -31,6 +33,11 @@ export function NetWorthRow({
   function useLive() {
     startTransition(async () => {
       try { await useLiveNetWorthValueAction(planId, itemKey); } catch (e) { setErr((e as Error).message); }
+    });
+  }
+  function remove() {
+    startTransition(async () => {
+      try { await removeNetWorthItemAction(planId, itemKey); } catch (e) { setErr((e as Error).message); }
     });
   }
 
@@ -65,6 +72,11 @@ export function NetWorthRow({
           <button onClick={keep} disabled={pending} className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50">
             Keep my number
           </button>
+          {removable && (
+            <button onClick={remove} disabled={pending} className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 disabled:opacity-50">
+              Remove
+            </button>
+          )}
         </div>
       </td>
     </tr>

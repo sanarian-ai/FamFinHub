@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge, Card, PageHeader, EmptyState } from "@/components/ui";
-import { compute, computeFundedStatus, loadPlan, NETWORTH_KEYS, presentValueByCategory } from "@/lib/retirement";
+import { compute, computeFundedStatus, loadPlan, presentValueByCategory } from "@/lib/retirement";
 import type { RetirementDb } from "@/lib/retirement";
 import { prisma } from "@/lib/prisma";
 import { getBaselinePlanId } from "../baseline/data";
@@ -33,7 +33,7 @@ export default async function ExpensesPage() {
   const result = compute(state.params, state.events, state.baseline, state.assumptions);
 
   const assetsHeldL = plan.items
-    .filter((i) => NETWORTH_KEYS.includes(i.key))
+    .filter((i) => i.group === "netWorth")
     .reduce((sum, i) => sum + i.valueL, 0);
   const funded = computeFundedStatus(result.rows, state.params.r, assetsHeldL);
 

@@ -10,7 +10,7 @@ import type { Assumptions, Baseline, CustomEvent, Params, SubKey } from "./types
 /** Bump when engine behaviour changes; stored with every saved version so results stay reproducible. */
 export const ENGINE_VERSION = "1.0.0";
 
-export type BaselineGroup = "spend" | "fixed" | "asset" | "income";
+export type BaselineGroup = "spend" | "fixed" | "asset" | "income" | "netWorth";
 export type BaselineUnit = "monthly" | "annual" | "lump";
 
 export interface BaselineItemInput {

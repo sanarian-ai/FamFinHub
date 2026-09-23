@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Card, PageHeader, StatTile, EmptyState } from "@/components/ui";
-import { compute, computeFundedStatus, loadPlan, NETWORTH_KEYS } from "@/lib/retirement";
+import { compute, computeFundedStatus, loadPlan, view } from "@/lib/retirement";
 import type { RetirementDb } from "@/lib/retirement";
 import { prisma } from "@/lib/prisma";
 import { getBaselinePlanId } from "../baseline/data";
 import { SuccessBadge } from "./SuccessBadge";
+import { PortfolioTrajectoryChart } from "./PortfolioTrajectoryChart";
 
 const db = prisma as unknown as RetirementDb;
 
@@ -35,9 +36,12 @@ export default async function PlanPage() {
   // Deterministic and cheap (no Monte Carlo) — safe on every page load, same as before M6.
   const result = compute(state.params, state.events, state.baseline, state.assumptions);
   const depletionYear = result.depl;
+  // Real terms (today's money) — matches how every other figure on this page is framed (PV is
+  // already time-value-adjusted; baseline figures are "today's money"). Same rows as /retirement/stress.
+  const trajectory = view(result.rows, "real").map((r) => ({ year: r.Y, balanceL: r.port }));
 
   const assetsHeldL = plan.items
-    .filter((i) => NETWORTH_KEYS.includes(i.key))
+    .filter((i) => i.group === "netWorth")
     .reduce((sum, i) => sum + i.valueL, 0);
   const funded = computeFundedStatus(result.rows, state.params.r, assetsHeldL);
   const deficit = funded.deltaL < 0;
@@ -101,10 +105,24 @@ export default async function PlanPage() {
         </div>
         <p className="mt-3 text-xs text-slate-500">
           Assets you hold today, compared to every future expense the plan projects — before counting any future income
-          (Ria&apos;s salary, rent, the Generali payout) or one-time unlocks (ESOP, EPF/NPS, the property sale). Those are
-          what the success probability below already accounts for; this number answers a narrower question on purpose:
-          could what&apos;s held today alone cover everything ahead.
+          (Ria&apos;s salary, rent, the Generali payout) or one-time unlocks (ESOP, EPF/NPS, the property sale). Those
+          already feed the &ldquo;runs out&rdquo; year above and the success probability below — both run the full
+          year-by-year simulation; this number is narrower on purpose: could what&apos;s held today alone cover
+          everything ahead.
         </p>
+      </Card>
+
+      <Card>
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Portfolio balance over time</h2>
+            <span className="text-xs text-slate-500">Deterministic path, today&apos;s money — no market volatility.</span>
+          </div>
+          <Link href="/retirement/stress" className="text-xs font-medium text-slate-600 hover:text-slate-900">
+            Full year-by-year ledger &rarr;
+          </Link>
+        </div>
+        <PortfolioTrajectoryChart data={trajectory} depletionYear={depletionYear} />
       </Card>
 
       <Card>
