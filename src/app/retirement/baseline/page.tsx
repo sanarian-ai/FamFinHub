@@ -3,9 +3,11 @@ import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { loadPlan } from "@/lib/retirement";
 import type { RetirementDb } from "@/lib/retirement";
 import { prisma } from "@/lib/prisma";
-import { getBaselinePlanId, getLedgerActuals } from "./data";
+import { getBaselinePlanId, getLedgerActuals, getNetWorthActuals } from "./data";
 import { BaselineRow, type RowUnit } from "./BaselineRow";
+import { NetWorthRow } from "./NetWorthRow";
 import { LifeEventEditor } from "./LifeEventEditor";
+import { NETWORTH_CLASSES } from "@/lib/retirement";
 
 const db = prisma as unknown as RetirementDb;
 
@@ -42,7 +44,7 @@ export default async function BaselinePage() {
     return <EmptyState>No retirement plan found yet. Run the seed script first.</EmptyState>;
   }
 
-  const [plan, actuals] = await Promise.all([loadPlan(db, planId), getLedgerActuals(planId)]);
+  const [plan, actuals, netWorthLive] = await Promise.all([loadPlan(db, planId), getLedgerActuals(planId), getNetWorthActuals()]);
   const itemsByKey = new Map(plan.items.map((i) => [i.key, i]));
   const fmtDate = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -100,6 +102,44 @@ export default async function BaselinePage() {
           </table>
         </Card>
       ))}
+      <Card>
+        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold text-slate-900">Net worth by asset class</h2>
+          <span className="text-xs text-slate-500">
+            A separate, informational view — not fed into the plan&apos;s compute(). International equity and PMS are live; everything else is manual.
+          </span>
+        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
+              <th className="pb-2 pr-3 font-medium">Asset class</th>
+              <th className="pb-2 pr-3 font-medium">Manual value (₹L)</th>
+              <th className="pb-2 pr-3 text-right font-medium">Live (₹L)</th>
+              <th className="pb-2 pr-3 font-medium">Reviewed</th>
+              <th className="pb-2 font-medium"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {NETWORTH_CLASSES.map((cls) => {
+              const item = itemsByKey.get(cls.key);
+              if (!item) return null;
+              const live = netWorthLive[cls.key];
+              return (
+                <NetWorthRow
+                  key={cls.key}
+                  planId={planId}
+                  itemKey={cls.key}
+                  label={cls.label}
+                  valueL={item.valueL}
+                  lastReviewedAt={fmtDate(item.lastReviewedAt)}
+                  liveValueL={live?.valueL ?? null}
+                  liveAsOf={live?.asOf ?? null}
+                />
+              );
+            })}
+          </tbody>
+        </table>
+      </Card>
       <LifeEventEditor planId={planId} events={plan.events} />
     </div>
   );

@@ -71,3 +71,67 @@ export async function getLedgerActuals(planId: string): Promise<Record<string, L
   }
   return out;
 }
+
+export type NetWorthActual = { valueL: number; asOf: string | null };
+
+/**
+ * Live current values for the two net-worth-by-asset-class rows that have an existing data
+ * provider (see src/lib/retirement/networth.ts NETWORTH_CLASSES): international equity from the
+ * US portfolio engine, PMS from Kabir's snapshot+price query. Both already exist elsewhere in the
+ * app (src/app/portfolio/us/holdings, src/app/portfolio/india) — this reuses them rather than
+ * re-deriving a second source of truth. Read-only: never writes the baseline table itself: the
+ * "Use live value" button (useLiveNetWorthValueAction) is the explicit trigger that does, same
+ * pattern as useLedgerValueAction above.
+ */
+export async function getNetWorthActuals(): Promise<Record<string, NetWorthActual>> {
+  const [intlEquity, pms] = await Promise.all([getIntlEquityActual(), getKabirPmsActual()]);
+  const out: Record<string, NetWorthActual> = {};
+  if (intlEquity != null) out["networth.intlEquity"] = intlEquity;
+  if (pms != null) out["networth.pms"] = pms;
+  return out;
+}
+
+async function getIntlEquityActual(): Promise<NetWorthActual | null> {
+  try {
+    const { getPortfolioData } = await import("@/lib/portfolio/data");
+    const { positions } = await import("@/lib/portfolio/views");
+    const { ctx, book, empty } = await getPortfolioData();
+    if (empty) return null;
+    const pos = positions(ctx, book);
+    const fx = ctx.fx[ctx.fx.length - 1];
+    const valueINR = pos.totalValue * fx;
+    return { valueL: valueINR / 1e5, asOf: ctx.asof };
+  } catch {
+    return null;
+  }
+}
+
+async function getKabirPmsActual(): Promise<NetWorthActual | null> {
+  const account = await prisma.portfolioAccount.findUnique({ where: { key: "KABIR_PMS_RIA" } });
+  if (!account) return null;
+  const [snapshots, securities] = await Promise.all([
+    prisma.positionSnapshot.findMany({
+      where: { accountId: account.id }, orderBy: { asOf: "desc" },
+      select: { securityId: true, asOf: true, qty: true },
+    }),
+    prisma.security.findMany({
+      where: { transactions: { some: { accountId: account.id } } },
+      select: { id: true, prices: { orderBy: { date: "desc" }, take: 1, select: { date: true, close: true } } },
+    }),
+  ]);
+  if (snapshots.length === 0) return null;
+  const latestQty = new Map<string, number>();
+  for (const s of snapshots) if (!latestQty.has(s.securityId)) latestQty.set(s.securityId, Number(s.qty));
+  let totalValue = 0;
+  let asOf: string | null = null;
+  for (const sec of securities) {
+    const qty = latestQty.get(sec.id) ?? 0;
+    const price = sec.prices[0];
+    if (qty > 0 && price?.close != null) {
+      totalValue += qty * Number(price.close);
+      const d = price.date.toISOString().slice(0, 10);
+      if (asOf === null || d > asOf) asOf = d;
+    }
+  }
+  return { valueL: totalValue / 1e5, asOf };
+}

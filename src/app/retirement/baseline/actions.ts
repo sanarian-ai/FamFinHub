@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { addLifeEvent, deleteLifeEvent, markBaselineReviewed, setBaselineValue } from "@/lib/retirement";
 import type { RetirementDb } from "@/lib/retirement";
-import { getLedgerActuals } from "./data";
+import { getLedgerActuals, getNetWorthActuals } from "./data";
 
 // The narrow RetirementDb interface (Record<string, Delegate>) lets persist.ts run against a
 // scratch DB in tests without depending on generated Prisma types; the real client is a
@@ -39,6 +39,19 @@ export async function useLedgerValueAction(planId: string, key: string, unit: "m
   if (!a) throw new Error("No ledger reference for " + key);
   const value = unit === "monthly" ? a.totalL / 12 : a.totalL;
   await setBaselineValue(db, planId, key, Math.round(value * 10000) / 10000);
+  revalidateBaseline();
+}
+
+/**
+ * Overwrites a net-worth manual value with the current live figure from its data provider
+ * (US portfolio for intlEquity, Kabir PMS query for pms) — see getNetWorthActuals in ./data.
+ * Explicit trigger, same as useLedgerValueAction: the live figure is never written silently.
+ */
+export async function useLiveNetWorthValueAction(planId: string, key: string): Promise<void> {
+  const actuals = await getNetWorthActuals();
+  const a = actuals[key];
+  if (!a) throw new Error("No live value available for " + key);
+  await setBaselineValue(db, planId, key, Math.round(a.valueL * 10000) / 10000);
   revalidateBaseline();
 }
 

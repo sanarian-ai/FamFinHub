@@ -8,6 +8,7 @@ import {
   BASELINE_KEYS, ENGINE_VERSION, baselineToItems, buildSnapshot, defaultPlanState, evaluate, itemsToBaseline,
   validateAssumptions, validateEvent, validateParams,
 } from "./store";
+import { NETWORTH_KEYS } from "./networth";
 import type { BaselineItemInput, PlanState, Snapshot } from "./store";
 import type { CustomEvent } from "./types";
 
@@ -66,9 +67,13 @@ export async function loadPlan(db: RetirementDb, planId: string): Promise<Loaded
   };
 }
 
-/** Typing a new value counts as a review. The ledger reference is never consulted or written. */
+/**
+ * Typing a new value counts as a review. The ledger reference is never consulted or written.
+ * Accepts both engine keys (BASELINE_KEYS, feed compute()) and tracked-only net worth keys
+ * (NETWORTH_KEYS, never touched by compute()) — both live in the same RetirementBaselineItem table.
+ */
 export async function setBaselineValue(db: RetirementDb, planId: string, key: string, valueL: number, note?: string | null) {
-  if (!BASELINE_KEYS.includes(key)) throw new Error("Unknown baseline key: " + key);
+  if (!BASELINE_KEYS.includes(key) && !NETWORTH_KEYS.includes(key)) throw new Error("Unknown baseline key: " + key);
   if (!Number.isFinite(valueL) || valueL < 0) throw new Error("Baseline value must be a non-negative number");
   return db.retirementBaselineItem.update({
     where: { planId_key: { planId, key } },
@@ -78,7 +83,7 @@ export async function setBaselineValue(db: RetirementDb, planId: string, key: st
 
 /** "I looked at the ledger reference and I am keeping my number." Value unchanged. */
 export async function markBaselineReviewed(db: RetirementDb, planId: string, key: string) {
-  if (!BASELINE_KEYS.includes(key)) throw new Error("Unknown baseline key: " + key);
+  if (!BASELINE_KEYS.includes(key) && !NETWORTH_KEYS.includes(key)) throw new Error("Unknown baseline key: " + key);
   return db.retirementBaselineItem.update({ where: { planId_key: { planId, key } }, data: { lastReviewedAt: new Date() } });
 }
 
