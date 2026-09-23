@@ -17,11 +17,15 @@ const fmtCr = (valueL: number) =>
  * Which Params field holds the year a net-worth class actually unlocks. Classes absent from this
  * map are liquid today (a manual figure or a live-wired one, but spendable now, not scheduled).
  * Sourced from fields the engine already tracks for its own simulation - no new concept introduced.
+ *
+ * Unlisted NSE shares are deliberately NOT mapped to Params.nseYear: that field drives a separate,
+ * unrelated hypothetical one-time inflow (P.nseAmt) and is 0/unset on this plan - it was never the
+ * unlock date for the currently-held shares. NSE's own IPO means secondary trading opens
+ * 2026-09-24, so this holding is liquid now, same as the rest of the direct-equity tracker.
  */
 const UNLOCK_YEAR_FIELD: Record<string, keyof Params> = {
   "networth.esops": "esopYear",
   "networth.realEstate": "propYear",
-  "networth.unlistedNse": "nseYear",
   "networth.epfNps": "epfYear",
   "networth.futureGenerali": "genYear",
 };
@@ -105,7 +109,7 @@ export default async function AssetsPage() {
         </div>
         <p className="mt-3 text-xs text-slate-500">
           &ldquo;Liquid now&rdquo; below (₹{fmtCr(liquidNowL)} Cr) is what the net-worth tracker shows as spendable today,
-          excluding ESOPs, real estate, unlisted NSE shares, EPF/NPS and the Generali policy &mdash; each locked until its own
+          excluding ESOPs, real estate, EPF/NPS and the Generali policy &mdash; each locked until its own
           date. The simulation instead uses a separately maintained figure, ₹{fmtCr(enginePoolL)} Cr, entered on the baseline
           screen. The two are independent by design and can drift as the tracker gets updated and the baseline figure
           doesn&apos;t. {gapIsNegligible ? "They currently line up." : "Update the baseline screen's “Opening liquid pool” and “EPF + NPS” if you want the simulation to reflect today's tracked figure."}
