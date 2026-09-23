@@ -60,7 +60,13 @@ export default async function PlanPage() {
       />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <StatTile label="Assets you hold today" value={`₹${fmtCr(funded.assetsHeldL)} Cr`} note="Net worth tracker, current value" />
+        <Link href="/retirement/assets" className="block transition hover:opacity-80">
+          <StatTile
+            label="Assets you hold today"
+            value={`₹${fmtCr(funded.assetsHeldL)} Cr`}
+            note="Net worth tracker, current value — tap for the breakdown"
+          />
+        </Link>
         <StatTile
           label="Cost of retirement"
           value={`₹${fmtCr(funded.pvExpensesL)} Cr`}
