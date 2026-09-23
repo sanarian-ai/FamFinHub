@@ -1,52 +1,27 @@
 import Link from "next/link";
-import clsx from "clsx";
-import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
-import { compute, loadPlan, view } from "@/lib/retirement";
+import { Card, PageHeader, StatTile, EmptyState } from "@/components/ui";
+import { compute, computeFundedStatus, loadPlan, NETWORTH_KEYS } from "@/lib/retirement";
 import type { RetirementDb } from "@/lib/retirement";
 import { prisma } from "@/lib/prisma";
-// getBaselinePlanId resolves the single household plan by name — nothing about it is
-// baseline-specific, it's just where M3 first needed a plan id. Reused here rather than
-// duplicated so there is exactly one place that knows the plan's name.
 import { getBaselinePlanId } from "../baseline/data";
-import { EvaluationPanel } from "./EvaluationPanel";
+import { SuccessBadge } from "./SuccessBadge";
 
 const db = prisma as unknown as RetirementDb;
 
 export const dynamic = "force-dynamic";
 
-const fmtL = (v: number) => v.toLocaleString("en-IN", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const fmtCr = (valueL: number) =>
+  (valueL / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-function UnitToggle({ unit }: { unit: "real" | "nominal" }) {
-  const opts: { key: "real" | "nominal"; label: string; href: string }[] = [
-    { key: "real", label: "Today's money", href: "/retirement/plan" },
-    { key: "nominal", label: "Nominal", href: "/retirement/plan?unit=nominal" },
-  ];
-  return (
-    <div className="inline-flex flex-wrap gap-0.5 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">
-      {opts.map((o) => (
-        <Link
-          key={o.key}
-          href={o.href}
-          className={clsx(
-            "rounded-md px-2.5 py-1 text-sm font-medium transition-colors",
-            unit === o.key ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100",
-          )}
-        >
-          {o.label}
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-export default async function PlanPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [k: string]: string | string[] | undefined }>;
-}) {
-  const sp = await searchParams;
-  const unit: "real" | "nominal" = sp.unit === "nominal" ? "nominal" : "real";
-
+/**
+ * Plan home (M6). Leads with funded status — PV of everything the plan will ever spend vs. what's
+ * actually held today — rather than a probability number alone, per the read that a bare success%
+ * doesn't say how big the gap is or what it would take to close it. Monte Carlo success% (needs an
+ * explicit click, see SuccessBadge) sits right next to it as the risk/confidence layer; the year-
+ * by-year ledger and full sensitivity breakdown moved to /retirement/stress (M4's original content,
+ * relocated, not rebuilt).
+ */
+export default async function PlanPage() {
   let planId: string;
   try {
     planId = await getBaselinePlanId();
@@ -57,12 +32,15 @@ export default async function PlanPage({
   const plan = await loadPlan(db, planId);
   const { state } = plan;
 
-  // Deterministic and cheap (no Monte Carlo, ~ms) — safe to run on every page load and every
-  // real/nominal toggle. The Monte Carlo verdict (success probability, band) and sensitivities
-  // are NOT computed here: see EvaluationPanel, which only runs them on an explicit click.
+  // Deterministic and cheap (no Monte Carlo) — safe on every page load, same as before M6.
   const result = compute(state.params, state.events, state.baseline, state.assumptions);
   const depletionYear = result.depl;
-  const rows = view(result.rows, unit);
+
+  const assetsHeldL = plan.items
+    .filter((i) => NETWORTH_KEYS.includes(i.key))
+    .reduce((sum, i) => sum + i.valueL, 0);
+  const funded = computeFundedStatus(result.rows, state.params.r, assetsHeldL);
+  const deficit = funded.deltaL < 0;
 
   return (
     <div className="flex flex-col gap-5">
@@ -70,64 +48,60 @@ export default async function PlanPage({
         title="Retirement plan"
         subtitle={`${plan.name} · valuation 1 Oct 2026`}
         actions={
-          <Link href="/retirement/baseline" className="text-sm font-medium text-slate-600 hover:text-slate-900">
-            Baseline &amp; life events &rarr;
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/retirement/stress" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+              Stress &amp; scenarios &rarr;
+            </Link>
+            <Link href="/retirement/baseline" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+              Baseline &amp; life events &rarr;
+            </Link>
+          </div>
         }
       />
 
-      <EvaluationPanel planId={planId} depletionYear={depletionYear} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <StatTile label="Assets you hold today" value={`₹${fmtCr(funded.assetsHeldL)} Cr`} note="Net worth tracker, current value" />
+        <StatTile
+          label="Cost of retirement"
+          value={`₹${fmtCr(funded.pvExpensesL)} Cr`}
+          note={`PV of all future expenses, discounted at ${funded.discountRatePct}%`}
+        />
+        <StatTile
+          label="Runs out (deterministic path)"
+          value={depletionYear ? String(depletionYear) : "Never by 2082"}
+          note="No volatility — the smooth-return path, not a simulation"
+        />
+      </div>
 
       <Card>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">Year-by-year ledger</h2>
-            <span className="text-xs text-slate-500">2026 is a Q4 stub (valuation 1 Oct 2026).</span>
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              {deficit ? "Funding gap" : "Funding surplus"}
+            </div>
+            <div className={`mt-1 text-3xl font-semibold ${deficit ? "text-rose-600" : "text-emerald-600"}`}>
+              {deficit ? "−" : "+"}₹{fmtCr(Math.abs(funded.deltaL))} Cr
+            </div>
           </div>
-          <UnitToggle unit={unit} />
+          <div className="text-right">
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">Funded ratio</div>
+            <div className="mt-1 text-xl font-semibold text-slate-800">{funded.fundedRatioPct.toFixed(0)}%</div>
+          </div>
         </div>
-        <div className="max-h-[520px] overflow-y-auto overflow-x-auto rounded-lg border border-slate-100">
-          <table className="w-full min-w-[560px] text-sm">
-            <thead className="sticky top-0 bg-white">
-              <tr className="border-b border-slate-200 text-left text-xs font-medium uppercase tracking-wide text-slate-400">
-                <th className="py-2 pl-3 pr-3 font-medium">Year</th>
-                <th className="py-2 pr-3 text-right font-medium">Income</th>
-                <th className="py-2 pr-3 text-right font-medium">Expense</th>
-                <th className="py-2 pr-3 text-right font-medium">Net</th>
-                <th className="py-2 pr-3 text-right font-medium">Assets/inflows</th>
-                <th className="py-2 pr-3 text-right font-medium">Portfolio</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.Y} className={clsx("border-b border-slate-50", r.port < 0 && "bg-rose-50")}>
-                  <td className="py-1.5 pl-3 pr-3 text-slate-700">
-                    {r.Y}
-                    {depletionYear === r.Y && (
-                      <span className="ml-1.5">
-                        <Badge tone="rose">depletes</Badge>
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums text-slate-600">{fmtL(r.inc)}</td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums text-slate-600">{fmtL(r.exp)}</td>
-                  <td className={clsx("py-1.5 pr-3 text-right tabular-nums", r.net < 0 ? "text-rose-600" : "text-slate-600")}>
-                    {fmtL(r.net)}
-                  </td>
-                  <td className="py-1.5 pr-3 text-right tabular-nums text-slate-600">{fmtL(r.assets)}</td>
-                  <td
-                    className={clsx(
-                      "py-1.5 pr-3 text-right tabular-nums font-medium",
-                      r.port < 0 ? "text-rose-600" : "text-slate-800",
-                    )}
-                  >
-                    {fmtL(r.port)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <p className="mt-3 text-xs text-slate-500">
+          Assets you hold today, compared to every future expense the plan projects — before counting any future income
+          (Ria&apos;s salary, rent, the Generali payout) or one-time unlocks (ESOP, EPF/NPS, the property sale). Those are
+          what the success probability below already accounts for; this number answers a narrower question on purpose:
+          could what&apos;s held today alone cover everything ahead.
+        </p>
+      </Card>
+
+      <Card>
+        <div className="mb-3">
+          <h2 className="text-sm font-semibold text-slate-900">Probability of success</h2>
+          <span className="text-xs text-slate-500">10,000 simulated paths, market volatility included.</span>
         </div>
+        <SuccessBadge planId={planId} />
       </Card>
     </div>
   );

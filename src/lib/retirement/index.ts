@@ -5,3 +5,4 @@ export * from "./store";
 export * from "./persist";
 export * from "./sensitivity";
 export * from "./networth";
+export * from "./funded";
