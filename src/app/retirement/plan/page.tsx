@@ -55,6 +55,9 @@ export default async function PlanPage() {
             <Link href="/retirement/baseline" className="text-sm font-medium text-slate-600 hover:text-slate-900">
               Baseline &amp; life events &rarr;
             </Link>
+            <Link href="/retirement/assumptions" className="text-sm font-medium text-slate-600 hover:text-slate-900">
+              Assumptions &rarr;
+            </Link>
           </div>
         }
       />
