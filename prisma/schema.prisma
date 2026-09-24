@@ -208,6 +208,9 @@ enum PortfolioBroker {
   ZERODHA // Individually-held Indian equities in Sangeeth's Zerodha demat, sourced from the INDmoney MCP (currently just NSE's own listed shares, post-2026-09-24 IPO).
   KOTAK_SECURITIES // Individually-held Indian equities in Ria's Kotak Securities demat, sourced from the INDmoney MCP (currently just NSE's own listed shares, post-2026-09-24 IPO).
   IIFL_DEMAT // Ria's IIFL (India Infoline) demat account — Indian direct equities distinct from the Kabir PMS book (Nuvama), sourced from the INDmoney MCP.
+  KABIR_CAPITAL_VENTURES // Closed pre-PMS pooled vehicle, Ria, exited 2024 — see closed-vehicle-historic-irr-ingestion-spec.md.
+  KABIR_FINANCIAL_VENTURES // Closed pre-PMS pooled vehicle, Ria, exited 2024 — same spec as above.
+  UNIFI_PMS // Unifi Capital PMS (Blended-Rangoli, BCAD 2 Breakout 20), Ria, fully exited 2025 — same spec as above.
 }
 
 enum TradeSide {
@@ -249,6 +252,7 @@ enum PortfolioSource {
   manual
   kabir_pms_report // Nuvama Wealthspectrum portal exports, read via Chrome under the user's logged-in session
   cams_cas_pdf // CAMS/KFintech Consolidated Account Statement, manually uploaded periodically (see mf-equity-irr-tracking-proposal.md)
+  manual_closed_vehicle_audit // Hand-audited closed-vehicle ledger (KCV/KFV/Unifi), sourced from statements read this session — see closed-vehicle-historic-irr-ingestion-spec.md.
 }
 
 enum CorporateActionType {

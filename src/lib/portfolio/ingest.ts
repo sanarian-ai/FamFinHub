@@ -5,7 +5,7 @@ import { Prisma, type PrismaClient } from "@prisma/client";
 import { splitFactor } from "./splits";
 
 export const MAX_ROWS = 5000;
-const SOURCES = ["indmoney_report", "ibkr_api", "manual", "kabir_pms_report", "cams_cas_pdf"] as const;
+const SOURCES = ["indmoney_report", "ibkr_api", "manual", "kabir_pms_report", "cams_cas_pdf", "manual_closed_vehicle_audit"] as const;
 const SIDES = ["BUY", "SELL"] as const;
 const CASH_TYPES = ["DIVIDEND", "WITHHOLDING_TAX", "FEE", "DEPOSIT", "WITHDRAWAL", "INTEREST"] as const;
 const ACTION_TYPES = ["SPLIT", "REVERSE_SPLIT", "SYMBOL_CHANGE", "BONUS", "RIGHTS", "DEMERGER"] as const;
