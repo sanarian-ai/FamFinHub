@@ -63,7 +63,7 @@ export function decompose(ctx: Ctx, p: { start: string; end: string }, o: RunOpt
   return { price: (usd.pf.profit - usd.divTot) * fx1, dividends: usd.divTot * fx1, fx: inr.pf.profit - usd.pf.profit * fx1, total: inr.pf.profit, fxRateStart: fx0, fxRateEnd: fx1 };
 }
 
-export type StockRow = { symbol: string; status: "open" | "exited"; d0: string; d1: string; days: number; annualised: boolean; pf: Leg; SPY: Leg; QQQ: Leg; V1: number; profit: number };
+export type StockRow = { symbol: string; status: "open" | "exited"; d0: string; d1: string; days: number; annualised: boolean; pf: Leg; SPY: Leg; QQQ: Leg; bench: Record<string, Leg>; V1: number; profit: number };
 /** Per-stock performance over a period. Exited positions are measured to their exit date, not the period end. */
 export function stockRows(ctx: Ctx, p: { start: string; end: string }, o: RunOpts): StockRow[] {
   const rows: StockRow[] = [];
@@ -77,7 +77,7 @@ export function stockRows(ctx: Ctx, p: { start: string; end: string }, o: RunOpt
       if (last > p.start && last < p.end) r = run(ctx, p.start, last, { ...o, symbols: [sym], series: false });
       status = "exited";
     }
-    rows.push({ symbol: sym, status, d0: r.d0, d1: r.d1, days: r.days, annualised: r.annualised, pf: r.pf, SPY: r.SPY, QQQ: r.QQQ, V1: r.V1, profit: r.pf.profit });
+    rows.push({ symbol: sym, status, d0: r.d0, d1: r.d1, days: r.days, annualised: r.annualised, pf: r.pf, SPY: r.SPY, QQQ: r.QQQ, bench: r.bench, V1: r.V1, profit: r.pf.profit });
   }
   return rows.sort((a, b) => (a.status === b.status ? b.V1 - a.V1 || b.profit - a.profit : a.status === "open" ? -1 : 1));
 }

@@ -15,6 +15,12 @@ export type Dataset = {
   dividends: Record<string, Record<string, number>>; // symbol -> ex-date -> as-traded dividend per share
   fx: Record<string, number>; // date -> USDINR
 };
+// Default benchmark pair for calls that don't specify RunOpts.benchmarks — the US book's SPY/QQQ.
+// Any caller (India, PMS, MF, combined) can pass its own `benchmarks: string[]` instead; the result's
+// generic `bench` record is keyed by whatever was requested. `.SPY`/`.QQQ` on RunResult/SeriesPt stay
+// as convenience aliases for the default pair specifically, so the existing US screens and
+// test-engine.ts (which read r.SPY/r.QQQ directly, never passing `benchmarks`) need no changes; they
+// fall back to a zero/null Leg — never crash — for a call whose benchmark set doesn't include them.
 export const BENCHMARKS = ["SPY", "QQQ"] as const;
 export type Bench = (typeof BENCHMARKS)[number];
 export const DEFAULT_WHT = 0.25; // US withholding assumed on dividends until actuals are ingested
@@ -79,13 +85,17 @@ export function xirr(cfs: { ms: number; v: number }[]): number | null {
   return (lo + hi) / 2;
 }
 
-export type RunOpts = { symbols?: string[]; accounts?: string[]; currency?: "USD" | "INR"; dividends?: boolean; wht?: number; series?: boolean };
+export type RunOpts = {
+  symbols?: string[]; accounts?: string[]; currency?: "USD" | "INR"; dividends?: boolean; wht?: number; series?: boolean;
+  benchmarks?: readonly string[]; // defaults to BENCHMARKS (["SPY","QQQ"]) — pass an India/PMS/MF/combined set instead
+};
 export type Leg = { end: number; profit: number; irr: number | null; ret: number | null; moic: number | null };
-export type SeriesPt = { d: string; pf: number; SPY: number; QQQ: number; inv: number };
+const EMPTY_LEG: Leg = { end: 0, profit: 0, irr: null, ret: null, moic: null };
+export type SeriesPt = { d: string; pf: number; SPY: number; QQQ: number; inv: number; bench: Record<string, number> };
 export type RunResult = {
   d0: string; d1: string; days: number; V0: number; V1: number; net: number; divTot: number; hasData: boolean;
   annualised: boolean; // false when the period is shorter than MIN_ANNUALISE_DAYS: show the period return, not the IRR
-  pf: Leg; SPY: Leg; QQQ: Leg; series: SeriesPt[] | null;
+  pf: Leg; SPY: Leg; QQQ: Leg; bench: Record<string, Leg>; series: SeriesPt[] | null;
 };
 
 export function symbolsOf(ctx: Ctx, accounts?: string[]): string[] {
@@ -107,6 +117,7 @@ export function idxOn(dates: string[], d: string): number {
 
 export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunResult {
   const { dates, px } = ctx;
+  const B: readonly string[] = o.benchmarks ?? BENCHMARKS;
   const S = o.symbols ?? symbolsOf(ctx, o.accounts);
   const inc = (x: AdjTrade) => S.includes(x.symbol) && (!o.accounts || o.accounts.includes(x.account));
   const fxAt = (i: number) => (o.currency === "INR" ? ctx.fx[i] : 1);
@@ -134,9 +145,11 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
   }
   ev.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.kind === "D" ? -1 : 1));
   type CF = { ms: number; v: number };
-  const cfs: Record<"pf" | Bench, CF[]> = { pf: [], SPY: [], QQQ: [] };
-  const bu: Record<Bench, number> = { SPY: 0, QQQ: 0 };
-  if (V0 > 0) { cfs.pf.push({ ms: t(d0), v: -V0 * fxAt(i0) }); for (const b of BENCHMARKS) { cfs[b].push({ ms: t(d0), v: -V0 * fxAt(i0) }); bu[b] = V0 / px[b][i0]; } }
+  const cfs: Record<string, CF[]> = { pf: [] };
+  for (const b of B) cfs[b] = [];
+  const bu: Record<string, number> = {};
+  for (const b of B) bu[b] = 0;
+  if (V0 > 0) { cfs.pf.push({ ms: t(d0), v: -V0 * fxAt(i0) }); for (const b of B) { cfs[b].push({ ms: t(d0), v: -V0 * fxAt(i0) }); bu[b] = V0 / px[b][i0]; } }
   let net = V0, divTot = 0;
   const p = { ...pos };
   const series: SeriesPt[] | null = o.series ? [] : null;
@@ -150,7 +163,7 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
         p[e.sym] += e.side === "BUY" ? e.q! : -e.q!;
         cfs.pf.push({ ms: t(e.d), v: cash * fxi });
         net += -cash;
-        for (const b of BENCHMARKS) { cfs[b].push({ ms: t(e.d), v: cash * fxi }); bu[b] += -cash / px[b][e.i]; }
+        for (const b of B) { cfs[b].push({ ms: t(e.d), v: cash * fxi }); bu[b] += -cash / px[b][e.i]; }
       } else {
         const cash = unitsAt(e.sym, e.d, true) * e.per! * (1 - wht); divTot += cash;
         cfs.pf.push({ ms: t(e.d), v: cash * fxi });
@@ -159,12 +172,14 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
     }
     if (series) {
       let v = 0; for (const s of S) v += p[s] * px[s][i];
-      series.push({ d, pf: v * fxAt(i), SPY: bu.SPY * px.SPY[i] * fxAt(i), QQQ: bu.QQQ * px.QQQ[i] * fxAt(i), inv: net * fxAt(i) });
+      const benchAtI: Record<string, number> = {};
+      for (const b of B) benchAtI[b] = bu[b] * px[b][i] * fxAt(i);
+      series.push({ d, pf: v * fxAt(i), SPY: benchAtI.SPY ?? 0, QQQ: benchAtI.QQQ ?? 0, inv: net * fxAt(i), bench: benchAtI });
     }
   }
   if (o.dividends) {
     const tev = ev.filter((e) => e.kind === "T");
-    for (const b of BENCHMARKS) for (const [exd, per] of Object.entries(ctx.div[b] ?? {})) {
+    for (const b of B) for (const [exd, per] of Object.entries(ctx.div[b] ?? {})) {
       if (exd > d0 && exd <= d1) {
         let u = V0 > 0 ? V0 / px[b][i0] : 0;
         for (const e of tev) if (e.d < exd) u += -e.usd! / px[b][e.i];
@@ -175,7 +190,7 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
   let V1 = 0; for (const s of S) V1 += p[s] * px[s][i1];
   const fx1 = fxAt(i1);
   cfs.pf.push({ ms: t(d1), v: V1 * fx1 });
-  for (const b of BENCHMARKS) cfs[b].push({ ms: t(d1), v: bu[b] * px[b][i1] * fx1 });
+  for (const b of B) cfs[b].push({ ms: t(d1), v: bu[b] * px[b][i1] * fx1 });
   const days = (t(d1) - t(d0)) / DAY;
   const startV = V0 * fxAt(i0);
   const T = Math.max(1, t(d1) - t(d0));
@@ -189,7 +204,12 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
     for (let j = first; j < c.length; j++) { if (c[j].v < 0) outs += -c[j].v; else ins += c[j].v; }
     return { end: endV, profit: c.reduce((a, x) => a + x.v, 0), irr: xirr(c), ret: den > 0 ? gain / den : null, moic: outs > 0 ? ins / outs : null };
   };
-  return { d0, d1, days, V0: startV, V1: V1 * fx1, net: net * fx1, divTot: divTot * fx1, hasData: cfs.pf.length > 1, annualised: days >= MIN_ANNUALISE_DAYS, pf: leg(cfs.pf), SPY: leg(cfs.SPY), QQQ: leg(cfs.QQQ), series };
+  const bench: Record<string, Leg> = {};
+  for (const b of B) bench[b] = leg(cfs[b]);
+  return {
+    d0, d1, days, V0: startV, V1: V1 * fx1, net: net * fx1, divTot: divTot * fx1, hasData: cfs.pf.length > 1, annualised: days >= MIN_ANNUALISE_DAYS,
+    pf: leg(cfs.pf), SPY: bench.SPY ?? EMPTY_LEG, QQQ: bench.QQQ ?? EMPTY_LEG, bench, series,
+  };
 }
 
 // ── FIFO lots and disposals (per account + symbol) ──────────────────────────────────────────
