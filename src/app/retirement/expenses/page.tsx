@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { Badge, Card, PageHeader, EmptyState } from "@/components/ui";
-import { compute, computeFundedStatus, loadPlan, presentValueByCategory } from "@/lib/retirement";
-import type { RetirementDb } from "@/lib/retirement";
+import { compute, computeFundedStatus, loadPlan, presentValueByCategory, view } from "@/lib/retirement";
+import type { RetirementDb, ExpenseCategoryKey } from "@/lib/retirement";
+import { EXPENSE_CATEGORIES } from "@/lib/retirement";
 import { prisma } from "@/lib/prisma";
 import { getBaselinePlanId } from "../baseline/data";
+import { UnitToggle } from "../plan/Ledger";
+import { CategoryLedger } from "./CategoryLedger";
 
 const db = prisma as unknown as RetirementDb;
 
 export const dynamic = "force-dynamic";
+
+const CATEGORY_KEYS = new Set(EXPENSE_CATEGORIES.map((c) => c.key));
+const isCategoryKey = (v: unknown): v is ExpenseCategoryKey => typeof v === "string" && CATEGORY_KEYS.has(v as ExpenseCategoryKey);
 
 const fmtCr = (valueL: number) =>
   (valueL / 100).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -16,11 +22,23 @@ const fmtCr = (valueL: number) =>
  * Expense detail (post-M6). Breaks the plan home page's single "Cost of retirement" PV figure
  * into the 8 categories the engine already tracks per year (core+flex+health+ins+school+edu+emi+
  * goals = Row.exp) - same discounting, same rate, same rows; presentValueByCategory in funded.ts
- * guarantees the categories sum back to the headline number exactly (see test-funded.ts). The
- * year-by-year timeline already exists at /retirement/stress (Ledger.tsx) - linked to below rather
- * than rebuilt here, same no-duplication call as the rest of this module.
+ * guarantees the categories sum back to the headline number exactly (see test-funded.ts).
+ *
+ * Two year-by-year views live in the app, deliberately not merged: the *net* ledger (income,
+ * expense, net, assets, portfolio - Ledger.tsx, at /retirement/stress) and this page's *expense,
+ * by category* ledger (CategoryLedger.tsx, added 2026-09-24) - same Row[] data both times, just a
+ * different cut. Clicking a category in the PV table below drills into its column here via
+ * ?highlight=<key>#by-year-category, no client JS needed since it's just a link + a searchParam.
  */
-export default async function ExpensesPage() {
+export default async function ExpensesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [k: string]: string | string[] | undefined }>;
+}) {
+  const sp = await searchParams;
+  const unit: "real" | "nominal" = sp.unit === "nominal" ? "nominal" : "real";
+  const highlightKey: ExpenseCategoryKey | null = isCategoryKey(sp.highlight) ? sp.highlight : null;
+
   let planId: string;
   try {
     planId = await getBaselinePlanId();
@@ -31,6 +49,7 @@ export default async function ExpensesPage() {
   const plan = await loadPlan(db, planId);
   const { state } = plan;
   const result = compute(state.params, state.events, state.baseline, state.assumptions);
+  const yearRows = view(result.rows, unit);
 
   const assetsHeldL = plan.items
     .filter((i) => i.group === "netWorth")
@@ -79,7 +98,14 @@ export default async function ExpensesPage() {
               const pct = funded.pvExpensesL > 0 ? (c.pvL / funded.pvExpensesL) * 100 : 0;
               return (
                 <tr key={c.key} className="border-b border-slate-100 last:border-0">
-                  <td className="py-2 pr-3 text-slate-700">{c.label}</td>
+                  <td className="py-2 pr-3">
+                    <Link
+                      href={`/retirement/expenses?highlight=${c.key}${unit === "nominal" ? "&unit=nominal" : ""}#by-year-category`}
+                      className="text-slate-700 underline decoration-slate-300 decoration-dotted underline-offset-4 hover:text-slate-900 hover:decoration-slate-500"
+                    >
+                      {c.label}
+                    </Link>
+                  </td>
                   <td className="py-2 pr-3">
                     <div className="flex items-center gap-2">
                       <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
@@ -98,14 +124,18 @@ export default async function ExpensesPage() {
           <span className="font-semibold text-slate-800">Total</span>
           <span className="font-semibold text-slate-800">₹{fmtCr(byCategory.reduce((s2, c) => s2 + c.pvL, 0))} Cr</span>
         </div>
+        <div className="mt-1 text-xs text-slate-400">Click a category to see its year-by-year path below.</div>
       </Card>
+
+      <CategoryLedger rows={yearRows} unit={unit} basePath="/retirement/expenses" highlightKey={highlightKey} />
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 className="text-sm font-semibold text-slate-900">Want the year-by-year path?</h2>
+            <h2 className="text-sm font-semibold text-slate-900">Want the year-by-year net view?</h2>
             <p className="mt-1 text-xs text-slate-500">
-              Nominal or real, every year to 2082, with the full sensitivity breakdown.
+              Income, expense, net, assets and portfolio balance per year — this page&apos;s ledger above is expense
+              only, split by category; the net ledger also has the full sensitivity breakdown.
             </p>
           </div>
           <Badge tone="blue">

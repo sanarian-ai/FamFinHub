@@ -5,8 +5,10 @@ import type { Row } from "@/lib/retirement";
 
 const fmtL = (v: number) => v.toLocaleString("en-IN", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
-/** basePath lets this be reused from any route (currently /retirement/stress) without hard-coding it. */
-function UnitToggle({ unit, basePath }: { unit: "real" | "nominal"; basePath: string }) {
+/** basePath lets this be reused from any route (currently /retirement/stress and /retirement/expenses)
+ *  without hard-coding it. Exported so CategoryLedger.tsx uses the identical control instead of a
+ *  second copy. */
+export function UnitToggle({ unit, basePath }: { unit: "real" | "nominal"; basePath: string }) {
   const opts: { key: "real" | "nominal"; label: string; href: string }[] = [
     { key: "real", label: "Today's money", href: basePath },
     { key: "nominal", label: "Nominal", href: `${basePath}?unit=nominal` },

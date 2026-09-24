@@ -57,10 +57,14 @@ export interface ExpenseCategoryPV {
   pvL: number;
 }
 
+export type ExpenseCategoryKey = "core" | "flex" | "health" | "ins" | "school" | "edu" | "emi" | "goals";
+
 /** The 8 fields that sum to Row.exp (see engine.ts's `const exp = core + flex + health + ins +
  *  school + edu + emi + goals`) - the categories a user would actually recognise, not the 12
- *  spend sub-buckets folded into core/flex (that finer cut lives in the year-by-year ledger). */
-const EXPENSE_CATEGORIES: { key: "core" | "flex" | "health" | "ins" | "school" | "edu" | "emi" | "goals"; label: string }[] = [
+ *  spend sub-buckets folded into core/flex (that finer cut lives in the year-by-year ledger).
+ *  Exported so the year-by-year-by-category view (CategoryLedger.tsx) uses these exact same
+ *  keys/labels rather than a second, driftable copy. */
+export const EXPENSE_CATEGORIES: { key: ExpenseCategoryKey; label: string }[] = [
   { key: "core", label: "Core living (housing, food, transport, utilities, staff)" },
   { key: "flex", label: "Flexible spend (lifestyle, dining, travel, learning, giving, subs)" },
   { key: "health", label: "Health" },
