@@ -107,7 +107,7 @@ export default async function BaselinePage() {
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="text-sm font-semibold text-slate-900">Net worth by asset class</h2>
           <span className="text-xs text-slate-500">
-            A separate, informational view — not fed into the plan&apos;s compute(). International equity, PMS, mutual funds, EPF + NPS, and NSE's own listed shares are live; everything else is manual.
+            A separate, informational view — not fed into the plan&apos;s compute(). International equity, PMS, mutual funds, EPF + NPS, NSE's own listed shares, and Indian direct equity (IIFL) are live; everything else is manual.
           </span>
         </div>
         <table className="w-full text-sm">

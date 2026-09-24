@@ -207,6 +207,7 @@ enum PortfolioBroker {
   RETIREMENT_TRACKED // EPF/NPS (and similar) sourced from the INDmoney MCP as a rolled-up total only — no unit-level data available. One account per family member; paired with an AGGREGATE_VALUE security, qty fixed at 1.
   ZERODHA // Individually-held Indian equities in Sangeeth's Zerodha demat, sourced from the INDmoney MCP (currently just NSE's own listed shares, post-2026-09-24 IPO).
   KOTAK_SECURITIES // Individually-held Indian equities in Ria's Kotak Securities demat, sourced from the INDmoney MCP (currently just NSE's own listed shares, post-2026-09-24 IPO).
+  IIFL_DEMAT // Ria's IIFL (India Infoline) demat account — Indian direct equities distinct from the Kabir PMS book (Nuvama), sourced from the INDmoney MCP.
 }
 
 enum TradeSide {

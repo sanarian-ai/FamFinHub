@@ -6,20 +6,21 @@
  * class already has its own engine input under a different key (e.g. EPF/NPS also feeds the
  * plan's opening pool via BASELINE_KEYS' "epf") — the two are intentionally independent numbers.
  *
- * Five classes are live-wired to existing data providers (see baseline/data.ts getNetWorthActuals):
+ * Six classes are live-wired to existing data providers (see baseline/data.ts getNetWorthActuals):
  * international equity (US portfolio), PMS (Kabir), mutual funds (CAMS), EPF + NPS (INDmoney,
- * value-only — no unit-level data exists for these two), and NSE's own listed shares (INDmoney,
- * real units — Sangeeth via Zerodha, Ria via Kotak Securities; NSE listed itself on BSE
- * 2026-09-24). Everything else is a manual figure the user updates directly, same explicit-save
- * UX as the rest of the baseline screen — a live-wired class is never forced: "Use live value" is
- * an explicit sync action, and the stored figure stays a manually editable number in between
- * syncs.
+ * value-only — no unit-level data exists for these two), NSE's own listed shares (INDmoney, real
+ * units — Sangeeth via Zerodha, Ria via Kotak Securities; NSE listed itself on BSE 2026-09-24),
+ * and Indian direct equity (INDmoney, real units — Ria's IIFL/India Infoline demat, 24 holdings,
+ * distinct from the Kabir PMS book which is Nuvama-custodied). Everything else is a manual figure
+ * the user updates directly, same explicit-save UX as the rest of the baseline screen — a
+ * live-wired class is never forced: "Use live value" is an explicit sync action, and the stored
+ * figure stays a manually editable number in between syncs.
  *
  * Seeded once from the user's personal net-worth tracking sheet (Sep 2026 snapshot) via
  * scripts/retirement/seed-networth.ts; values from there are just a starting point, not kept in
  * sync with the sheet.
  */
-export type NetWorthLiveSource = "usPortfolio" | "kabirPms" | "mutualFunds" | "epfNps" | "nse" | null;
+export type NetWorthLiveSource = "usPortfolio" | "kabirPms" | "mutualFunds" | "epfNps" | "nse" | "iifl" | null;
 
 export interface NetWorthClass {
   key: string;
@@ -30,7 +31,7 @@ export interface NetWorthClass {
 
 export const NETWORTH_CLASSES: NetWorthClass[] = [
   { key: "networth.mutualFunds", label: "Mutual funds", live: "mutualFunds", sortOrder: 0 },
-  { key: "networth.indianEquity", label: "Indian direct equity", live: null, sortOrder: 1 },
+  { key: "networth.indianEquity", label: "Indian direct equity", live: "iifl", sortOrder: 1 },
   { key: "networth.unlistedNse", label: "NSE (National Stock Exchange of India)", live: "nse", sortOrder: 2 }, // relabeled 2026-09-24: NSE listed itself (BSE) that day, no longer unlisted
   { key: "networth.intlEquity", label: "International equity (US stocks)", live: "usPortfolio", sortOrder: 3 },
   { key: "networth.pms", label: "PMS (Kabir)", live: "kabirPms", sortOrder: 4 },

@@ -79,21 +79,23 @@ export type NetWorthActual = { valueL: number; asOf: string | null };
  * (see src/lib/retirement/networth.ts NETWORTH_CLASSES): international equity from the US
  * portfolio engine, PMS from Kabir's snapshot+price query, mutual funds from the CAMS-ingested
  * MF_FOLIO accounts, EPF + NPS from the RETIREMENT_TRACKED accounts seeded via the INDmoney MCP
- * (value-only — see seed-aggregate-value.ts; no unit-level data exists for these two), and NSE's
- * own listed shares from the ZERODHA/KOTAK_SECURITIES accounts (real units, seeded via
- * seed-holdings.ts same as Kabir PMS). The first three already exist elsewhere in the app
- * (src/app/portfolio/us/holdings, src/app/portfolio/india, src/app/portfolio/mf) — this reuses
- * them rather than re-deriving a second source of truth. Read-only: never writes the baseline
- * table itself: the "Use live value" button (useLiveNetWorthValueAction) is the explicit trigger
- * that does, same pattern as useLedgerValueAction above.
+ * (value-only — see seed-aggregate-value.ts; no unit-level data exists for these two), NSE's own
+ * listed shares from the ZERODHA/KOTAK_SECURITIES accounts, and Indian direct equity from the
+ * IIFL_DEMAT account (both real units, seeded via seed-holdings.ts same as Kabir PMS). The first
+ * three already exist elsewhere in the app (src/app/portfolio/us/holdings, src/app/portfolio/india,
+ * src/app/portfolio/mf) — this reuses them rather than re-deriving a second source of truth.
+ * Read-only: never writes the baseline table itself: the "Use live value" button
+ * (useLiveNetWorthValueAction) is the explicit trigger that does, same pattern as
+ * useLedgerValueAction above.
  */
 export async function getNetWorthActuals(): Promise<Record<string, NetWorthActual>> {
-  const [intlEquity, pms, mutualFunds, epfNps, nse] = await Promise.all([
+  const [intlEquity, pms, mutualFunds, epfNps, nse, iifl] = await Promise.all([
     getIntlEquityActual(),
     getKabirPmsActual(),
     getMutualFundsActual(),
     getEpfNpsActual(),
     getNseActual(),
+    getIiflActual(),
   ]);
   const out: Record<string, NetWorthActual> = {};
   if (intlEquity != null) out["networth.intlEquity"] = intlEquity;
@@ -101,6 +103,7 @@ export async function getNetWorthActuals(): Promise<Record<string, NetWorthActua
   if (mutualFunds != null) out["networth.mutualFunds"] = mutualFunds;
   if (epfNps != null) out["networth.epfNps"] = epfNps;
   if (nse != null) out["networth.unlistedNse"] = nse;
+  if (iifl != null) out["networth.indianEquity"] = iifl;
   return out;
 }
 
@@ -264,6 +267,41 @@ async function getNseActual(): Promise<NetWorthActual | null> {
   let asOf: string | null = null;
   for (const { securityId, qty } of latestByPair.values()) {
     const price = priceById.get(securityId);
+    if (qty > 0 && price?.close != null) {
+      totalValue += qty * Number(price.close);
+      const d = price.date.toISOString().slice(0, 10);
+      if (asOf === null || d > asOf) asOf = d;
+    }
+  }
+  return { valueL: totalValue / 1e5, asOf };
+}
+
+
+/**
+ * Sum of current market value across the IIFL_DEMAT account (Ria's India Infoline demat, 24
+ * holdings, real units seeded via seed-holdings.ts from the INDmoney MCP). Distinct from PMS
+ * (Kabir/Nuvama-custodied) despite both being Ria's Indian equity — kept as separate accounts so
+ * the two stay easy to tell apart, per the original ask when this was first scoped.
+ */
+async function getIiflActual(): Promise<NetWorthActual | null> {
+  const account = await prisma.portfolioAccount.findUnique({ where: { key: "IIFL_DEMAT_RIA" } });
+  if (!account) return null;
+  const snapshots = await prisma.positionSnapshot.findMany({
+    where: { accountId: account.id }, orderBy: { asOf: "desc" },
+    select: { securityId: true, asOf: true, qty: true },
+  });
+  if (snapshots.length === 0) return null;
+  const latestQty = new Map<string, number>();
+  for (const s of snapshots) if (!latestQty.has(s.securityId)) latestQty.set(s.securityId, Number(s.qty));
+  const securities = await prisma.security.findMany({
+    where: { id: { in: [...latestQty.keys()] } },
+    select: { id: true, prices: { orderBy: { date: "desc" }, take: 1, select: { date: true, close: true } } },
+  });
+  let totalValue = 0;
+  let asOf: string | null = null;
+  for (const sec of securities) {
+    const qty = latestQty.get(sec.id) ?? 0;
+    const price = sec.prices[0];
     if (qty > 0 && price?.close != null) {
       totalValue += qty * Number(price.close);
       const d = price.date.toISOString().slice(0, 10);
