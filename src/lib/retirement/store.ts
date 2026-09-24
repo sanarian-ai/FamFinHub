@@ -25,7 +25,6 @@ const FIXED: { key: string; label: string; group: BaselineGroup; unit: BaselineU
   { key: "openingPool", label: "Opening liquid pool (ex-ESOP, ex-real estate)", group: "asset", unit: "lump", get: (b) => b.openingPoolL },
   { key: "epf", label: "EPF + NPS balance", group: "asset", unit: "lump", get: (b) => b.epfL },
   { key: "rent", label: "Retained real estate rent (annual)", group: "income", unit: "annual", get: (b) => b.rentAnnualL },
-  { key: "genSumAssured", label: "Generali sum assured (income base)", group: "income", unit: "lump", get: (b) => b.genSumAssuredL },
 ];
 
 export const BASELINE_KEYS: string[] = [...SUBS.map((s) => "sub." + s.k), ...FIXED.map((f) => f.key)];
@@ -58,18 +57,18 @@ export function itemsToBaseline(items: { key: string; valueL: unknown }[]): Base
   for (const s of SUBS) subMonthlyL[s.k] = v("sub." + s.k);
   return {
     openingPoolL: v("openingPool"), subMonthlyL, healthAnnualL: v("health"), insAnnualL: v("insurance"),
-    schoolAnnualL: v("school"), emiMonthlyL: v("emi"), rentAnnualL: v("rent"), epfL: v("epf"), genSumAssuredL: v("genSumAssured"),
+    schoolAnnualL: v("school"), emiMonthlyL: v("emi"), rentAnnualL: v("rent"), epfL: v("epf"),
   };
 }
 
 // ---------- validation ----------
 const PCT: Record<string, [number, number]> = {
-  r: [-5, 30], cpi: [0, 20], med: [0, 25], edu: [0, 25], nseG: [-20, 40], riaG: [-10, 30], esopH: [0, 100],
+  r: [-5, 30], cpi: [0, 20], med: [0, 25], edu: [0, 25], riaG: [-10, 30], esopH: [0, 100],
   stepPct: [0, 100], lifePct: [0, 100],
 };
-const YEAR_KEYS = ["propYear", "esopYear", "genYear", "genLast", "nseYear", "epfYear", "riaLast", "sangFrom", "sangTo",
+const YEAR_KEYS = ["propYear", "esopYear", "epfYear", "riaLast", "sangFrom", "sangTo",
   "rubenUG", "rochUG", "termLast", "healthRamp", "stepYear", "lifeYear", "marr1Year", "marr2Year"];
-const ZERO_OK = new Set(["genYear", "nseYear", "stepYear", "lifeYear"]);
+const ZERO_OK = new Set(["stepYear", "lifeYear"]);
 
 export function validateParams(input: unknown): Params {
   if (!input || typeof input !== "object") throw new Error("params: expected an object");

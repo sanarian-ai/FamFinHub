@@ -32,7 +32,7 @@ export const DEFAULT_BASELINE: Baseline = {
     lifestyle: 0.5417, dining: 0.1212, learning: 0.0711, giving: 0.2142, subs: 0.1461, travel: 1.0206, finSvc: 0.1069,
   },
   healthAnnualL: 2.76, insAnnualL: 0.48, schoolAnnualL: 11.88, emiMonthlyL: 2.13,
-  rentAnnualL: 3.4, epfL: 69, genSumAssuredL: 24.481,
+  rentAnnualL: 3.4, epfL: 69,
 };
 
 export const DEFAULT_ASSUMPTIONS: Assumptions = {
@@ -40,17 +40,10 @@ export const DEFAULT_ASSUMPTIONS: Assumptions = {
   mcMean: 0.0875, mcSigma: 0.12, cpiSd: 0.015, seed: 7,
 };
 
-/** Generali Option 1 guaranteed-income rate by policy year (policy no. 01878040). */
-export function genRate(policyYear: number): number {
-  return policyYear <= 5 ? 0.03 : policyYear <= 10 ? 0.04 : policyYear <= 15 ? 0.05 : policyYear <= 20 ? 0.06 : 0.07;
-}
-
 export const DEFAULT_PARAMS: Params = {
   r: 8, cpi: 6, med: 8, edu: 8,
   propYear: 2026, propAmt: 1.5,
   esopYear: 2028, esopH: 25, esopAmt: 12.6,
-  genYear: 0, genAmt: 0, genPrem: 5, genLast: 2034, genInc: false, nseG: 8,
-  nseYear: 0, nseAmt: 1.02,
   epfYear: 2042,
   riaLast: 2042, riaNet: 37.3, riaG: 5,
   sangFrom: 2028, sangTo: 2040, sangNet: 0,

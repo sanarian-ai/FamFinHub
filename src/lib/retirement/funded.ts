@@ -9,8 +9,8 @@
  * no new assumption to maintain, one rate feeds both the ledger's deterministic path and this PV.
  *
  * assetsHeldL: the current, undiscounted value of what's actually held today (the net-worth
- * tracker's 13 classes — see networth.ts). Deliberately NOT netted against future recurring
- * income (Ria's salary, rent, the Generali annuity, a future Sangeeth income) or one-time asset
+ * tracker's 14 classes — see networth.ts). Deliberately NOT netted against future recurring
+ * income (Ria's salary, rent, a future Sangeeth income) or one-time asset
  * unlocks (ESOP, property sale, EPF/NPS) that Row.assets/Row.inc already capture — those are
  * covered by the Monte Carlo success% right next to this number, not blended into it. This number
  * answers a narrower, starker question on purpose: "if no further income ever arrived, could

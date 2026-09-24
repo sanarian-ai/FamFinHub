@@ -23,7 +23,6 @@ export interface Baseline {
   emiMonthlyL: number;
   rentAnnualL: number;           // retained real estate rent, today's money
   epfL: number;                  // EPF + NPS balance at valuation date
-  genSumAssuredL: number;        // Generali sum assured (guaranteed income base)
 }
 
 export interface Assumptions {
@@ -36,8 +35,6 @@ export interface Params {
   r: number; cpi: number; med: number; edu: number;
   propYear: number; propAmt: number;                  // amt in Cr
   esopYear: number; esopH: number; esopAmt: number;   // haircut percent, amt in Cr (post-tax)
-  genYear: number; genAmt: number; genPrem: number; genLast: number; genInc: boolean;
-  nseG: number; nseYear: number; nseAmt: number;
   epfYear: number;
   riaLast: number; riaNet: number; riaG: number;
   sangFrom: number; sangTo: number; sangNet: number;
@@ -54,7 +51,7 @@ export interface CustomEvent { year: number; label?: string; kind: "expense" | "
 export interface Row {
   Y: number; idx: number;
   core: number; flex: number; health: number; ins: number; school: number; edu: number; emi: number; goals: number;
-  ria: number; rent: number; sang: number; gen: number;
+  ria: number; rent: number; sang: number;
   inc: number; exp: number; net: number; assets: number; port: number; st: number; held: number;
   [sub: string]: number;
 }

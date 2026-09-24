@@ -1,4 +1,4 @@
-import { DEFAULT_ASSUMPTIONS, DEFAULT_BASELINE, L, SUBS, genRate } from "./defaults";
+import { DEFAULT_ASSUMPTIONS, DEFAULT_BASELINE, L, SUBS } from "./defaults";
 import type { Assumptions, Baseline, ComputeResult, CustomEvent, McResult, Params, Row } from "./types";
 
 export function stageOf(Y: number, P: Params): number {
@@ -38,7 +38,7 @@ export function compute(
     }
     const ramp = Y >= P.healthRamp ? Math.pow(1.03, Math.min(Y - P.healthRamp + 1, 15)) : 1;
     const health = baseline.healthAnnualL * iM * ramp * frac;
-    const ins = (Y <= P.termLast ? baseline.insAnnualL * frac : 0) + ((Y >= 2027 && Y <= P.genLast) ? P.genPrem : 0);
+    const ins = Y <= P.termLast ? baseline.insAnnualL * frac : 0;
     const sf = Y < P.rubenUG ? 1 : (Y < P.rochUG ? 0.5 : 0);
     const school = baseline.schoolAnnualL * iS * sf * frac;
     let edu = 0;
@@ -57,8 +57,6 @@ export function compute(
       if (ce.kind === "expense") goals += (+ce.amt || 0) * Math.pow(1 + c, Y - 2026);
       if (ce.kind === "inflow") inflow += (+ce.amt || 0);
     }
-    const gk = Y - 2025;
-    const gen = (P.genInc && Y >= 2027 && gk <= 25) ? baseline.genSumAssuredL * genRate(gk) : 0;
     const ria = Y <= P.riaLast
       ? (Y === 2026 ? P.riaNet * 0.25 : P.riaNet * Math.pow(1 + P.riaG / 100, Y - 2026))
       : 0;
@@ -69,20 +67,17 @@ export function compute(
     let assets = 0;
     if (Y === P.propYear) assets += P.propAmt * L;
     if (Y === P.esopYear) assets += P.esopAmt * L * (1 - P.esopH / 100);
-    if (P.genYear && P.genAmt > 0 && Y === P.genYear) assets += P.genAmt * L;
-    if (P.nseYear && Y === P.nseYear) assets += P.nseAmt * L * Math.pow(1 + P.nseG / 100, Y - 2026);
     if (Y === P.epfYear) assets += baseline.epfL * Math.pow(1 + A.epfG / 100, Y - 2026);
-    const held = ((!P.nseYear || Y < P.nseYear) ? P.nseAmt * L * Math.pow(1 + P.nseG / 100, Y - 2026) : 0)
-      + (Y < P.epfYear ? baseline.epfL * Math.pow(1 + A.epfG / 100, Y - 2026) : 0);
+    const held = Y < P.epfYear ? baseline.epfL * Math.pow(1 + A.epfG / 100, Y - 2026) : 0;
     const exp = core + flex + health + ins + school + edu + emi + goals;
-    const inc = ria + rent + sang + gen;
+    const inc = ria + rent + sang;
     const flow = inc + assets + inflow - exp;
     port = Y === 2026
       ? port * Math.pow(1 + r, 0.25) + flow * Math.pow(1 + r, 0.125)
       : port * (1 + r) + flow * Math.pow(1 + r, 0.5);
     if (port < 0 && depl === null) depl = Y;
     out.push({
-      Y, idx, core, flex, health, ins, school, edu, emi, goals, ria, rent, sang, gen, inc, exp,
+      Y, idx, core, flex, health, ins, school, edu, emi, goals, ria, rent, sang, inc, exp,
       net: inc - exp, assets: assets + inflow, port, st, held, ...sv,
     });
   }

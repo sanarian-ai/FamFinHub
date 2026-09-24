@@ -50,9 +50,8 @@ export const NETWORTH_CLASSES: NetWorthClass[] = [
   { key: "networth.fd", label: "Fixed deposits", live: null, sortOrder: 9 },
   { key: "networth.cash", label: "Cash", live: null, sortOrder: 10 },
   { key: "networth.realEstate", label: "Real estate (present value)", live: null, sortOrder: 11 },
-  { key: "networth.futureGenerali", label: "Future Generali (policy value)", live: null, sortOrder: 12 },
-  { key: "networth.esops", label: "ESOPs", live: null, sortOrder: 13 },
-  { key: "networth.bitcoin", label: "BitCoin", live: null, sortOrder: 14 },
+  { key: "networth.esops", label: "ESOPs", live: null, sortOrder: 12 },
+  { key: "networth.bitcoin", label: "BitCoin", live: null, sortOrder: 13 },
 ];
 
 export const NETWORTH_KEYS: string[] = NETWORTH_CLASSES.map((c) => c.key);
