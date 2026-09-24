@@ -114,18 +114,18 @@ export function AssumptionsForm({
         <NumField label="Education inflation" value={p.edu} onChange={n("edu")} suffix="%" step={0.1} />
       </Section>
 
-      <Section title="Property" note="One-time inflow when the property sells; EMI stops the same year.">
+      <Section title="Property" note="One-time inflow at face value when the property sells — not grown by inflation. EMI stops the same year.">
         <NumField label="Sale year" value={p.propYear} onChange={n("propYear")} step={1} />
         <NumField label="Sale proceeds" value={p.propAmt} onChange={n("propAmt")} suffix="₹ Cr" step={0.1} />
       </Section>
 
-      <Section title="ESOP" note="One-time inflow, net of the stated haircut.">
+      <Section title="ESOP" note="One-time inflow at face value in the unlock year — not grown by inflation. Net of the stated haircut.">
         <NumField label="Unlock year" value={p.esopYear} onChange={n("esopYear")} step={1} />
         <NumField label="Haircut" value={p.esopH} onChange={n("esopH")} suffix="%" step={1} />
         <NumField label="Gross value" value={p.esopAmt} onChange={n("esopAmt")} suffix="₹ Cr" step={0.1} />
       </Section>
 
-      <Section title="Future Generali policy" note="Either a lump payout, a guaranteed income stream from genYear, or both off.">
+      <Section title="Future Generali policy" note="Lump payout and premium are face-value amounts, not grown by inflation. Either a lump payout, a guaranteed income stream from genYear, or both off.">
         <NumField label="Payout / income start year" value={p.genYear} onChange={n("genYear")} step={1} />
         <NumField label="Lump payout" value={p.genAmt} onChange={n("genAmt")} suffix="₹ Cr" step={0.1} />
         <NumField label="Annual premium" value={p.genPrem} onChange={n("genPrem")} suffix="₹ L / yr" step={0.1} />
@@ -133,7 +133,7 @@ export function AssumptionsForm({
         <BoolField label="Guaranteed income stream on" checked={p.genInc} onChange={b("genInc")} />
       </Section>
 
-      <Section title="Unlisted NSE shares" note="One-time inflow if a nseYear is set — otherwise held at the tracked value with no scheduled event (see the assets detail page).">
+      <Section title="Unlisted NSE shares" note="Amount grows at the growth rate below, not general inflation. One-time inflow if a nseYear is set — otherwise held at the tracked value with no scheduled event (see the assets detail page).">
         <NumField label="Event year (0 = none scheduled)" value={p.nseYear} onChange={n("nseYear")} step={1} />
         <NumField label="Amount" value={p.nseAmt} onChange={n("nseAmt")} suffix="₹ Cr" step={0.1} />
         <NumField label="Growth rate" value={p.nseG} onChange={n("nseG")} suffix="%" step={0.1} />
@@ -143,19 +143,19 @@ export function AssumptionsForm({
         <NumField label="Withdrawal year" value={p.epfYear} onChange={n("epfYear")} step={1} />
       </Section>
 
-      <Section title="Ria's income">
+      <Section title="Ria's income" note="Current net income, compounding forward at the growth rate below — not general inflation.">
         <NumField label="Last working year" value={p.riaLast} onChange={n("riaLast")} step={1} />
         <NumField label="Current net income" value={p.riaNet} onChange={n("riaNet")} suffix="₹ L / yr" step={0.1} />
         <NumField label="Growth rate" value={p.riaG} onChange={n("riaG")} suffix="%" step={0.1} />
       </Section>
 
-      <Section title="Sangeeth's future income" note="A hypothetical future income window; 0 net means none modelled.">
+      <Section title="Sangeeth's future income" note="A hypothetical future income window; 0 net means none modelled. Net income compounds forward each year at the rate set in Monte Carlo &amp; growth assumptions below.">
         <NumField label="From year" value={p.sangFrom} onChange={n("sangFrom")} step={1} />
         <NumField label="To year" value={p.sangTo} onChange={n("sangTo")} step={1} />
         <NumField label="Net income" value={p.sangNet} onChange={n("sangNet")} suffix="₹ L / yr" step={0.1} />
       </Section>
 
-      <Section title="Children's education" note="UG cost applies each of 4 years from its start year; PG cost each of the following 2.">
+      <Section title="Children's education" note="Costs are today's money, grown to each year by the Education inflation rate above. UG cost applies each of 4 years from its start year; PG cost each of the following 2.">
         <NumField label="Reuben's UG start year" value={p.rubenUG} onChange={n("rubenUG")} step={1} />
         <NumField label="Rochelle's UG start year" value={p.rochUG} onChange={n("rochUG")} step={1} />
         <NumField label="UG cost" value={p.ugCost} onChange={n("ugCost")} suffix="₹ L / yr" step={0.5} />
@@ -174,7 +174,7 @@ export function AssumptionsForm({
         <NumField label="Flex spend cut" value={p.lifePct} onChange={n("lifePct")} suffix="%" step={1} />
       </Section>
 
-      <Section title="Marriage goals">
+      <Section title="Marriage goals" note="Amounts are today's money, grown to each event year by General inflation (CPI) above — same treatment as every other spend category.">
         <BoolField label="Included in the plan" checked={p.marrOn} onChange={b("marrOn")} />
         <NumField label="Event 1 year" value={p.marr1Year} onChange={n("marr1Year")} step={1} disabled={!p.marrOn} />
         <NumField label="Event 1 amount" value={p.marr1Amt} onChange={n("marr1Amt")} suffix="₹ L" step={1} disabled={!p.marrOn} />
