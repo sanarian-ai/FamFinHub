@@ -205,6 +205,8 @@ enum PortfolioBroker {
   KABIR_PMS // Kabir Capital Advisors LLP - Two Rules Value Fund (India equity PMS, held in Ria's demat via Nuvama)
   MF_FOLIO // A mutual fund folio sourced from a CAMS/KFintech Consolidated Account Statement. One row per (AMC, folio no.); RTA (CAMS vs KFintech) is per-folio metadata, not a separate broker.
   RETIREMENT_TRACKED // EPF/NPS (and similar) sourced from the INDmoney MCP as a rolled-up total only — no unit-level data available. One account per family member; paired with an AGGREGATE_VALUE security, qty fixed at 1.
+  ZERODHA // Individually-held Indian equities in Sangeeth's Zerodha demat, sourced from the INDmoney MCP (currently just NSE's own listed shares, post-2026-09-24 IPO).
+  KOTAK_SECURITIES // Individually-held Indian equities in Ria's Kotak Securities demat, sourced from the INDmoney MCP (currently just NSE's own listed shares, post-2026-09-24 IPO).
 }
 
 enum TradeSide {

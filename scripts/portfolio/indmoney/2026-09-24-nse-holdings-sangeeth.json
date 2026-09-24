@@ -1,0 +1,8 @@
+{
+  "account": "ZERODHA_SANGEETH",
+  "asOf": "2026-09-24",
+  "securities": [
+    { "symbol": "544937", "name": "National Stock Exchange Of India Ltd", "kind": "STOCK", "currency": "INR", "exchange": "BSE" }
+  ],
+  "holdings": [ { "symbol": "544937", "qty": 1000 } ]
+}

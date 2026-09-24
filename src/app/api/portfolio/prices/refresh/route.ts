@@ -18,7 +18,10 @@ import { fetchLatestCloses } from "@/lib/portfolio/priceFeed";
  *   - x-api-key: INGEST_API_KEY (the scheduled task, no browser session)
  *
  * Scope: STOCK/ETF securities only, selected by `?scope=kabir|us|all` (default all):
- *   kabir -> currency INR, exchange NSE   us -> currency USD
+ *   kabir -> currency INR, exchange NSE or BSE   us -> currency USD
+ * BSE-listed symbols (scrip code as the security's symbol, e.g. "544937") map to Yahoo's `.BO`
+ * suffix instead of NSE's `.NS` — see priceFeed.ts yahooSymbol. A brand-new listing Yahoo hasn't
+ * indexed yet just falls back like any other miss (see the contract below).
  * Indian mutual fund NAVs (the 4 Kabir liquid/arbitrage funds) are excluded — not exchange-quoted
  * instruments this feed covers.
  *
@@ -55,14 +58,14 @@ export async function POST(req: NextRequest) {
   const STOCK_ETF: ("STOCK" | "ETF")[] = ["STOCK", "ETF"];
   const where =
     scope === "kabir"
-      ? { currency: "INR", exchange: "NSE", kind: { in: STOCK_ETF } }
+      ? { currency: "INR", exchange: { in: ["NSE", "BSE"] }, kind: { in: STOCK_ETF } }
       : scope === "us"
       ? { currency: "USD", kind: { in: STOCK_ETF } }
-      : { kind: { in: STOCK_ETF }, OR: [{ currency: "INR", exchange: "NSE" }, { currency: "USD" }] };
+      : { kind: { in: STOCK_ETF }, OR: [{ currency: "INR", exchange: { in: ["NSE", "BSE"] } }, { currency: "USD" }] };
 
   const securities = await prisma.security.findMany({
     where,
-    select: { id: true, symbol: true, currency: true },
+    select: { id: true, symbol: true, currency: true, exchange: true },
   });
 
   if (securities.length === 0) {
@@ -70,7 +73,10 @@ export async function POST(req: NextRequest) {
   }
 
   const closes = await fetchLatestCloses(
-    securities.map((s) => ({ symbol: s.symbol, market: s.currency === "INR" ? ("NSE" as const) : ("US" as const) }))
+    securities.map((s) => ({
+      symbol: s.symbol,
+      market: s.currency === "INR" ? (s.exchange === "BSE" ? ("BSE" as const) : ("NSE" as const)) : ("US" as const),
+    }))
   );
 
   const updated: { symbol: string; date: string; close: number }[] = [];

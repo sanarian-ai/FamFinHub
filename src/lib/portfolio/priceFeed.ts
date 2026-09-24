@@ -8,14 +8,19 @@
 // are not exchange-quoted instruments Yahoo's chart endpoint covers, so they're excluded here rather
 // than silently failing on every run — see MANIFEST.md / kabir-pms-p2-log.md for that known gap.
 
-const SESSION_TZ: Record<"NSE" | "US", string> = { NSE: "Asia/Kolkata", US: "America/New_York" };
+const SESSION_TZ: Record<"NSE" | "BSE" | "US", string> = { NSE: "Asia/Kolkata", BSE: "Asia/Kolkata", US: "America/New_York" };
 
-const sessionDate = (epochSeconds: number, market: "NSE" | "US") =>
+const sessionDate = (epochSeconds: number, market: "NSE" | "BSE" | "US") =>
   new Intl.DateTimeFormat("en-CA", { timeZone: SESSION_TZ[market], year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(epochSeconds * 1000));
 
-/** NSE-listed security symbol -> Yahoo's `.NS` ticker. US symbols are used as-is. */
-export function yahooSymbol(symbol: string, market: "NSE" | "US"): string {
-  return market === "NSE" ? `${symbol}.NS` : symbol;
+/**
+ * NSE-listed security symbol -> Yahoo's `.NS` ticker; BSE-listed (scrip code as the symbol,
+ * e.g. "544937") -> Yahoo's `.BO` ticker. US symbols are used as-is.
+ */
+export function yahooSymbol(symbol: string, market: "NSE" | "BSE" | "US"): string {
+  if (market === "NSE") return `${symbol}.NS`;
+  if (market === "BSE") return `${symbol}.BO`;
+  return symbol;
 }
 
 export type PriceFetchResult = { symbol: string; date: string; close: number } | null;
@@ -25,7 +30,7 @@ export type PriceFetchResult = { symbol: string; date: string; close: number } |
  * malformed body, or missing close data returns null rather than throwing, so a caller looping
  * over many symbols never has one bad ticker abort the rest.
  */
-export async function fetchLatestClose(symbol: string, market: "NSE" | "US"): Promise<PriceFetchResult> {
+export async function fetchLatestClose(symbol: string, market: "NSE" | "BSE" | "US"): Promise<PriceFetchResult> {
   const yq = yahooSymbol(symbol, market);
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yq)}?interval=1d&range=5d`;
   try {
@@ -54,7 +59,7 @@ export async function fetchLatestClose(symbol: string, market: "NSE" | "US"): Pr
 }
 
 /** Fetches every symbol independently and in parallel; one failure never affects the others. */
-export async function fetchLatestCloses(securities: { symbol: string; market: "NSE" | "US" }[]): Promise<Map<string, PriceFetchResult>> {
+export async function fetchLatestCloses(securities: { symbol: string; market: "NSE" | "BSE" | "US" }[]): Promise<Map<string, PriceFetchResult>> {
   const out = new Map<string, PriceFetchResult>();
   await Promise.all(
     securities.map(async (s) => {
