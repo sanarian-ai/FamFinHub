@@ -2,10 +2,13 @@ import type { ReactNode } from "react";
 import clsx from "clsx";
 import { Card } from "@/components/ui";
 
-export function Tile({ label, value, sub, valueClass }: { label: string; value: string; sub?: ReactNode; valueClass?: string }) {
+export function Tile({ label, value, sub, valueClass, dot }: { label: string; value: string; sub?: ReactNode; valueClass?: string; dot?: string }) {
   return (
     <Card className="p-4">
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
+        {dot && <span className="inline-block h-2 w-2 rounded-full" style={{ background: dot }} />}
+        {label}
+      </div>
       <div className={clsx("mt-1 text-2xl font-semibold tabular-nums text-slate-900", valueClass)}>{value}</div>
       {sub && <div className="mt-1 text-xs text-slate-500">{sub}</div>}
     </Card>
