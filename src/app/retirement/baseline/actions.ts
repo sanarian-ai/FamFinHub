@@ -13,6 +13,11 @@ const db = prisma as unknown as RetirementDb;
 
 function revalidateBaseline() {
   revalidatePath("/retirement/baseline");
+  // Net-worth items (group: "netWorth") now also render, editable, on /retirement/assets (see
+  // that page) — every action that can touch one revalidates both screens so an edit made from
+  // either shows up on the other without a manual refresh. Revalidating assets for a pure ledger
+  // item (useLedgerValueAction) is a no-op there, not worth a separate helper to avoid.
+  revalidatePath("/retirement/assets");
 }
 
 /** Direct client call (not a form action) — mirrors updateCategoryRuleAction in mapping/actions.ts. */

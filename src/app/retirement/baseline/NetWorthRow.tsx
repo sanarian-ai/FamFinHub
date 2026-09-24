@@ -1,17 +1,23 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Badge } from "@/components/ui";
 import { markReviewedAction, removeNetWorthItemAction, saveBaselineValueAction, useLiveNetWorthValueAction } from "./actions";
 
 const fmtL = (v: number) => v.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
 
 export function NetWorthRow({
   planId, itemKey, label, valueL, lastReviewedAt, liveValueL, liveAsOf, removable = false,
+  showUnlock = false, unlockYear = null,
 }: {
   planId: string; itemKey: string; label: string; valueL: number; lastReviewedAt: string;
   liveValueL: number | null; liveAsOf: string | null;
   /** True for a bucket the user added themselves — the 13 built-in classes are never removable here. */
   removable?: boolean;
+  /** When true, render an extra "Unlocks" cell (see retirement/assets/page.tsx, which is the only
+   *  caller that passes it — the baseline screen's own table has no unlock-date concept to show). */
+  showUnlock?: boolean;
+  unlockYear?: number | null;
 }) {
   const [value, setValue] = useState(String(valueL));
   const [pending, startTransition] = useTransition();
@@ -44,6 +50,11 @@ export function NetWorthRow({
   return (
     <tr className="border-b border-slate-100 align-top">
       <td className="py-2.5 pr-3 text-slate-800">{label}</td>
+      {showUnlock && (
+        <td className="py-2.5 pr-3">
+          {unlockYear != null ? <Badge tone="amber">{unlockYear}</Badge> : <span className="text-xs text-slate-400">now</span>}
+        </td>
+      )}
       <td className="py-2.5 pr-3">
         <div className="flex items-center gap-1.5">
           <input
