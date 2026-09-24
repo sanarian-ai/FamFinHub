@@ -204,6 +204,7 @@ enum PortfolioBroker {
   IBKR
   KABIR_PMS // Kabir Capital Advisors LLP - Two Rules Value Fund (India equity PMS, held in Ria's demat via Nuvama)
   MF_FOLIO // A mutual fund folio sourced from a CAMS/KFintech Consolidated Account Statement. One row per (AMC, folio no.); RTA (CAMS vs KFintech) is per-folio metadata, not a separate broker.
+  RETIREMENT_TRACKED // EPF/NPS (and similar) sourced from the INDmoney MCP as a rolled-up total only — no unit-level data available. One account per family member; paired with an AGGREGATE_VALUE security, qty fixed at 1.
 }
 
 enum TradeSide {
@@ -216,6 +217,7 @@ enum SecurityKind {
   ETF
   BENCHMARK
   MUTUAL_FUND // liquid/arbitrage funds a PMS parks idle cash in; not a portfolio "holding" the client chose
+  AGGREGATE_VALUE // a value-only holding with no real per-unit price (e.g. EPF/NPS from INDmoney, rolled up); qty is fixed at 1 and PriceDaily.close carries the whole position's INR value. Excluded from the Yahoo Finance price-refresh job by kind, same as MUTUAL_FUND.
 }
 
 enum CashEventType {

@@ -1,0 +1,20 @@
+[
+  {
+    "account": "RETIREMENT_TRACKED_SANGEETH",
+    "accountName": "EPF + NPS (Sangeeth)",
+    "holder": "Sangeeth",
+    "security": "EPFNPS_SANGEETH",
+    "securityName": "EPF + NPS — Sangeeth (rolled-up total, INDmoney)",
+    "asOf": "2026-09-24",
+    "valueINR": 7116079.07
+  },
+  {
+    "account": "RETIREMENT_TRACKED_RIA",
+    "accountName": "EPF + NPS (Ria)",
+    "holder": "Ria",
+    "security": "EPFNPS_RIA",
+    "securityName": "EPF + NPS — Ria (rolled-up total, INDmoney)",
+    "asOf": "2026-09-24",
+    "valueINR": 264015.95
+  }
+]

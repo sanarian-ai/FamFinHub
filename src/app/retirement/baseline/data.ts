@@ -78,18 +78,26 @@ export type NetWorthActual = { valueL: number; asOf: string | null };
  * Live current values for the net-worth-by-asset-class rows that have an existing data provider
  * (see src/lib/retirement/networth.ts NETWORTH_CLASSES): international equity from the US
  * portfolio engine, PMS from Kabir's snapshot+price query, mutual funds from the CAMS-ingested
- * MF_FOLIO accounts. All three already exist elsewhere in the app (src/app/portfolio/us/holdings,
+ * MF_FOLIO accounts, and EPF + NPS from the RETIREMENT_TRACKED accounts seeded via the INDmoney
+ * MCP (value-only — see seed-aggregate-value.ts; no unit-level data exists for these two). The
+ * first three already exist elsewhere in the app (src/app/portfolio/us/holdings,
  * src/app/portfolio/india, src/app/portfolio/mf) — this reuses them rather than re-deriving a
  * second source of truth. Read-only: never writes the baseline table itself: the "Use live value"
  * button (useLiveNetWorthValueAction) is the explicit trigger that does, same pattern as
  * useLedgerValueAction above.
  */
 export async function getNetWorthActuals(): Promise<Record<string, NetWorthActual>> {
-  const [intlEquity, pms, mutualFunds] = await Promise.all([getIntlEquityActual(), getKabirPmsActual(), getMutualFundsActual()]);
+  const [intlEquity, pms, mutualFunds, epfNps] = await Promise.all([
+    getIntlEquityActual(),
+    getKabirPmsActual(),
+    getMutualFundsActual(),
+    getEpfNpsActual(),
+  ]);
   const out: Record<string, NetWorthActual> = {};
   if (intlEquity != null) out["networth.intlEquity"] = intlEquity;
   if (pms != null) out["networth.pms"] = pms;
   if (mutualFunds != null) out["networth.mutualFunds"] = mutualFunds;
+  if (epfNps != null) out["networth.epfNps"] = epfNps;
   return out;
 }
 
@@ -146,6 +154,48 @@ async function getKabirPmsActual(): Promise<NetWorthActual | null> {
  */
 async function getMutualFundsActual(): Promise<NetWorthActual | null> {
   const accounts = await prisma.portfolioAccount.findMany({ where: { broker: "MF_FOLIO" }, select: { id: true } });
+  if (accounts.length === 0) return null;
+  const accountIds = accounts.map((a) => a.id);
+  const snapshots = await prisma.positionSnapshot.findMany({
+    where: { accountId: { in: accountIds } }, orderBy: { asOf: "desc" },
+    select: { accountId: true, securityId: true, asOf: true, qty: true },
+  });
+  if (snapshots.length === 0) return null;
+  const latestByPair = new Map<string, { securityId: string; qty: number }>();
+  for (const s of snapshots) {
+    const k = `${s.accountId}|${s.securityId}`;
+    if (!latestByPair.has(k)) latestByPair.set(k, { securityId: s.securityId, qty: Number(s.qty) });
+  }
+  const securityIds = [...new Set([...latestByPair.values()].map((s) => s.securityId))];
+  const securities = await prisma.security.findMany({
+    where: { id: { in: securityIds } },
+    select: { id: true, prices: { orderBy: { date: "desc" }, take: 1, select: { date: true, close: true } } },
+  });
+  const priceById = new Map(securities.map((s) => [s.id, s.prices[0]]));
+  let totalValue = 0;
+  let asOf: string | null = null;
+  for (const { securityId, qty } of latestByPair.values()) {
+    const price = priceById.get(securityId);
+    if (qty > 0 && price?.close != null) {
+      totalValue += qty * Number(price.close);
+      const d = price.date.toISOString().slice(0, 10);
+      if (asOf === null || d > asOf) asOf = d;
+    }
+  }
+  return { valueL: totalValue / 1e5, asOf };
+}
+
+
+/**
+ * Sum of current value across every RETIREMENT_TRACKED account (one per family member; each has a
+ * single AGGREGATE_VALUE security with qty fixed at 1 and PriceDaily.close carrying the whole EPF
+ * + NPS total for that person). Seeded via seed-aggregate-value.ts from the INDmoney MCP — no
+ * unit-level or per-broker data exists for EPF/NPS, confirmed against two separate INDmoney
+ * endpoints (2026-09-24), so this is intentionally a coarser value-only sync than the other three
+ * live classes.
+ */
+async function getEpfNpsActual(): Promise<NetWorthActual | null> {
+  const accounts = await prisma.portfolioAccount.findMany({ where: { broker: "RETIREMENT_TRACKED" }, select: { id: true } });
   if (accounts.length === 0) return null;
   const accountIds = accounts.map((a) => a.id);
   const snapshots = await prisma.positionSnapshot.findMany({

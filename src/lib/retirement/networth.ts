@@ -6,17 +6,18 @@
  * class already has its own engine input under a different key (e.g. EPF/NPS also feeds the
  * plan's opening pool via BASELINE_KEYS' "epf") — the two are intentionally independent numbers.
  *
- * Three classes are live-wired to existing data providers (see baseline/data.ts getNetWorthActuals):
- * international equity (US portfolio), PMS (Kabir), and mutual funds (CAMS). Everything else is a
- * manual figure the user updates directly, same explicit-save UX as the rest of the baseline
- * screen — a live-wired class is never forced: "Use live value" is an explicit sync action, and
- * the stored figure stays a manually editable number in between syncs.
+ * Four classes are live-wired to existing data providers (see baseline/data.ts getNetWorthActuals):
+ * international equity (US portfolio), PMS (Kabir), mutual funds (CAMS), and EPF + NPS (INDmoney,
+ * value-only — no unit-level data exists for these two). Everything else is a manual figure the
+ * user updates directly, same explicit-save UX as the rest of the baseline screen — a live-wired
+ * class is never forced: "Use live value" is an explicit sync action, and the stored figure stays
+ * a manually editable number in between syncs.
  *
  * Seeded once from the user's personal net-worth tracking sheet (Sep 2026 snapshot) via
  * scripts/retirement/seed-networth.ts; values from there are just a starting point, not kept in
  * sync with the sheet.
  */
-export type NetWorthLiveSource = "usPortfolio" | "kabirPms" | "mutualFunds" | null;
+export type NetWorthLiveSource = "usPortfolio" | "kabirPms" | "mutualFunds" | "epfNps" | null;
 
 export interface NetWorthClass {
   key: string;
@@ -32,7 +33,7 @@ export const NETWORTH_CLASSES: NetWorthClass[] = [
   { key: "networth.intlEquity", label: "International equity (US stocks)", live: "usPortfolio", sortOrder: 3 },
   { key: "networth.pms", label: "PMS (Kabir)", live: "kabirPms", sortOrder: 4 },
   { key: "networth.commodities", label: "Commodities (gold/silver)", live: null, sortOrder: 5 },
-  { key: "networth.epfNps", label: "EPF + NPS", live: null, sortOrder: 6 },
+  { key: "networth.epfNps", label: "EPF + NPS", live: "epfNps", sortOrder: 6 },
   { key: "networth.fd", label: "Fixed deposits", live: null, sortOrder: 7 },
   { key: "networth.cash", label: "Cash", live: null, sortOrder: 8 },
   { key: "networth.realEstate", label: "Real estate (present value)", live: null, sortOrder: 9 },
