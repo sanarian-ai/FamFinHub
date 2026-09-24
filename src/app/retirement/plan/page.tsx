@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Card, PageHeader, StatTile, EmptyState } from "@/components/ui";
-import { compute, computeFundedStatus, loadPlan, view } from "@/lib/retirement";
+import { BIRTH_YEAR, compute, computeFundedStatus, loadPlan, view } from "@/lib/retirement";
 import type { RetirementDb } from "@/lib/retirement";
 import { prisma } from "@/lib/prisma";
 import { getBaselinePlanId } from "../baseline/data";
@@ -38,7 +38,12 @@ export default async function PlanPage() {
   const depletionYear = result.depl;
   // Real terms (today's money) — matches how every other figure on this page is framed (PV is
   // already time-value-adjusted; baseline figures are "today's money"). Same rows as /retirement/stress.
-  const trajectory = view(result.rows, "real").map((r) => ({ year: r.Y, balanceL: r.port }));
+  // sangeethAge/riaAge are display-only (BIRTH_YEAR, defaults.ts) — the tooltip's request, not
+  // anything the engine computes with.
+  const trajectory = view(result.rows, "real").map((r) => ({
+    year: r.Y, balanceL: r.port,
+    sangeethAge: r.Y - BIRTH_YEAR.sangeeth, riaAge: r.Y - BIRTH_YEAR.ria,
+  }));
 
   const assetsHeldL = plan.items
     .filter((i) => i.group === "netWorth")

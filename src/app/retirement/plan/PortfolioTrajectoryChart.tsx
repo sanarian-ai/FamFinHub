@@ -6,6 +6,8 @@ import { CHART_INK, SINGLE_SERIES, axisTick, tooltipStyle } from "@/app/insights
 export interface TrajectoryPoint {
   year: number;
   balanceL: number;
+  sangeethAge: number;
+  riaAge: number;
 }
 
 const fmtCr = (v: number) => (v / 100).toLocaleString("en-IN", { maximumFractionDigits: 1 });
@@ -54,7 +56,12 @@ export function PortfolioTrajectoryChart({ data, depletionYear }: { data: Trajec
           contentStyle={tooltipStyle}
           // eslint-disable-next-line @typescript-eslint/no-explicit-any -- matches TrendAreaChart.tsx's existing pattern
           formatter={((v: number) => [`₹${fmtCr(v)} Cr`, "Portfolio balance"]) as any}
-          labelFormatter={(y) => `Year ${y}`}
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any -- recharts payload isn't typed without pulling in its internal generics
+          labelFormatter={((y: number, payload: any) => {
+            const p = payload?.[0]?.payload as TrajectoryPoint | undefined;
+            if (!p) return `Year ${y}`;
+            return `Year ${y} · Sangeeth ${p.sangeethAge} · Ria ${p.riaAge}`;
+          }) as any}
         />
         <Area
           type="monotone"

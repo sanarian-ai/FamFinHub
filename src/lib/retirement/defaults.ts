@@ -2,6 +2,10 @@ import type { Assumptions, Baseline, Params, SubBucket } from "./types";
 
 export const L = 100;
 
+/** Birth years, for age-at-year display (e.g. the plan home page's trajectory chart tooltip).
+ *  Not otherwise used by the engine — ages don't drive any computation, just labelling. */
+export const BIRTH_YEAR = { sangeeth: 1984, ria: 1987 } as const;
+
 export const SUBS: SubBucket[] = [
   { k: "food", n: "Food and groceries", b: "core" }, { k: "homeMaint", n: "Home maintenance", b: "core" },
   { k: "houseStaff", n: "House staff", b: "core" }, { k: "transport", n: "Transport", b: "core" },
