@@ -203,6 +203,7 @@ enum PortfolioBroker {
   INDMONEY_ALPACA
   IBKR
   KABIR_PMS // Kabir Capital Advisors LLP - Two Rules Value Fund (India equity PMS, held in Ria's demat via Nuvama)
+  MF_FOLIO // A mutual fund folio sourced from a CAMS/KFintech Consolidated Account Statement. One row per (AMC, folio no.); RTA (CAMS vs KFintech) is per-folio metadata, not a separate broker.
 }
 
 enum TradeSide {
@@ -231,6 +232,7 @@ enum PortfolioSource {
   ibkr_api
   manual
   kabir_pms_report // Nuvama Wealthspectrum portal exports, read via Chrome under the user's logged-in session
+  cams_cas_pdf // CAMS/KFintech Consolidated Account Statement, manually uploaded periodically (see mf-equity-irr-tracking-proposal.md)
 }
 
 enum CorporateActionType {
@@ -305,7 +307,8 @@ model PortfolioTransaction {
   execTs        DateTime // UTC execution timestamp
   tradeDate     DateTime              @db.Date // US session date (America/New_York)
   source        PortfolioSource
-  brokerRef     String // broker id: INDmoney Broker Reference Id / IBKR trade_id
+  brokerRef     String // broker id: INDmoney Broker Reference Id / IBKR trade_id; for cams_cas_pdf, a deterministic hash of (folio, ISIN, date, description, amount, units) since CAMS gives no stable transaction id
+  switchGroupId String? // links a same-day switch-out + switch-in pair across two folios for display; null when not a switch or the pair couldn't be matched. Never read by IRR/lot math - purely an audit/display aid.
   importBatchId String?
   importBatch   PortfolioImportBatch? @relation(fields: [importBatchId], references: [id])
   createdAt     DateTime              @default(now())
