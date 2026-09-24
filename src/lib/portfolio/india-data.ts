@@ -32,6 +32,17 @@ export type IndiaPortfolioData = {
   // reasoning as channelAccounts: Sangeeth's own MF folios aren't sourced yet (see the build brief's
   // open items) but will show up here automatically once they are, no code change needed.
   holderAccounts: Record<HolderKey, string[]>;
+  // Accounts eligible for buildLots()/positions() — i.e. every India account EXCEPT the closed
+  // pooled-vehicle accounts ingested in step 4 (KCV/KFV/Unifi BLN/Unifi BCAD20). Those four use a
+  // "qty 1 = one contribution or withdrawal" synthetic-security encoding that's correct for
+  // engine.run()'s dated cashflows (XIRR) but is NOT a real position lifecycle — FIFO-matching their
+  // BUY/SELL events throws (an early full-value SELL against a single BUY lot is a real oversell,
+  // not a bug) even for the two accounts where it happens not to throw, the resulting "lots" are
+  // meaningless (e.g. "sold the ₹25L lot for ₹25K"). Every buildLots() call in this app MUST
+  // intersect its `accounts` argument with this list first — reuses PortfolioAccount.isActive
+  // (already false on all four, set at ingestion) rather than a second hardcoded exclude-list, so a
+  // future closed/synthetic account is excluded automatically by the same flag.
+  lotAccounts: string[];
   lotsError: string | null; // set when buildLots() rejected the trade history (e.g. an oversold lot from an
   // unmodeled CAMS transaction type such as a switch or reinvestment) — book falls back to empty rather than
   // crashing every India screen; XIRR/positions still work off ds/ctx, only FIFO lots/disposals are affected.
@@ -44,7 +55,7 @@ export async function getIndiaPortfolioData(): Promise<IndiaPortfolioData> {
   if (memo && Date.now() - memo.at < TTL_MS) return memo.v;
   const [ds, accs] = await Promise.all([
     loadIndiaDataset(prisma),
-    prisma.portfolioAccount.findMany({ where: { broker: { in: INDIA_BROKERS } }, select: { key: true, broker: true, holder: true } }),
+    prisma.portfolioAccount.findMany({ where: { broker: { in: INDIA_BROKERS } }, select: { key: true, broker: true, holder: true, isActive: true } }),
   ]);
   const channelAccounts = {} as Record<IndiaChannel, string[]>;
   for (const ch of Object.keys(INDIA_CHANNEL_BROKERS) as IndiaChannel[]) {
@@ -56,14 +67,15 @@ export async function getIndiaPortfolioData(): Promise<IndiaPortfolioData> {
     RIA: accs.filter((a) => a.holder === "Ria").map((a) => a.key),
     HOUSEHOLD: accs.map((a) => a.key),
   };
+  const lotAccounts = accs.filter((a) => a.isActive).map((a) => a.key);
   const empty = ds.trades.length === 0 || Object.keys(ds.prices).length === 0;
   const ctx = buildContext(ds);
   let book: LotBook = { open: [], disposals: [] };
   let lotsError: string | null = null;
   if (!empty) {
-    try { book = buildLots(ds); } catch (e) { lotsError = e instanceof Error ? e.message : String(e); }
+    try { book = buildLots(ds, lotAccounts); } catch (e) { lotsError = e instanceof Error ? e.message : String(e); }
   }
-  const v: IndiaPortfolioData = { ds, ctx, book, empty, channelAccounts, holderAccounts, lotsError };
+  const v: IndiaPortfolioData = { ds, ctx, book, empty, channelAccounts, holderAccounts, lotAccounts, lotsError };
   memo = { at: Date.now(), v };
   return v;
 }

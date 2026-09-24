@@ -18,6 +18,10 @@ const SESSION_TZ: Record<string, string> = {
   manual: "America/New_York",
   kabir_pms_report: "Asia/Kolkata",
   cams_cas_pdf: "Asia/Kolkata",
+  manual_closed_vehicle_audit: "Asia/Kolkata", // KCV/KFV/Unifi closed-vehicle ledger — Indian PMS/pooled-vehicle
+  // statements, same session-date basis as kabir_pms_report/cams_cas_pdf. Without this entry the
+  // fallback below silently used America/New_York, which shifts a midnight-UTC execTs to the previous
+  // calendar day — found while building the closed-vehicle ingestion script (step 4).
 };
 export const RECONCILE_TOL = 1e-4; // units
 

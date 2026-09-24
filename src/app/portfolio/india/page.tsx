@@ -73,14 +73,18 @@ async function loadSnapshotGroup(key: string): Promise<SnapGroup | null> {
  */
 export default async function IndiaOverview({ searchParams }: { searchParams: Promise<{ [k: string]: string | string[] | undefined }> }) {
   const q = parseQ(await searchParams);
-  const { ctx, ds, channelAccounts, holderAccounts } = await getIndiaPortfolioData();
+  const { ctx, ds, channelAccounts, holderAccounts, lotAccounts } = await getIndiaPortfolioData();
   const accounts = holderAccounts[q.h];
+  // buildLots()/positions() must never see the closed-vehicle accounts (KCV/KFV/Unifi) — their
+  // "qty 1 per contribution/withdrawal" cashflow encoding isn't a real position lifecycle and FIFO-
+  // matching it throws (a real oversell, not a bug) for two of the four. See india-data.ts's
+  // `lotAccounts` comment. They still feed IRR on Performance via engine.run(), just not here.
+  const inScope = (list: readonly string[]) => accounts.filter((a) => list.includes(a) && lotAccounts.includes(a));
 
-  const book = buildLots(ds, accounts); // safe over accounts with zero trades — they just contribute nothing
+  const book = buildLots(ds, inScope(channelAccounts.ALL));
   const pos = positions(ctx, book);
   const gain = pos.totalValue - pos.totalCost;
 
-  const inScope = (list: readonly string[]) => accounts.filter((a) => list.includes(a));
   const channelValue = (ch: "PMS" | "MF") => positions(ctx, buildLots(ds, inScope(channelAccounts[ch]))).totalValue;
   const pmsValue = channelValue("PMS");
   const mfValue = channelValue("MF");
