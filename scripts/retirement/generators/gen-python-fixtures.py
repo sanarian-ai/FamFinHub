@@ -1,6 +1,11 @@
-"""Independent cross-check: Python v2 model (numpy) on the configuration it shares with the TS engine."""
-import json, sys
-sys.path.insert(0, "/home/claude")
+"""Independent cross-check: Python v2 model (numpy) on the configuration it shares with the TS engine.
+Reference source (retirement_model_v0/v1/v2.py) lives in ./reference-src/ (committed to the repo) so
+this doesn't depend on any particular cloud workspace's /home/claude/ scratch files still being around.
+Run with cwd = scripts/retirement/ (writes fixtures/python-v2.json relative to cwd):
+    python3 generators/gen-python-fixtures.py
+"""
+import json, os, sys
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "reference-src"))
 import numpy as np
 import retirement_model_v1 as m, retirement_model_v2 as v2
 # Known, deliberate difference: Python v0 indexes school fees from 2026.72 (like UG/PG); the TS/JS engine indexes them

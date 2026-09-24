@@ -1,7 +1,15 @@
 // Generates golden fixtures from the shipped Runway Ledger v10 JS engine (the reference implementation).
+// Reference source lives in ./reference-src/ (committed to the repo) so this doesn't depend on any
+// particular cloud workspace's /home/claude/ scratch files still being around. Needs Chromium via
+// Playwright to run — cloud-side only (this repo's local dev shell doesn't have it installed).
+// Run with cwd = scripts/retirement/ (writes fixtures/golden-v10.json relative to cwd):
+//   PW_PATH=playwright node generators/gen-fixtures.mjs
 import { createRequire } from "node:module"; const require = createRequire(import.meta.url); const { chromium } = require(process.env.PW_PATH || "playwright");
 import fs from "node:fs";
-const html = fs.readFileSync("/home/claude/runway-ledger.html", "utf8");
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const html = fs.readFileSync(path.join(__dirname, "reference-src", "runway-ledger.html"), "utf8");
 const i = html.lastIndexOf("renderEditor();render();\n})();");
 fs.writeFileSync("/tmp/ref.html", html.slice(0, i) + "window.__x={DEFAULTS:DEFAULTS,clone:clone,compute:compute,simulate:simulate,view:view};\n" + html.slice(i));
 const CONFIGS = {

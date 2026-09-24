@@ -1,0 +1,621 @@
+<title>Runway Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --hair:rgba(11,11,11,.10); --wash:rgba(11,11,11,.045);
+  --accent:#2a78d6; --accent-ink:#ffffff; --crit:#d03b3b; --good-ink:#006300; --tint:rgba(42,120,214,.07);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#4a3aa7; --s8:#e34948;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --hair:rgba(255,255,255,.10); --wash:rgba(255,255,255,.06);
+    --accent:#3987e5; --accent-ink:#0b0b0b; --crit:#e66767; --good-ink:#0ca30c; --tint:rgba(57,135,229,.10);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d0d0d; --surface:#1a1a19; --ink:#ffffff; --ink2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --hair:rgba(255,255,255,.10); --wash:rgba(255,255,255,.06);
+  --accent:#3987e5; --accent-ink:#0b0b0b; --crit:#e66767; --good-ink:#0ca30c; --tint:rgba(57,135,229,.10);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; --s7:#9085e9; --s8:#e66767;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans);padding-inline:16px;padding-block:20px 48px}
+.wrap{max-width:1240px;margin-inline:auto;display:flex;flex-direction:column;gap:16px}
+h1{font-size:22px;font-weight:600;letter-spacing:-.01em;margin:0}
+h2{font-size:13px;font-weight:600;margin:0;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2)}
+.sub{color:var(--ink2);margin:2px 0 0}
+.top{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between}
+.controls{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--hair);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;color:var(--ink2);background:transparent;border:0;padding:6px 12px;cursor:pointer;border-right:1px solid var(--hair)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);font-weight:500}
+.seg button:hover:not([aria-pressed="true"]){background:var(--wash)}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.lbl{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.btn{font:inherit;border:1px solid var(--hair);background:var(--surface);color:var(--ink);border-radius:6px;padding:6px 12px;cursor:pointer}
+.btn:hover{background:var(--wash)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--hair);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.kpi .k{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font-size:26px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi .n{font-size:12px;color:var(--ink2)}
+.pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;border:1px solid var(--hair);color:var(--ink2);margin-left:6px;vertical-align:middle;font-weight:400;letter-spacing:0;text-transform:none}
+.pill.crit{color:var(--crit);border-color:var(--crit)}
+.card{background:var(--surface);border:1px solid var(--hair);border-radius:8px;padding:14px}
+.card-h{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;color:var(--ink2)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.legend i.line{height:2px;width:14px;border-radius:0;vertical-align:3px;background:var(--ink)}
+.chart{position:relative;overflow-x:auto}
+.chart svg{display:block;min-width:720px;width:100%;height:auto}
+.chart text{fill:var(--muted);font:11px var(--sans)}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--hair);box-shadow:0 4px 14px rgba(0,0,0,.14);border-radius:6px;padding:8px 10px;font-size:12px;min-width:190px;z-index:5}
+.tip b{font-weight:600}
+.tip .row{display:flex;justify-content:space-between;gap:16px;font-variant-numeric:tabular-nums}
+.tip .row span:first-child{color:var(--ink2)}
+.tip i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.tip .ev{margin-top:6px;padding-top:6px;border-top:1px solid var(--hair);color:var(--ink2)}
+details.card>summary{cursor:pointer;list-style:none;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between}
+details.card>summary::-webkit-details-marker{display:none}
+details.card>summary .hint{font-size:12px;color:var(--muted)}
+.editor{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:10px 24px}
+.grp{grid-column:1/-1;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--hair);padding-bottom:4px;margin-top:6px}
+.ev-row{display:flex;flex-direction:column;gap:4px;padding:8px 10px;border:1px solid var(--hair);border-radius:6px}
+.ev-row .t{font-weight:500}
+.ev-row .note{font-size:12px;color:var(--muted)}
+.fields{display:flex;flex-wrap:wrap;gap:6px 12px}
+.fld{display:flex;flex-direction:column;gap:2px;font-size:11px;color:var(--ink2)}
+.fld input,.fld select{font:13px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--hair);border-radius:4px;padding:4px 6px;width:96px}
+.fld input[type=checkbox]{width:auto;height:18px}
+.custom{grid-column:1/-1;display:flex;flex-direction:column;gap:8px}
+.custom table{border-collapse:collapse;width:100%}
+.custom td,.custom th{padding:4px 6px;text-align:left;font-size:12px;border-bottom:1px solid var(--hair)}
+.custom input,.custom select{font:13px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--hair);border-radius:4px;padding:4px 6px}
+.custom input.lab{width:100%;min-width:180px;font-family:var(--sans)}
+.custom input.num{width:80px}
+.x{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:16px}
+.x:hover{color:var(--crit)}
+.tablewrap{overflow:auto;max-height:78vh;border:1px solid var(--hair);border-radius:6px}
+table.led{border-collapse:separate;border-spacing:0;font-size:12px;width:max-content;min-width:100%}
+.led th,.led td{padding:5px 8px;border-bottom:1px solid var(--hair);white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.led td.num,.led th.num{font-family:var(--mono);font-size:12px}
+.led thead th{position:sticky;top:0;background:var(--surface);z-index:2;font-weight:500;color:var(--ink2);font-size:11px;letter-spacing:.03em;border-bottom:1px solid var(--axis)}
+.led thead tr.g th{top:0;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left;border-bottom:0;padding-block:6px 2px}
+.led thead tr.h th{top:26px}
+.led .sticky{position:sticky;left:0;background:var(--surface);z-index:1;text-align:left;border-right:1px solid var(--hair)}
+.led thead .sticky{z-index:3}
+.led td.evc{text-align:left;white-space:normal;min-width:300px;max-width:380px;color:var(--ink2)}
+.led td.age{color:var(--muted);text-align:center}
+.led tr.edu td{background:var(--tint)}
+.led tr.edu td.sticky{background:var(--tint)}
+.led td.tot{font-weight:600;color:var(--ink)}
+.led td.neg{color:var(--crit)}
+.led td.sep,.led th.sep{border-left:1px solid var(--axis)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+.tag{display:inline-block;font-size:10px;letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--hair);color:var(--muted);border-radius:3px;padding:0 4px;margin-right:5px;vertical-align:1px}
+.evc div{margin:1px 0}
+.stg{border-collapse:collapse;width:100%;min-width:760px;font-size:12px}
+.stg th,.stg td{padding:5px 8px;border-bottom:1px solid var(--hair);text-align:right;vertical-align:top}
+.stg thead th{font-weight:500;color:var(--ink2);font-size:11px;letter-spacing:.03em;border-bottom:1px solid var(--axis)}
+.stg .yr{font-weight:400;color:var(--muted);margin-top:2px}
+.stg tr.gh td{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;background:var(--wash);border-bottom:0}
+.stg tr.tt td{font-weight:600;border-top:1px solid var(--axis);border-bottom:0}
+.stg .mono{font-family:var(--mono)}
+.stg input{font:13px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--hair);border-radius:4px;padding:3px 5px;width:64px;text-align:right}
+.stg input.yin{width:72px}
+.stg .amt{display:block;font:11px var(--mono);color:var(--muted);margin-top:2px}
+.led td.stc{text-align:left;color:var(--ink2);font-size:11px;white-space:nowrap}
+.foot{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.yrcell{font-weight:600;color:var(--ink)}
+@media (max-width:640px){h1{font-size:19px}.kpi .v{font-size:22px}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>Runway Ledger</h1>
+      <p class="sub">Year-by-year income, expenses and liquid portfolio, Oct 2026 to 2082 (Ria at 95). Conservative path: no salary from Sangeeth.</p>
+    </div>
+    <div class="controls">
+      <div><span class="lbl">ESOP case</span><span class="seg" id="scen" role="group" aria-label="ESOP scenario"></span></div>
+      <div><span class="lbl">Money</span><span class="seg" id="unit" role="group" aria-label="Units"></span></div>
+      <div><span class="lbl">Rows</span><span class="seg" id="rows" role="group" aria-label="Rows"></span></div>
+      <div><span class="lbl">Columns</span><span class="seg" id="detail" role="group" aria-label="Ledger detail"></span></div>
+      <button class="btn" id="reset" type="button">Reset all edits</button>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card">
+    <div class="card-h"><h2>Income vs expense by year</h2><div class="legend" id="leg1"></div></div>
+    <div class="chart" id="ch1"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h"><h2>Liquid portfolio, year end</h2><div class="legend" id="leg2"></div></div>
+    <div class="chart" id="ch2"></div>
+  </div>
+
+  <div class="card" id="stageCard">
+    <div class="card-h"><h2>Sub-buckets by life stage</h2><span class="hint" style="font-size:12px;color:var(--muted)">Multiplier on today's run-rate. Edit any cell or stage start year; every chart and row recomputes.</span></div>
+    <div class="chart" style="overflow-x:auto"><div id="stageTbl"></div></div>
+  </div>
+
+  <details class="card" id="editorCard" open>
+    <summary><h2>Life-stage events: edit any year or amount</h2><span class="hint">Changes recompute every chart and row. Saved in this browser.</span></summary>
+    <div class="editor" id="editor"></div>
+  </details>
+
+  <div class="card">
+    <div class="card-h"><h2>Year ledger</h2><span class="hint" id="ledgerNote" style="font-size:12px;color:var(--muted)"></span></div>
+    <div class="tablewrap" id="tw"></div>
+  </div>
+
+  <div class="foot">
+    <div>Base run-rate from Family Finance Hub actuals, Sep 2025 to Aug 2026 (revised 2026-09-22 to match the ledger's own Expense Types): essential core ₹1.41L/mo (food, home maintenance, house staff, transport, utilities), flexible ₹2.22L/mo (lifestyle, dining, learning, giving, subscriptions, travel, financial service charges), health ₹0.23L/mo, insurance ₹0.04L/mo, school and activities ₹0.99L/mo, EMI ₹2.13L/mo. Income tax is not a spending line: the return is treated as after tax.</div>
+    <div>Starting liquid pool ₹7.55 Cr (ex-ESOP, ex-real estate). Retained real estate ₹0.5 Cr yields ₹3.4L a year. Ria's net salary is bank credits for the last 12 months (₹37.3L). Marriages and car replacement are off unless you switch them on below.</div>
+    <div>Deterministic path uses one fixed return every year. The probability of success is simulated live in your browser for whatever you have set: 10,000 futures with returns averaging 8.75% (volatility 12%) and CPI 6% ± 1.5%. Bands: Adequate 90% or more, Just enough 75–89%, Inadequate below 75%. Sub-bucket base run-rates come from hub categories, LTM Sep 2025 to Aug 2026; the life-stage multipliers are my assumptions, not observed data.</div>
+  </div>
+</div>
+<div class="tip" id="tip" hidden></div>
+
+<script>
+(function(){
+"use strict";
+var L=100; // 1 Cr = 100 lakh; all amounts in ₹ lakh
+var BUCKETS=[
+  {k:"core",name:"Essential core",c:"var(--s1)"},
+  {k:"flex",name:"Flexible",c:"var(--s2)"},
+  {k:"health",name:"Health",c:"var(--s3)"},
+  {k:"ins",name:"Insurance",c:"var(--s4)"},
+  {k:"school",name:"School and activities",c:"var(--s5)"},
+  {k:"edu",name:"UG / PG",c:"var(--s6)"},
+  {k:"emi",name:"EMI",c:"var(--s7)"},
+  {k:"goals",name:"Goals and one-offs",c:"var(--s8)"}
+];
+var DEFAULTS={
+  r:8,cpi:6,med:8,edu:8,
+  propYear:2026,propAmt:1.5,
+  esopYear:2028,esopH:25,esopAmt:12.6,
+  epfYear:2042,
+  riaLast:2042,riaNet:37.3,riaG:5,
+  sangFrom:2028,sangTo:2040,sangNet:0,
+  rubenUG:2031,rochUG:2036,ugCost:50,pgCost:100,
+  termLast:2039,healthRamp:2044,
+  stepYear:0,stepPct:15,lifeYear:0,lifePct:30,
+  marrOn:false,marr1Year:2039,marr1Amt:50,marr2Year:2044,marr2Amt:100,
+  shiftOn:true,st:[2031,2042,2052,2062],
+  mult:{food:[1,0.8,0.7,0.7,0.65],transport:[1,1,0.9,0.7,0.5],utilities:[1,1,1,1,1],
+    homeMaint:[1,1,1,1.1,1.25],houseStaff:[1,1,1,1.2,1.5],
+    lifestyle:[1,0.82,0.73,0.57,0.47],dining:[1,1.1,1.1,0.8,0.5],learning:[1,0.5,0.3,0.2,0.2],giving:[1,1.2,1,1,1],
+    subs:[1,1.1,1,1,0.9],travel:[1,0.8,1.3,0.7,0.2],finSvc:[1,1,1,1,1]}
+};
+var SUBS=[
+  {k:"food",n:"Food and groceries",b:"core",m:0.4913},{k:"homeMaint",n:"Home maintenance",b:"core",m:0.2243},
+  {k:"houseStaff",n:"House staff",b:"core",m:0.4877},{k:"transport",n:"Transport",b:"core",m:0.1558},
+  {k:"utilities",n:"Utilities and connectivity",b:"core",m:0.0527},
+  {k:"lifestyle",n:"Lifestyle (shopping and personal care)",b:"flex",m:0.5417},{k:"dining",n:"Dining and celebrations",b:"flex",m:0.1212},
+  {k:"learning",n:"Learning",b:"flex",m:0.0711},{k:"giving",n:"Giving and gifts",b:"flex",m:0.2142},
+  {k:"subs",n:"Subscriptions and entertainment",b:"flex",m:0.1461},
+  {k:"travel",n:"Travel and vacation",b:"flex",m:1.0206},{k:"finSvc",n:"Financial service charges",b:"flex",m:0.1069}
+];
+var STAGES=[
+  {n:"Kids in school",s:"Now"},{n:"Kids at UG/PG",s:""},{n:"Empty nest, go-go",s:""},{n:"Empty nest, slow-go",s:""},{n:"Late life",s:""}
+];
+function stageOf(Y,P){var i=0;for(var j=0;j<4;j++)if(Y>=P.st[j])i=j+1;return i;}
+var PRESETS=[
+  {id:"A",name:"2028 · no haircut",year:2028,h:0,flat:{mc:44.0,fail:2062,p10:2049},shift:{mc:59.3,fail:2062,p10:2048}},
+  {id:"B",name:"2028 · 25% haircut",year:2028,h:25,flat:{mc:30.9,fail:2058,p10:2045},shift:{mc:44.7,fail:2058,p10:2046}},
+  {id:"C",name:"2030 · 25% haircut",year:2030,h:25,flat:{mc:24.2,fail:2057,p10:2045},shift:{mc:37.4,fail:2058,p10:2045}}
+];
+var KEY="runway-ledger-v1";
+var S={P:clone(DEFAULTS),custom:[],unit:"real",rows:"all",detail:"bucket"};
+S.P.esopYear=2028;S.P.esopH=25;
+try{var raw=localStorage.getItem(KEY);if(raw){var o=JSON.parse(raw);if(o&&o.P){S.P=Object.assign(clone(DEFAULTS),o.P);S.custom=o.custom||[];S.unit=o.unit||"real";S.rows=o.rows||"all";S.detail=o.detail||"bucket";}}}catch(e){}
+// Repair a browser save from before a sub-bucket rename/reorg: fill in any current bucket the
+// saved mult object doesn't have (from DEFAULTS) and drop any bucket that no longer exists, so a
+// stale save can never crash the stage table or silently keep an orphaned curve around.
+(function(){
+  if(!S.P.mult)S.P.mult={};
+  var next={};
+  SUBS.forEach(function(u){next[u.k]=S.P.mult[u.k]||DEFAULTS.mult[u.k].slice();});
+  S.P.mult=next;
+})();
+function clone(o){return JSON.parse(JSON.stringify(o));}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* ---------- model ---------- */
+function compute(P,custom){
+  var r=P.r/100,c=P.cpi/100,md=P.med/100,ed=P.edu/100;
+  var out=[],port=7.55*L,depl=null;
+  for(var Y=2026;Y<=2082;Y++){
+    var frac=Y===2026?0.25:1,mid=Y===2026?2026.875:Y+0.5;
+    var idx=Math.pow(1+c,mid-2026.2),iE=Math.pow((1+ed)/(1+c),mid-2026.72)*idx,iS=Math.pow((1+ed)/(1+c),mid-2026.2)*idx,iM=Math.pow(1+md,mid-2026.2);
+    var st=P.shiftOn?stageOf(Y,P):0,core=0,flex=0,sv={};
+    SUBS.forEach(function(u){
+      var mu=(P.mult[u.k]||[1,1,1,1,1])[st];
+      var cut=u.b==="core"?((P.stepYear&&Y>=P.stepYear)?1-P.stepPct/100:1):((P.lifeYear&&Y>=P.lifeYear)?1-P.lifePct/100:1);
+      var v=u.m*12*idx*frac*mu*cut;sv["s_"+u.k]=v;if(u.b==="core")core+=v;else flex+=v;
+    });
+    var ramp=Y>=P.healthRamp?Math.pow(1.03,Math.min(Y-P.healthRamp+1,15)):1;
+    var health=2.76*iM*ramp*frac;
+    var ins=Y<=P.termLast?0.48*frac:0;
+    var sf=Y<P.rubenUG?1:(Y<P.rochUG?0.5:0);
+    var school=11.88*iS*sf*frac;
+    var edu=0,starts=[P.rubenUG,P.rochUG];
+    for(var i=0;i<2;i++){var s=starts[i];if(Y>=s&&Y<=s+3)edu+=P.ugCost*iE;else if(Y>=s+4&&Y<=s+5)edu+=P.pgCost*iE;}
+    var emi=Y<=P.propYear?2.13*(Y===2026?3:12):0;
+    var goals=0,inflow=0,k;
+    if(P.marrOn){
+      if(Y===P.marr1Year)goals+=P.marr1Amt*idx;
+      if(Y===P.marr2Year)goals+=P.marr2Amt*idx;
+    }
+    for(k=0;k<custom.length;k++){var ce=custom[k];if(+ce.year!==Y)continue;
+      if(ce.kind==="expense")goals+=(+ce.amt||0)*Math.pow(1+c,Y-2026);
+      if(ce.kind==="inflow")inflow+=(+ce.amt||0);}
+    var ria=Y<=P.riaLast?(Y===2026?P.riaNet*0.25:P.riaNet*Math.pow(1+P.riaG/100,Y-2026)):0;
+    var rent=Y===2026?0.85:3.4*Math.pow(1+c,Y-2026);
+    var sang=(P.sangNet>0&&Y>=P.sangFrom&&Y<=P.sangTo)?P.sangNet*Math.pow(1.05,Y-2026)*(Y===2026?0.25:1):0;
+    var assets=0;
+    if(Y===P.propYear)assets+=P.propAmt*L;
+    if(Y===P.esopYear)assets+=P.esopAmt*L*(1-P.esopH/100);
+    if(Y===P.epfYear)assets+=69*Math.pow(1.07,Y-2026);
+    var held=Y<P.epfYear?69*Math.pow(1.07,Y-2026):0;
+    var exp=core+flex+health+ins+school+edu+emi+goals;
+    var inc=ria+rent+sang;
+    var flow=inc+assets+inflow-exp;
+    port=Y===2026?port*Math.pow(1+r,0.25)+flow*Math.pow(1+r,0.125):port*(1+r)+flow*Math.pow(1+r,0.5);
+    if(port<0&&depl===null)depl=Y;
+    var rowo={Y:Y,idx:idx,core:core,flex:flex,health:health,ins:ins,school:school,edu:edu,emi:emi,goals:goals,
+      ria:ria,rent:rent,sang:sang,inc:inc,exp:exp,net:inc-exp,assets:assets+inflow,port:port,st:st,held:held};for(var q in sv)rowo[q]=sv[q];out.push(rowo);
+  }
+  return {rows:out,depl:depl};
+}
+function view(rows,unit){
+  return rows.map(function(x){
+    var d=unit==="real"?x.idx:1,o={Y:x.Y};
+    for(var k in x){if(k==="Y"||k==="idx")continue;o[k]=k==="st"?x[k]:x[k]/d;}
+    return o;
+  });
+}
+
+
+/* ---------- Monte Carlo (runs live in the browser) ---------- */
+function rng(seed){var a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function simulate(rows,P,n){
+  var R=rng(7),spare=null;
+  function gauss(){if(spare!==null){var g=spare;spare=null;return g;}var u=R()||1e-12,v=R(),m=Math.sqrt(-2*Math.log(u));spare=m*Math.sin(2*Math.PI*v);return m*Math.cos(2*Math.PI*v);}
+  var sigma=0.12,mean=0.0875,mu=Math.log(1+mean)-sigma*sigma/2,cs=0.015,cm=P.cpi/100;
+  var infl=[],flat=[],flow=[];
+  rows.forEach(function(x){var f=x.ins+x.emi;flat.push(f);infl.push((x.exp-f)/x.idx);flow.push(x.inc+x.assets);});
+  var ok=0,fails=[];
+  for(var k=0;k<n;k++){
+    var pool=7.55*L,idx=1,alive=true,fy=0;
+    for(var i=0;i<rows.length&&alive;i++){
+      var Y=rows[i].Y,yrs=Y===2026?0.25:1,mid=Y===2026?2026.875:Y+0.5;
+      var pi=Math.min(0.15,Math.max(0,cm+cs*gauss()));
+      idx=i===0?Math.pow(1+pi,mid-2026.2):idx*(1+pi);
+      var r=Math.exp((mu*yrs)+sigma*Math.sqrt(yrs)*gauss())-1;
+      pool=pool*(1+r)+(flow[i]-infl[i]*idx-flat[i])*Math.pow(1+r,0.5);
+      if(pool<0){alive=false;fy=Y;}
+    }
+    if(alive)ok++;else fails.push(fy);
+  }
+  fails.sort(function(a,b){return a-b;});
+  var q=function(p){return fails.length?fails[Math.min(fails.length-1,Math.floor(p*fails.length))]:null;};
+  return {p:ok/n*100,n:n,med:q(0.5),p10:q(0.1)};
+}
+
+/* ---------- events ---------- */
+function events(Y,P,custom){
+  var e=[],sA=Y-1984,rA=Y-1987,rb=Y-2013,rc=Y-2018;
+  function add(t,x){e.push({t:t,x:x});}
+  if(Y===2026)add("Now","Oct 2026: no salary from Sangeeth. Ria's salary and rent are the only earned income.");
+  if(Y===P.propYear)add("Assets","Property sold, +₹"+P.propAmt+" Cr net. Last EMI paid (₹2.13L/mo through this year).");
+  if(Y===P.esopYear)add("Assets","ESOP liquidity: ₹"+(P.esopAmt*(1-P.esopH/100)).toFixed(1)+" Cr ("+P.esopH+"% haircut on ₹"+P.esopAmt+" Cr).");
+  if(Y===P.epfYear)add("Assets","EPF + NPS opens (Sangeeth "+sA+"), +₹"+(0.69*Math.pow(1.07,Y-2026)).toFixed(2)+" Cr.");
+  if(Y===P.riaLast)add("Income","Ria's last working year (age "+rA+"). Salary stops after this year.");
+  if(P.sangNet>0&&Y===P.sangFrom)add("Income","Sangeeth earns ₹"+P.sangNet+"L net a year (today's money) from now to "+P.sangTo+".");
+  if(P.sangNet>0&&Y===P.sangTo)add("Income","Sangeeth's last earning year.");
+  if(Y===P.rubenUG)add("Family","Reuben starts UG (age "+rb+"). School costs halve.");
+  if(Y===P.rubenUG+4)add("Family","Reuben starts PG (age "+rb+").");
+  if(Y===P.rubenUG+5)add("Family","Reuben's last education year.");
+  if(Y===P.rochUG)add("Family","Rochelle starts UG (age "+rc+"). School costs end.");
+  if(Y===P.rochUG+4)add("Family","Rochelle starts PG (age "+rc+").");
+  if(Y===P.rochUG+5)add("Family","Rochelle's last education year. All education outflow ends.");
+  if(Y===P.termLast+1)add("Cover","Term cover ends. Premium stops.");
+  if(P.shiftOn)for(var j=0;j<4;j++)if(Y===P.st[j])add("Stage","Spending shifts to \""+STAGES[j+1].n+"\" pattern (see multipliers below).");
+  if(Y===P.healthRamp)add("Health","Age-related health cost ramp starts (+3% real a year, 15 years).");
+  if(P.stepYear&&Y===P.stepYear)add("Lifestyle","Empty-nest step-down: essential core −"+P.stepPct+"%.");
+  if(P.lifeYear&&Y===P.lifeYear)add("Lifestyle","Lifestyle reset: flexible spend −"+P.lifePct+"%.");
+  if(P.marrOn&&Y===P.marr1Year)add("Goal","Reuben's marriage, ₹"+P.marr1Amt+"L in today's money.");
+  if(P.marrOn&&Y===P.marr2Year)add("Goal","Rochelle's marriage, ₹"+P.marr2Amt+"L in today's money.");
+  [58,60,65,75,85,95].forEach(function(a){if(sA===a&&Y>2026)add("Age","Sangeeth turns "+a+".");});
+  if(rA===60)add("Age","Ria turns 60.");
+  if(Y===2082)add("Age","Ria turns 95. Plan horizon ends.");
+  custom.forEach(function(ce){if(+ce.year===Y)add("Custom",(ce.label||"Custom event")+(ce.kind==="expense"?" (−₹"+ce.amt+"L today)":ce.kind==="inflow"?" (+₹"+ce.amt+"L)":""));});
+  return e;
+}
+
+/* ---------- formatting ---------- */
+function fmt(v){if(Math.abs(v)<0.05)return "–";return Math.abs(v)<1000?v.toFixed(1):Math.round(v).toLocaleString("en-IN");}
+function cr(v){return (v/L).toFixed(1);}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function nice(max){var p=Math.pow(10,Math.floor(Math.log10(max))),f=max/p,s=f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10;var step=s*p/(s===1?2:s===2?2:s===2.5?2.5:s===5?5:5);
+  if(step<=0)step=1;var top=Math.ceil(max/step)*step;return {top:top,step:step};}
+
+/* ---------- render ---------- */
+var tip=document.getElementById("tip");
+var cur=null;
+function render(){
+  cur=compute(S.P,S.custom);cur.mc=simulate(cur.rows,S.P,10000);
+  var V=view(cur.rows,S.unit),N=cur.rows;
+  renderControls();renderKpis(V);renderChart1(V);renderChart2(V);renderStage();renderLedger(V);
+}
+function isDefaultsExceptEsop(){
+  var d=clone(DEFAULTS),p=clone(S.P);
+  ["esopYear","esopH"].forEach(function(k){delete d[k];delete p[k];});
+  if(!p.shiftOn){["shiftOn","st","mult"].forEach(function(k){delete d[k];delete p[k];});d.__f=1;p.__f=1;}
+  return JSON.stringify(d)===JSON.stringify(p)&&S.custom.length===0;
+}
+function activePreset(){
+  for(var i=0;i<PRESETS.length;i++)if(PRESETS[i].year===S.P.esopYear&&PRESETS[i].h===S.P.esopH)return PRESETS[i];
+  return null;
+}
+function seg(el,items,val,cb){
+  el.innerHTML=items.map(function(it){return '<button type="button" data-v="'+it.v+'" aria-pressed="'+(it.v===val)+'">'+esc(it.t)+'</button>';}).join("");
+  el.onclick=function(ev){var b=ev.target.closest("button");if(b)cb(b.getAttribute("data-v"));};
+}
+function renderControls(){
+  var ap=activePreset();
+  seg(document.getElementById("scen"),PRESETS.map(function(p){return {v:p.id,t:p.name};}).concat(ap?[]:[{v:"X",t:"Custom"}]),ap?ap.id:"X",function(v){
+    var p=PRESETS.filter(function(q){return q.id===v})[0];if(!p)return;S.P.esopYear=p.year;S.P.esopH=p.h;save();renderEditor();render();});
+  seg(document.getElementById("unit"),[{v:"real",t:"Today's money"},{v:"nominal",t:"Nominal"}],S.unit,function(v){S.unit=v;save();render();});
+  seg(document.getElementById("detail"),[{v:"bucket",t:"Buckets"},{v:"sub",t:"Sub-buckets"}],S.detail,function(v){S.detail=v;save();render();});
+  seg(document.getElementById("rows"),[{v:"all",t:"All years"},{v:"key",t:"Key years"}],S.rows,function(v){S.rows=v;save();render();});
+}
+function renderKpis(V){
+  var mc=cur.mc,band=mc.p>=90?"Adequate":mc.p>=75?"Just enough":"Inadequate";
+  var u=S.unit==="real"?"today's":"nominal";
+  var last=V[V.length-1],peak=V.reduce(function(a,b){return b.exp>a.exp?b:a;});
+  var endEdu=Math.max(S.P.rubenUG,S.P.rochUG)+5,endRow=V.filter(function(x){return x.Y===Math.min(endEdu,2082);})[0];
+  var eduTot=V.reduce(function(a,x){return a+x.edu+x.school;},0);
+  var k1='<div class="v">'+mc.p.toFixed(0)+'%</div><div class="n">of '+mc.n.toLocaleString("en-IN")+' bumpy futures last to 2082. '+(mc.med?'When it fails, the typical year is '+mc.med+' (earliest tenth by '+mc.p10+').':'No failures in this sample.')+'</div>';
+  var det=cur.depl?'<div class="v" style="color:var(--crit)">'+cur.depl+'</div><div class="n">Portfolio runs out at Ria age '+(cur.depl-1987)+' even on a smooth '+S.P.r+'% return and '+S.P.cpi+'% CPI: a middle-of-the-road future.</div>'
+    :'<div class="v">₹'+cr(last.port)+' Cr</div><div class="n">left in 2082 ('+u+' money) on a smooth '+S.P.r+'% return: a middle-of-the-road future, not a guarantee.</div>';
+  document.getElementById("kpis").innerHTML=
+    '<div class="kpi"><div class="k">Probability of success'+'<span class="pill'+(mc.p>=90?'':(mc.p>=75?'':' crit'))+'">'+band+'</span>'+'</div>'+k1+'</div>'+
+    '<div class="kpi"><div class="k">Smooth-return path (a typical future)'+(cur.depl?'<span class="pill crit">runs out</span>':'')+'</div>'+det+'</div>'+
+    '<div class="kpi"><div class="k">Peak spending year</div><div class="v">'+peak.Y+'</div><div class="n">₹'+cr(peak.exp)+' Cr in the year ('+u+' money). Education is the driver.</div></div>'+
+    '<div class="kpi"><div class="k">Pool when education ends</div><div class="v">₹'+(endRow?cr(endRow.port):"–")+' Cr</div><div class="n">Year end '+Math.min(endEdu,2082)+', '+u+' money. Lifetime school + UG/PG outlay ₹'+cr(eduTot)+' Cr.</div></div>';
+}
+function svgOpen(W,H){return '<svg viewBox="0 0 '+W+' '+H+'" role="img" xmlns="http://www.w3.org/2000/svg">';}
+function xTicks(V,x,y){var s="";V.forEach(function(d,i){if(d.Y%5===0||d.Y===2026){s+='<text x="'+x(i)+'" y="'+y+'" text-anchor="middle">'+d.Y+'</text>';}});return s;}
+function renderChart1(V){
+  var W=1000,H=340,ml=52,mr=12,mt=12,mb=40,pw=W-ml-mr,ph=H-mt-mb,n=V.length,slot=pw/n,bw=Math.max(3,slot-2);
+  var mx=Math.max.apply(null,V.map(function(d){return Math.max(d.exp,d.inc);}));
+  var sc=nice(mx/L*1.02),top=sc.top;
+  function y(v){return mt+ph-(v/L)/top*ph;}
+  function x(i){return ml+slot*i+slot/2;}
+  var s=svgOpen(W,H),t;
+  for(t=0;t<=top+1e-9;t+=sc.step){s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+y(t*L)+'" y2="'+y(t*L)+'" stroke="var(--grid)" stroke-width="1"/><text x="'+(ml-8)+'" y="'+(y(t*L)+4)+'" text-anchor="end">'+(t%1?t.toFixed(1):t)+'</text>';}
+  s+='<text x="'+ml+'" y="10" text-anchor="start" style="font-size:10px">₹ Cr per year</text>';
+  V.forEach(function(d,i){
+    var acc=0;
+    BUCKETS.forEach(function(b){var v=d[b.k];if(v<=0.001)return;var y1=y(acc+v),y0=y(acc);
+      s+='<rect x="'+(x(i)-bw/2)+'" y="'+y1+'" width="'+bw+'" height="'+Math.max(0,y0-y1)+'" fill="'+b.c+'" stroke="var(--surface)" stroke-width="1"/>';acc+=v;});
+  });
+  var pts=V.map(function(d,i){return x(i)+","+y(d.inc);}).join(" ");
+  s+='<polyline points="'+pts+'" fill="none" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>';
+  s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+y(0)+'" y2="'+y(0)+'" stroke="var(--axis)"/>';
+  s+=xTicks(V,x,H-8);
+  V.forEach(function(d,i){var ev=events(d.Y,S.P,S.custom).filter(function(e){return e.t!=="Age"&&e.t!=="Now";});
+    if(ev.length)s+='<circle cx="'+x(i)+'" cy="'+(H-mb+8)+'" r="3" fill="var(--ink2)"/>';});
+  V.forEach(function(d,i){s+='<rect class="hit" data-c="1" data-i="'+i+'" x="'+(x(i)-slot/2)+'" y="'+mt+'" width="'+slot+'" height="'+ph+'" fill="transparent"/>';});
+  s+='</svg>';
+  var box=document.getElementById("ch1");box.innerHTML=s;box.onpointermove=box.onpointerleave=null;wireTip(box,V,1);
+  document.getElementById("leg1").innerHTML='<span><i class="line"></i>Income (line)</span>'+BUCKETS.map(function(b){return '<span><i style="background:'+b.c+'"></i>'+b.name+'</span>';}).join("")+'<span style="color:var(--muted)">● year has a life-stage event</span>';
+}
+function renderChart2(V){
+  var W=1000,H=280,ml=52,mr=12,mt=14,mb=40,pw=W-ml-mr,ph=H-mt-mb,n=V.length,slot=pw/n;
+  var vals=V.map(function(d){return d.port/L;}),mx=Math.max.apply(null,vals),mn=Math.min(0,Math.min.apply(null,vals));
+  var sc=nice(Math.max(mx,1)*1.03),top=sc.top,bot=mn<0?-Math.ceil(-mn/sc.step)*sc.step:0,rng=top-bot;
+  function y(v){return mt+ph-((v/L)-bot)/rng*ph;}
+  function x(i){return ml+slot*i+slot/2;}
+  var s=svgOpen(W,H),t;
+  for(t=bot;t<=top+1e-9;t+=sc.step){s+='<line x1="'+ml+'" x2="'+(W-mr)+'" y1="'+y(t*L)+'" y2="'+y(t*L)+'" stroke="'+(Math.abs(t)<1e-9?'var(--axis)':'var(--grid)')+'"/><text x="'+(ml-8)+'" y="'+(y(t*L)+4)+'" text-anchor="end">'+(Math.abs(t%1)>1e-9?t.toFixed(1):Math.round(t))+'</text>';}
+  s+='<text x="'+ml+'" y="10" style="font-size:10px">₹ Cr</text>';
+  var pts=V.map(function(d,i){return x(i)+","+y(d.port);});
+  var z=y(0);
+  s+='<polygon points="'+x(0)+','+z+' '+pts.join(" ")+' '+x(n-1)+','+z+'" fill="var(--s1)" opacity=".14"/>';
+  s+='<polyline points="'+pts.join(" ")+'" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round"/>';
+  s+=xTicks(V,x,H-8);
+  V.forEach(function(d,i){var ev=events(d.Y,S.P,S.custom).filter(function(e){return e.t==="Assets"||e.t==="Family"||e.t==="Income"||e.t==="Custom";});
+    if(ev.length)s+='<circle cx="'+x(i)+'" cy="'+y(d.port)+'" r="3.5" fill="var(--surface)" stroke="var(--s1)" stroke-width="2"/>';});
+  if(cur.depl){var di=cur.depl-2026;s+='<circle cx="'+x(di)+'" cy="'+y(0)+'" r="5" fill="var(--crit)" stroke="var(--surface)" stroke-width="2"/><text x="'+(x(di)-8)+'" y="'+(y(0)-10)+'" text-anchor="end" style="fill:var(--crit);font-weight:600">Runs out '+cur.depl+'</text>';}
+  s+='<circle cx="'+x(n-1)+'" cy="'+y(V[n-1].port)+'" r="4" fill="var(--s1)"/>';
+  V.forEach(function(d,i){s+='<rect class="hit" data-c="2" data-i="'+i+'" x="'+(x(i)-slot/2)+'" y="'+mt+'" width="'+slot+'" height="'+ph+'" fill="transparent"/>';});
+  s+='</svg>';
+  var box=document.getElementById("ch2");box.innerHTML=s;wireTip(box,V,2);
+  document.getElementById("leg2").innerHTML='<span><i style="background:var(--s1)"></i>Portfolio at '+S.P.r+'% fixed return</span><span style="color:var(--muted)">○ asset, family or income event that year</span>';
+}
+function wireTip(box,V,kind){
+  box.onpointermove=function(ev){
+    var h=ev.target.closest(".hit");if(!h){tip.hidden=true;return;}
+    var d=V[+h.getAttribute("data-i")],evs=events(d.Y,S.P,S.custom),html='<b>'+d.Y+'</b> <span style="color:var(--muted)">Sangeeth '+(d.Y-1984)+' · Ria '+(d.Y-1987)+' · Reuben '+(d.Y-2013)+' · Rochelle '+(d.Y-2018)+'</span>';
+    if(kind===1){
+      html+='<div class="row" style="margin-top:6px"><span>Income</span><span>₹'+fmt(d.inc)+'L</span></div><div class="row"><span>Expense</span><span>₹'+fmt(d.exp)+'L</span></div>';
+      BUCKETS.forEach(function(b){if(d[b.k]>0.001)html+='<div class="row"><span><i style="background:'+b.c+'"></i>'+b.name+'</span><span>'+fmt(d[b.k])+'</span></div>';});
+    }else{
+      html+='<div class="row" style="margin-top:6px"><span>Portfolio</span><span>₹'+cr(d.port)+' Cr</span></div><div class="row"><span>Net operating flow</span><span>₹'+fmt(d.net)+'L</span></div>';
+      if(d.assets>0.001)html+='<div class="row"><span>Asset inflows</span><span>₹'+fmt(d.assets)+'L</span></div>';
+    }
+    if(evs.length)html+='<div class="ev">'+evs.map(function(e){return esc(e.x);}).join("<br>")+'</div>';
+    tip.innerHTML=html;tip.hidden=false;
+    var r=document.body.getBoundingClientRect(),w=tip.offsetWidth,hh=tip.offsetHeight;
+    var px=ev.clientX-r.left+16,py=ev.clientY-r.top+window.scrollY*0+16;
+    if(px+w>window.innerWidth-8)px=ev.clientX-r.left-w-16;
+    tip.style.left=Math.max(4,px)+"px";tip.style.top=(ev.pageY+16)+"px";
+    if(ev.clientY+hh+24>window.innerHeight)tip.style.top=(ev.pageY-hh-16)+"px";
+  };
+  box.onpointerleave=function(){tip.hidden=true;};
+}
+function renderStage(){
+  var P=S.P,h='<div style="display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin-bottom:8px"><label class="fld" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="shiftOn" '+(P.shiftOn?'checked':'')+'> Apply life-stage shifts (off = flat run-rate for every year)</label></div>';
+  h+='<table class="stg"><thead><tr><th style="text-align:left">Sub-bucket</th><th>Today ₹L/mo</th>';
+  for(var i=0;i<5;i++){
+    h+='<th><div>'+STAGES[i].n+'</div><div class="yr">'+(i===0?'to '+(P.st[0]-1):'from <input class="yin" type="number" id="st'+(i-1)+'" data-st="'+(i-1)+'" value="'+P.st[i-1]+'" min="2027" max="2082" step="1">')+'</div></th>';
+  }
+  h+='</tr></thead><tbody>';
+  var tot=[0,0,0,0,0],grp="";
+  SUBS.forEach(function(u){
+    if(u.b!==grp){grp=u.b;h+='<tr class="gh"><td colspan="7">'+(u.b==="core"?"Essential core":"Flexible")+'</td></tr>';}
+    var m=P.mult[u.k]||[1,1,1,1,1];
+    h+='<tr><td style="text-align:left">'+u.n+'</td><td class="mono">'+u.m.toFixed(2)+'</td>';
+    for(var i=0;i<5;i++){tot[i]+=u.m*m[i];h+='<td><input class="min" type="number" id="mu_'+u.k+'_'+i+'" data-mk="'+u.k+'" data-mi="'+i+'" value="'+m[i]+'" min="0" step="0.05"><span class="amt">'+(u.m*m[i]).toFixed(2)+'</span></td>';}
+    h+='</tr>';
+  });
+  var base=SUBS.reduce(function(a,u){return a+u.m;},0);
+  h+='<tr class="tt"><td style="text-align:left">Total living spend, ₹L/mo (today\'s money)</td><td class="mono">'+base.toFixed(2)+'</td>'+tot.map(function(t){return '<td class="mono">'+t.toFixed(2)+'<span class="amt">'+(t/base*100).toFixed(0)+'% of today</span></td>';}).join("")+'</tr>';
+  h+='</tbody></table><div class="hint" style="font-size:12px;color:var(--muted);margin-top:6px">Health, insurance, school, education, EMI and one-offs are modelled separately. Stage boundaries default to: Reuben starts UG, Ria stops working, then Sangeeth about 68 and about 78. Multipliers are assumptions to edit, not observed data. Optional empty-nest and lifestyle resets in the events panel apply on top.</div>';
+  var el=document.getElementById("stageTbl");el.innerHTML=h;el.style.opacity=P.shiftOn?1:.55;
+}
+document.getElementById("stageTbl").addEventListener("change",function(ev){
+  var t=ev.target;
+  if(t.id==="shiftOn"){S.P.shiftOn=t.checked;save();render();return;}
+  if(t.getAttribute("data-st")!==null){
+    var j=+t.getAttribute("data-st"),v=Math.round(parseFloat(t.value));if(!isFinite(v))v=DEFAULTS.st[j];
+    v=Math.min(2082,Math.max(2027,v));
+    if(j>0&&v<S.P.st[j-1])v=S.P.st[j-1];if(j<3&&v>S.P.st[j+1])v=S.P.st[j+1];
+    S.P.st[j]=v;save();render();return;}
+  if(t.getAttribute("data-mk")){
+    var v2=parseFloat(t.value);if(!isFinite(v2)||v2<0)v2=DEFAULTS.mult[t.getAttribute("data-mk")][+t.getAttribute("data-mi")];
+    S.P.mult[t.getAttribute("data-mk")][+t.getAttribute("data-mi")]=v2;save();render();}
+});
+function renderLedger(V){
+  var P=S.P,sub=S.detail==="sub";
+  var cols=[];
+  if(sub){
+    SUBS.filter(function(u){return u.b==="core";}).forEach(function(u,i){cols.push({k:"s_"+u.k,n:u.n,c:"var(--s1)",grp:"Essential core",sep:i===0});});
+    SUBS.filter(function(u){return u.b==="flex";}).forEach(function(u,i){cols.push({k:"s_"+u.k,n:u.n,c:"var(--s2)",grp:"Flexible",sep:i===0});});
+    BUCKETS.slice(2).forEach(function(b){cols.push({k:b.k,n:b.name,c:b.c});});
+  }else BUCKETS.forEach(function(b,i){cols.push({k:b.k,n:b.name,c:b.c,sep:i===0});});
+  var head='<thead><tr class="g"><th class="sticky" rowspan="2">Year</th><th rowspan="2" style="text-align:center">Ages<br>S · R · Rb · Rc</th><th rowspan="2" style="text-align:left">Stage</th><th rowspan="2" style="text-align:left">Life-stage events</th>'+
+    '<th colspan="4" class="sep">Income</th><th colspan="'+(cols.length+1)+'" class="sep">Expense</th><th colspan="4" class="sep">Position</th></tr>'+
+    '<tr class="h"><th class="sep">Ria net</th><th>Rent</th><th>Sangeeth</th><th>Total</th>'+
+    cols.map(function(b){return '<th'+(b.sep?' class="sep"':'')+'><span class="dot" style="background:'+b.c+'"></span>'+b.n+'</th>';}).join("")+'<th>Total</th>'+
+    '<th class="sep">Net operating</th><th>Asset inflows</th><th>Portfolio (₹ Cr)</th><th title="EPF/NPS, growing but not spendable">Held, not spendable (₹ Cr)</th></tr></thead>';
+  var body="",first=cur.depl,eduLo=Math.min(P.rubenUG,P.rochUG),eduHi=Math.max(P.rubenUG,P.rochUG)+5,shown=0,prevSt=-1;
+  V.forEach(function(d){
+    var ev=events(d.Y,P,S.custom);
+    if(S.rows==="key"&&!ev.length)return;shown++;
+    var edu=d.Y>=eduLo&&d.Y<=eduHi;
+    var evh=ev.map(function(e){return '<div><span class="tag">'+e.t+'</span>'+esc(e.x)+'</div>';}).join("");
+    var stl=P.shiftOn?STAGES[d.st].n:"Flat";
+    body+='<tr'+(edu?' class="edu"':'')+'><td class="sticky yrcell">'+d.Y+(d.Y===2026?' <span style="color:var(--muted);font-weight:400">Q4</span>':'')+'</td>'+
+      '<td class="age">'+(d.Y-1984)+' · '+(d.Y-1987)+' · '+(d.Y-2013)+' · '+(d.Y-2018)+'</td><td class="stc">'+stl+'</td><td class="evc">'+evh+'</td>'+
+      '<td class="num sep">'+fmt(d.ria)+'</td><td class="num">'+fmt(d.rent)+'</td><td class="num">'+fmt(d.sang)+'</td><td class="num tot">'+fmt(d.inc)+'</td>'+
+      cols.map(function(b){return '<td class="num'+(b.sep?' sep':'')+'">'+fmt(d[b.k])+'</td>';}).join("")+
+      '<td class="num tot">'+fmt(d.exp)+'</td>'+
+      '<td class="num sep'+(d.net<0?' neg':'')+'">'+fmt(d.net)+'</td><td class="num">'+(d.assets>0.001?'+'+fmt(d.assets):'–')+'</td>'+
+      '<td class="num tot'+(d.port<0?' neg':'')+'">'+(d.port<0?'▼ ':'')+cr(d.port)+(first===d.Y?' <span class="pill crit">runs out</span>':'')+'</td><td class="num">'+(d.held>0.005?cr(d.held):'–')+'</td></tr>';
+  });
+  document.getElementById("tw").innerHTML='<table class="led">'+head+'<tbody>'+body+'</tbody></table>';
+  document.getElementById("ledgerNote").textContent='₹ lakh, '+(S.unit==="real"?"today's money (2026)":"nominal")+' · shaded rows = education years · '+shown+' of '+V.length+' years shown';
+}
+
+/* ---------- editor ---------- */
+var DEFS=[
+  {g:"Family and education"},
+  {t:"Reuben starts UG",note:"PG follows four years later; school costs halve from this year.",f:[["rubenUG","Year","y"]]},
+  {t:"Rochelle starts UG",note:"School costs end this year; PG follows four years later.",f:[["rochUG","Year","y"]]},
+  {t:"Education cost per year",note:"Today's money, per child. Inflates at the education rate below.",f:[["ugCost","UG ₹L/yr","n"],["pgCost","PG ₹L/yr","n"]]},
+  {t:"Optional: marriages",note:"Off by default. Amounts in today's money, inflated at the CPI rate.",f:[["marrOn","Include","c"],["marr1Year","Reuben year","y"],["marr1Amt","₹L","n"],["marr2Year","Rochelle year","y"],["marr2Amt","₹L","n"]]},
+  {g:"Income"},
+  {t:"Ria stops working",note:"Last working year. Net salary is bank credits after tax.",f:[["riaLast","Last year","y"],["riaNet","Net ₹L/yr (2026)","n"],["riaG","Annual raise %","n"]]},
+  {t:"Sangeeth earns again",note:"Net of tax, today's money, +5% a year. 0 keeps the conservative case.",f:[["sangNet","Net ₹L/yr","n"],["sangFrom","From","y"],["sangTo","To","y"]]},
+  {g:"Assets and liquidity"},
+  {t:"Property sale and EMI end",note:"EMI ₹2.13L/mo is paid through December of this year. Proceeds are net of loan.",f:[["propYear","Year","y"],["propAmt","Net ₹Cr","n"]]},
+  {t:"ESOP liquidity",note:"Post-tax ₹12.6 Cr (₹21 Cr is pre-tax). Haircut reduces what arrives.",f:[["esopYear","Year","y"],["esopH","Haircut %","n"],["esopAmt","Value ₹Cr","n"]]},
+  {t:"EPF and NPS opens",note:"₹0.69 Cr today, grown 7% a year until this year.",f:[["epfYear","Year","y"]]},
+  {g:"Health, cover and lifestyle"},
+  {t:"Term cover ends",note:"Last year a premium is paid.",f:[["termLast","Last premium year","y"]]},
+  {t:"Health cost ramp starts",note:"+3% real a year for 15 years from this year.",f:[["healthRamp","Year","y"]]},
+  {t:"Optional: empty-nest step-down",note:"Cuts essential core from this year. 0 = off.",f:[["stepYear","Year (0 = off)","y0"],["stepPct","Cut %","n"]]},
+  {t:"Optional: lifestyle reset",note:"Cuts flexible spend from this year, for example after downsizing. 0 = off.",f:[["lifeYear","Year (0 = off)","y0"],["lifePct","Cut %","n"]]},
+  {g:"Economy (applies to every year)"},
+  {t:"Returns and inflation",note:"Fixed after-tax return for the ledger path, and growth rates for each cost type.",f:[["r","Return %","n"],["cpi","CPI %","n"],["med","Medical %","n"],["edu","Education %","n"]]}
+];
+function fieldHtml(f){
+  var k=f[0],lab=f[1],ty=f[2],v=S.P[k];
+  if(ty==="c")return '<label class="fld">'+lab+'<input type="checkbox" id="f_'+k+'" data-k="'+k+'" data-t="c"'+(v?' checked':'')+'></label>';
+  var step=ty==="n"?"0.1":"1";
+  return '<label class="fld">'+lab+'<input type="number" id="f_'+k+'" data-k="'+k+'" data-t="'+ty+'" value="'+v+'" step="'+step+'" min="0"></label>';
+}
+function renderEditor(){
+  var h="";
+  DEFS.forEach(function(d){
+    if(d.g){h+='<div class="grp">'+d.g+'</div>';return;}
+    h+='<div class="ev-row"><div class="t">'+d.t+'</div><div class="fields">'+d.f.map(fieldHtml).join("")+'</div><div class="note">'+d.note+'</div></div>';
+  });
+  h+='<div class="grp">Your own events</div><div class="custom">';
+  h+='<table><thead><tr><th>Year</th><th>Event</th><th>Type</th><th>Amount ₹L</th><th></th></tr></thead><tbody>';
+  S.custom.forEach(function(c,i){
+    h+='<tr><td><input class="num" type="number" id="c_y'+i+'" data-ci="'+i+'" data-cf="year" value="'+c.year+'" min="2026" max="2082"></td>'+
+      '<td><input class="lab" type="text" id="c_l'+i+'" data-ci="'+i+'" data-cf="label" value="'+esc(c.label)+'"></td>'+
+      '<td><select id="c_k'+i+'" data-ci="'+i+'" data-cf="kind"><option value="label"'+(c.kind==="label"?" selected":"")+'>Note only</option><option value="expense"'+(c.kind==="expense"?" selected":"")+'>One-off expense (today\'s money)</option><option value="inflow"'+(c.kind==="inflow"?" selected":"")+'>One-off inflow (nominal)</option></select></td>'+
+      '<td><input class="num" type="number" id="c_a'+i+'" data-ci="'+i+'" data-cf="amt" value="'+(c.amt||0)+'" min="0" step="1"></td>'+
+      '<td><button class="x" type="button" data-del="'+i+'" aria-label="Remove event">×</button></td></tr>';
+  });
+  h+='<tr><td><input class="num" type="number" id="n_y" value="2030" min="2026" max="2082"></td><td><input class="lab" type="text" id="n_l" placeholder="e.g. Buy a car, move city, Reuben goes abroad"></td>'+
+    '<td><select id="n_k"><option value="label">Note only</option><option value="expense">One-off expense (today\'s money)</option><option value="inflow">One-off inflow (nominal)</option></select></td>'+
+    '<td><input class="num" type="number" id="n_a" value="0" min="0" step="1"></td><td><button class="btn" type="button" id="n_add">Add</button></td></tr>';
+  h+='</tbody></table></div>';
+  document.getElementById("editor").innerHTML=h;
+}
+document.getElementById("editor").addEventListener("change",function(ev){
+  var t=ev.target,k=t.getAttribute("data-k");
+  if(k){
+    var ty=t.getAttribute("data-t"),v;
+    if(ty==="c")v=t.checked;
+    else{v=parseFloat(t.value);if(!isFinite(v)||v<0)v=DEFAULTS[k];
+      if(ty==="y")v=Math.min(2082,Math.max(2026,Math.round(v)));
+      if(ty==="y0"){v=Math.round(v);if(v!==0)v=Math.min(2082,Math.max(2026,v));}
+      if(k==="esopH"||k==="stepPct"||k==="lifePct")v=Math.min(100,v);
+      t.value=v;}
+    S.P[k]=v;save();render();return;
+  }
+  var ci=t.getAttribute("data-ci");
+  if(ci!==null){var c=S.custom[+ci],f=t.getAttribute("data-cf"),val=t.value;
+    if(f==="year"){val=Math.min(2082,Math.max(2026,Math.round(parseFloat(val)||2030)));t.value=val;}
+    if(f==="amt")val=Math.max(0,parseFloat(val)||0);
+    c[f]=val;save();render();}
+});
+document.getElementById("editor").addEventListener("click",function(ev){
+  var t=ev.target;
+  if(t.getAttribute("data-del")!==null){S.custom.splice(+t.getAttribute("data-del"),1);save();renderEditor();render();return;}
+  if(t.id==="n_add"){
+    var y=Math.min(2082,Math.max(2026,Math.round(parseFloat(document.getElementById("n_y").value)||2030)));
+    var l=document.getElementById("n_l").value.trim()||"Custom event";
+    var k=document.getElementById("n_k").value,a=Math.max(0,parseFloat(document.getElementById("n_a").value)||0);
+    S.custom.push({year:y,label:l,kind:k,amt:a});save();renderEditor();render();
+  }
+});
+document.getElementById("reset").addEventListener("click",function(){
+  S.P=clone(DEFAULTS);S.P.esopYear=2028;S.P.esopH=25;S.custom=[];save();renderEditor();render();
+});
+document.addEventListener("pointerdown",function(ev){if(!ev.target.closest(".chart"))tip.hidden=true;});
+renderEditor();render();
+})();
+</script>
