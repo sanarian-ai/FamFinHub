@@ -6,15 +6,17 @@
  * class already has its own engine input under a different key (e.g. EPF/NPS also feeds the
  * plan's opening pool via BASELINE_KEYS' "epf") — the two are intentionally independent numbers.
  *
- * Two classes are live-wired to existing data providers (see baseline/data.ts getNetWorthActuals):
- * international equity (US portfolio) and PMS (Kabir). Everything else is a manual figure the
- * user updates directly, same explicit-save UX as the rest of the baseline screen.
+ * Three classes are live-wired to existing data providers (see baseline/data.ts getNetWorthActuals):
+ * international equity (US portfolio), PMS (Kabir), and mutual funds (CAMS). Everything else is a
+ * manual figure the user updates directly, same explicit-save UX as the rest of the baseline
+ * screen — a live-wired class is never forced: "Use live value" is an explicit sync action, and
+ * the stored figure stays a manually editable number in between syncs.
  *
  * Seeded once from the user's personal net-worth tracking sheet (Sep 2026 snapshot) via
  * scripts/retirement/seed-networth.ts; values from there are just a starting point, not kept in
  * sync with the sheet.
  */
-export type NetWorthLiveSource = "usPortfolio" | "kabirPms" | null;
+export type NetWorthLiveSource = "usPortfolio" | "kabirPms" | "mutualFunds" | null;
 
 export interface NetWorthClass {
   key: string;
@@ -24,7 +26,7 @@ export interface NetWorthClass {
 }
 
 export const NETWORTH_CLASSES: NetWorthClass[] = [
-  { key: "networth.mutualFunds", label: "Mutual funds", live: null, sortOrder: 0 },
+  { key: "networth.mutualFunds", label: "Mutual funds", live: "mutualFunds", sortOrder: 0 },
   { key: "networth.indianEquity", label: "Indian direct equity", live: null, sortOrder: 1 },
   { key: "networth.unlistedNse", label: "Unlisted shares (NSE)", live: null, sortOrder: 2 },
   { key: "networth.intlEquity", label: "International equity (US stocks)", live: "usPortfolio", sortOrder: 3 },
