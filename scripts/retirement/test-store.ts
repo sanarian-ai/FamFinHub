@@ -1,11 +1,4 @@
-/**
- * M2 pure-layer tests (no database). Run: npx tsx scripts/retirement/test-store.ts
- *
- * STALE (partial) as of 2026-09-24: Future Generali and Unlisted NSE shares were removed from
- * Params/Baseline that day (see test-engine.ts's header for the full note). The two tests below
- * that compare against golden-v10.json's default-case probability/depletion year are disabled for
- * the same reason — the removed genPrem premium changed the default deterministic path.
- */
+/** M2 pure-layer tests (no database). Run: npx tsx scripts/retirement/test-store.ts */
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -27,9 +20,11 @@ t("survives Decimal(14,4) storage (values have at most 4 dp)", () => {
   const stored = baselineToItems(DEFAULT_BASELINE).map((i) => ({ ...i, valueL: Number(i.valueL.toFixed(4)) }));
   assert.deepEqual(itemsToBaseline(stored), DEFAULT_BASELINE);
 });
-// Golden-comparison tests removed 2026-09-24 — see STALE note above. G is still parsed (unused-var
-// suppressed) so this is a minimal diff to restore once fixtures are regenerated.
-void G;
+t("default state reproduces the golden default probability", () => assert.equal(evaluate(defaultPlanState()).successPct, Math.round(G.res.default.mc.p * 100) / 100));
+t("default state reproduces the golden depletion year and band", () => {
+  const e = evaluate(defaultPlanState());
+  assert.equal(e.depletionYear, G.res.default.depl); assert.equal(e.band, "Inadequate");
+});
 t("a missing baseline key is named, never treated as zero", () => {
   const items = baselineToItems(DEFAULT_BASELINE).filter((i) => i.key !== "sub.travel" && i.key !== "emi");
   throwsMsg(() => itemsToBaseline(items), /missing: sub\.travel, emi/);
