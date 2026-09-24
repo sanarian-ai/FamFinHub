@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic";
 const BASE = "/portfolio/india/performance";
 const CUR = "INR" as const;
 const BENCHMARK_LABEL = "Nifty 500 TRI";
-const CHANNEL_HREF: Partial<Record<(typeof CHANNEL_ORDER)[number], string>> = { EQUITY: "/portfolio/india/equity", MF: "/portfolio/india/mf" };
+const CHANNEL_HREF: Partial<Record<(typeof CHANNEL_ORDER)[number], string>> = { EQUITY: "/portfolio/india/equity", PMS: "/portfolio/india/pms", MF: "/portfolio/india/mf" };
 
 /**
  * India rollup Performance — blended IRR vs a single Nifty 500 TRI benchmark, plus three cuts:
