@@ -1,0 +1,37 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import clsx from "clsx";
+
+const tabs = [
+  { href: "/portfolio/india", label: "Overview" },
+  { href: "/portfolio/india/performance", label: "Performance" },
+];
+
+/** The India rollup's own 2-tab subnav (blended Overview/Performance) — distinct from the India
+ * Equity detail page's 4-tab subnav one level down, so it must not be rendered via a shared layout
+ * (that would nest both subnavs on /portfolio/india/equity/*). Rendered directly by the two rollup
+ * pages instead. */
+export function RollupSubNav() {
+  const path = usePathname();
+  return (
+    <div className="flex gap-1 border-b border-slate-200">
+      {tabs.map((t) => {
+        const active = path === t.href;
+        return (
+          <Link
+            key={t.href}
+            href={t.href}
+            className={clsx(
+              "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors",
+              active ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-800"
+            )}
+          >
+            {t.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}

@@ -7,7 +7,7 @@ export default function IndiaLayout({ children }: { children: ReactNode }) {
     <div className="mx-auto max-w-7xl">
       <PageHeader
         title="Portfolio"
-        subtitle="India equity · Kabir PMS + IIFL demat (Ria) · NSE (Sangeeth via Zerodha, Ria via Kotak Securities)"
+        subtitle="Blended across direct equity, PMS and mutual funds — see the Equity and Mutual Funds channel pages for per-channel detail"
         actions={<PortfolioSwitcher active="india" />}
       />
       <div className="pt-5">{children}</div>

@@ -24,9 +24,14 @@ export const INDIA_CHANNEL_BROKERS = {
 } as const;
 export type IndiaChannel = keyof typeof INDIA_CHANNEL_BROKERS;
 
+export type HolderKey = "SANGEETH" | "RIA" | "HOUSEHOLD";
 export type IndiaPortfolioData = {
   ds: Dataset; ctx: Ctx; book: LotBook; empty: boolean;
   channelAccounts: Record<IndiaChannel, string[]>;
+  // Resolved from PortfolioAccount.holder ("Sangeeth" / "Ria" today) rather than hardcoded, same
+  // reasoning as channelAccounts: Sangeeth's own MF folios aren't sourced yet (see the build brief's
+  // open items) but will show up here automatically once they are, no code change needed.
+  holderAccounts: Record<HolderKey, string[]>;
   lotsError: string | null; // set when buildLots() rejected the trade history (e.g. an oversold lot from an
   // unmodeled CAMS transaction type such as a switch or reinvestment) — book falls back to empty rather than
   // crashing every India screen; XIRR/positions still work off ds/ctx, only FIFO lots/disposals are affected.
@@ -39,13 +44,18 @@ export async function getIndiaPortfolioData(): Promise<IndiaPortfolioData> {
   if (memo && Date.now() - memo.at < TTL_MS) return memo.v;
   const [ds, accs] = await Promise.all([
     loadIndiaDataset(prisma),
-    prisma.portfolioAccount.findMany({ where: { broker: { in: INDIA_BROKERS } }, select: { key: true, broker: true } }),
+    prisma.portfolioAccount.findMany({ where: { broker: { in: INDIA_BROKERS } }, select: { key: true, broker: true, holder: true } }),
   ]);
   const channelAccounts = {} as Record<IndiaChannel, string[]>;
   for (const ch of Object.keys(INDIA_CHANNEL_BROKERS) as IndiaChannel[]) {
     const brokers = INDIA_CHANNEL_BROKERS[ch] as PortfolioBroker[];
     channelAccounts[ch] = accs.filter((a) => brokers.includes(a.broker)).map((a) => a.key);
   }
+  const holderAccounts: Record<HolderKey, string[]> = {
+    SANGEETH: accs.filter((a) => a.holder === "Sangeeth").map((a) => a.key),
+    RIA: accs.filter((a) => a.holder === "Ria").map((a) => a.key),
+    HOUSEHOLD: accs.map((a) => a.key),
+  };
   const empty = ds.trades.length === 0 || Object.keys(ds.prices).length === 0;
   const ctx = buildContext(ds);
   let book: LotBook = { open: [], disposals: [] };
@@ -53,7 +63,7 @@ export async function getIndiaPortfolioData(): Promise<IndiaPortfolioData> {
   if (!empty) {
     try { book = buildLots(ds); } catch (e) { lotsError = e instanceof Error ? e.message : String(e); }
   }
-  const v: IndiaPortfolioData = { ds, ctx, book, empty, channelAccounts, lotsError };
+  const v: IndiaPortfolioData = { ds, ctx, book, empty, channelAccounts, holderAccounts, lotsError };
   memo = { at: Date.now(), v };
   return v;
 }
