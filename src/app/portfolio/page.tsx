@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-// Portfolio hub: US Stocks is the first (and currently only) tab.
+// Portfolio hub: All assets is the landing tab — see PortfolioSwitcher and portfolio/all/page.tsx.
 export default function PortfolioIndex() {
-  redirect("/portfolio/us");
+  redirect("/portfolio/all");
 }
