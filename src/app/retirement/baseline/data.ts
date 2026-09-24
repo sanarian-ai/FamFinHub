@@ -78,21 +78,21 @@ export type NetWorthActual = { valueL: number; asOf: string | null };
  * Live current values for the net-worth-by-asset-class rows that have an existing data provider
  * (see src/lib/retirement/networth.ts NETWORTH_CLASSES): international equity from the US
  * portfolio engine, PMS from Kabir's snapshot+price query, mutual funds from the CAMS-ingested
- * MF_FOLIO accounts, EPF + NPS from the RETIREMENT_TRACKED accounts seeded via the INDmoney MCP
- * (value-only — see seed-aggregate-value.ts; no unit-level data exists for these two), NSE's own
- * listed shares from the ZERODHA/KOTAK_SECURITIES accounts, and Indian direct equity from the
- * IIFL_DEMAT account (both real units, seeded via seed-holdings.ts same as Kabir PMS). The first
- * three already exist elsewhere in the app (src/app/portfolio/us/holdings, src/app/portfolio/india,
- * src/app/portfolio/mf) — this reuses them rather than re-deriving a second source of truth.
- * Read-only: never writes the baseline table itself: the "Use live value" button
- * (useLiveNetWorthValueAction) is the explicit trigger that does, same pattern as
- * useLedgerValueAction above.
+ * MF_FOLIO accounts (split 4 ways by Security.mfCategory — see getMutualFundsByCategory), EPF + NPS
+ * from the RETIREMENT_TRACKED accounts seeded via the INDmoney MCP (value-only — see
+ * seed-aggregate-value.ts; no unit-level data exists for these two), NSE's own listed shares from
+ * the ZERODHA/KOTAK_SECURITIES accounts, and Indian direct equity from the IIFL_DEMAT account (both
+ * real units, seeded via seed-holdings.ts same as Kabir PMS). The first three already exist
+ * elsewhere in the app (src/app/portfolio/us/holdings, src/app/portfolio/india, src/app/portfolio/mf)
+ * — this reuses them rather than re-deriving a second source of truth. Read-only: never writes the
+ * baseline table itself: the "Use live value" button (useLiveNetWorthValueAction) is the explicit
+ * trigger that does, same pattern as useLedgerValueAction above.
  */
 export async function getNetWorthActuals(): Promise<Record<string, NetWorthActual>> {
-  const [intlEquity, pms, mutualFunds, epfNps, nse, iifl] = await Promise.all([
+  const [intlEquity, pms, mfByCategory, epfNps, nse, iifl] = await Promise.all([
     getIntlEquityActual(),
     getKabirPmsActual(),
-    getMutualFundsActual(),
+    getMutualFundsByCategory(),
     getEpfNpsActual(),
     getNseActual(),
     getIiflActual(),
@@ -100,7 +100,10 @@ export async function getNetWorthActuals(): Promise<Record<string, NetWorthActua
   const out: Record<string, NetWorthActual> = {};
   if (intlEquity != null) out["networth.intlEquity"] = intlEquity;
   if (pms != null) out["networth.pms"] = pms;
-  if (mutualFunds != null) out["networth.mutualFunds"] = mutualFunds;
+  if (mfByCategory.EQUITY != null) out["networth.mfEquity"] = mfByCategory.EQUITY;
+  if (mfByCategory.DEBT != null) out["networth.mfDebt"] = mfByCategory.DEBT;
+  if (mfByCategory.HYBRID != null) out["networth.mfHybrid"] = mfByCategory.HYBRID;
+  if (mfByCategory.COMMODITY != null) out["networth.mfCommodity"] = mfByCategory.COMMODITY;
   if (epfNps != null) out["networth.epfNps"] = epfNps;
   if (nse != null) out["networth.unlistedNse"] = nse;
   if (iifl != null) out["networth.indianEquity"] = iifl;
@@ -156,17 +159,23 @@ async function getKabirPmsActual(): Promise<NetWorthActual | null> {
 /**
  * Sum of current market value across every MF_FOLIO account (a mutual fund can span several
  * folios — see camsParser.ts header — so this is latest qty per (account, security) pair, summed,
- * not deduped to one row per security). Mirrors src/app/portfolio/mf/page.tsx's own aggregation.
+ * not deduped to one row per security — mirrors src/app/portfolio/mf/page.tsx's own aggregation),
+ * split 4 ways by each security's Security.mfCategory (SEBI scheme category, read off the fund
+ * name at classification time — see the seeding note in networth.ts). A fund with no category set
+ * would silently vanish from all four totals rather than one of them, so this throws instead —
+ * safer than a quiet undercount; every MF_FOLIO-held security was categorized 2026-09-24 and any
+ * newly CAMS-ingested fund needs the same before its value shows up anywhere here.
  */
-async function getMutualFundsActual(): Promise<NetWorthActual | null> {
+async function getMutualFundsByCategory(): Promise<Record<"EQUITY" | "DEBT" | "HYBRID" | "COMMODITY", NetWorthActual | null>> {
+  const empty = { EQUITY: null, DEBT: null, HYBRID: null, COMMODITY: null } as const;
   const accounts = await prisma.portfolioAccount.findMany({ where: { broker: "MF_FOLIO" }, select: { id: true } });
-  if (accounts.length === 0) return null;
+  if (accounts.length === 0) return { ...empty };
   const accountIds = accounts.map((a) => a.id);
   const snapshots = await prisma.positionSnapshot.findMany({
     where: { accountId: { in: accountIds } }, orderBy: { asOf: "desc" },
     select: { accountId: true, securityId: true, asOf: true, qty: true },
   });
-  if (snapshots.length === 0) return null;
+  if (snapshots.length === 0) return { ...empty };
   const latestByPair = new Map<string, { securityId: string; qty: number }>();
   for (const s of snapshots) {
     const k = `${s.accountId}|${s.securityId}`;
@@ -175,20 +184,26 @@ async function getMutualFundsActual(): Promise<NetWorthActual | null> {
   const securityIds = [...new Set([...latestByPair.values()].map((s) => s.securityId))];
   const securities = await prisma.security.findMany({
     where: { id: { in: securityIds } },
-    select: { id: true, prices: { orderBy: { date: "desc" }, take: 1, select: { date: true, close: true } } },
+    select: { id: true, mfCategory: true, prices: { orderBy: { date: "desc" }, take: 1, select: { date: true, close: true } } },
   });
-  const priceById = new Map(securities.map((s) => [s.id, s.prices[0]]));
-  let totalValue = 0;
-  let asOf: string | null = null;
+  const secById = new Map(securities.map((s) => [s.id, s]));
+  const totals: Record<string, { value: number; asOf: string | null }> = {
+    EQUITY: { value: 0, asOf: null }, DEBT: { value: 0, asOf: null }, HYBRID: { value: 0, asOf: null }, COMMODITY: { value: 0, asOf: null },
+  };
   for (const { securityId, qty } of latestByPair.values()) {
-    const price = priceById.get(securityId);
-    if (qty > 0 && price?.close != null) {
-      totalValue += qty * Number(price.close);
-      const d = price.date.toISOString().slice(0, 10);
-      if (asOf === null || d > asOf) asOf = d;
-    }
+    if (qty <= 0) continue;
+    const sec = secById.get(securityId);
+    const price = sec?.prices[0];
+    if (!sec || price?.close == null) continue;
+    if (!sec.mfCategory) throw new Error(`Security ${securityId} is MF_FOLIO-held but has no mfCategory set — classify it before it can appear in the net-worth split.`);
+    const bucket = totals[sec.mfCategory];
+    bucket.value += qty * Number(price.close);
+    const d = price.date.toISOString().slice(0, 10);
+    if (bucket.asOf === null || d > bucket.asOf) bucket.asOf = d;
   }
-  return { valueL: totalValue / 1e5, asOf };
+  const out: Record<string, NetWorthActual | null> = {};
+  for (const [cat, t] of Object.entries(totals)) out[cat] = t.value > 0 ? { valueL: t.value / 1e5, asOf: t.asOf } : null;
+  return out as Record<"EQUITY" | "DEBT" | "HYBRID" | "COMMODITY", NetWorthActual | null>;
 }
 
 

@@ -223,6 +223,17 @@ enum SecurityKind {
   AGGREGATE_VALUE // a value-only holding with no real per-unit price (e.g. EPF/NPS from INDmoney, rolled up); qty is fixed at 1 and PriceDaily.close carries the whole position's INR value. Excluded from the Yahoo Finance price-refresh job by kind, same as MUTUAL_FUND.
 }
 
+// SEBI's own scheme-category descriptor, read off each fund's name (e.g. "Arbitrage Fund" ->
+// HYBRID, "Liquid Fund" -> DEBT) — only meaningful for kind: MUTUAL_FUND, null on every other
+// security kind. Drives the 4-way split of the net-worth mutual-funds row; see
+// src/app/retirement/baseline/data.ts getMutualFundsByCategory.
+enum MfCategory {
+  EQUITY
+  DEBT
+  HYBRID // arbitrage, equity savings, balanced advantage, multi-asset allocation, conservative hybrid — genuine mixed equity/debt (or equity/debt/commodity) exposure, not cleanly either pure bucket
+  COMMODITY
+}
+
 enum CashEventType {
   DIVIDEND
   WITHHOLDING_TAX
@@ -286,6 +297,7 @@ model Security {
   symbol       String                 @unique
   name         String
   kind         SecurityKind           @default(STOCK)
+  mfCategory   MfCategory? // set only when kind: MUTUAL_FUND — see MfCategory
   currency     String                 @default("USD")
   exchange     String?
   createdAt    DateTime               @default(now())
