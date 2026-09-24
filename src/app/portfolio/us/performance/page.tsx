@@ -1,10 +1,11 @@
 import { Badge, Card, EmptyState } from "@/components/ui";
 import { getPortfolioData } from "@/lib/portfolio/data";
 import { inceptionStart } from "@/lib/portfolio/engine";
-import { fmtDay, fmtMoney, fmtPct, fmtPP, tone, type Cur } from "@/lib/portfolio/format";
-import { accountsFor, alpha, BROKERS, downsample, headline, pickPeriod, periodDefs, runPeriod, stockRows, type BrokerKey } from "@/lib/portfolio/views";
+import { fmtDay, fmtINR, fmtMoney, fmtPct, fmtPP, fmtUSD, tone, type Cur } from "@/lib/portfolio/format";
+import { accountsFor, alpha, BROKERS, decompose, downsample, headline, pickPeriod, periodDefs, runPeriod, stockRows, type BrokerKey } from "@/lib/portfolio/views";
+import { CATEGORICAL } from "@/app/insights/chartTheme";
 import { PeriodBar, Toggles, parseQ } from "../controls";
-import { Note, rowCls, tableCls, Td, Th, theadCls } from "../ui";
+import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../ui";
 import { ValueChart } from "../ValueChart";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +22,9 @@ export default async function Performance({ searchParams }: { searchParams: Prom
   const defs = periodDefs(ctx, accounts);
   const period = pickPeriod(ctx, q.p, accounts);
   const main = runPeriod(ctx, period, { ...opts, series: true });
+  const other = runPeriod(ctx, period, { ...opts, currency: cur === "USD" ? "INR" : "USD" });
+  const usd = cur === "USD" ? main : other, inr = cur === "INR" ? main : other;
+  const dec = decompose(ctx, period, opts);
 
   const table = defs.map((d) => ({ d, r: runPeriod(ctx, d, opts) })).filter((x) => x.r.hasData);
   const stocks = stockRows(ctx, period, opts);
@@ -36,6 +40,11 @@ export default async function Performance({ searchParams }: { searchParams: Prom
     return h.value == null ? <span className="text-slate-400" title="No annualised rate (replica net short or no flows)">n/a</span> : fmtPct(h.value);
   };
 
+  const pf = headline(main.pf, main), spy = headline(main.SPY, main), qqq = headline(main.QQQ, main);
+  const kind = pf.kind === "IRR" ? "IRR" : "Return";
+  const aSpy = alpha(main.pf, main.SPY, main), aQqq = alpha(main.pf, main.QQQ, main);
+  const invested = main.net - main.V0;
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3">
@@ -43,14 +52,53 @@ export default async function Performance({ searchParams }: { searchParams: Prom
         <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
       </div>
 
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        <Tile label="Portfolio value" value={fmtMoney(main.V1, cur)} sub={`${fmtMoney(other.V1, cur === "USD" ? "INR" : "USD")} · ${fmtDay(main.d1)}`} />
+        <Tile label={`Portfolio ${kind}`} dot={CATEGORICAL[0]} value={fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, cur)}${main.annualised ? "" : " · period return, under 90 days"}`} />
+        <Tile label={`S&P 500 ${kind}`} dot={CATEGORICAL[1]} value={fmtPct(spy.value)} sub={`same flows · P&L ${fmtMoney(main.SPY.profit, cur)}`} />
+        <Tile label={`Nasdaq-100 ${kind}`} dot={CATEGORICAL[2]} value={fmtPct(qqq.value)} sub={`same flows · P&L ${fmtMoney(main.QQQ.profit, cur)}`} />
+        <Tile label="Alpha vs SPY" value={fmtPP(aSpy)} valueClass={tone(aSpy)} sub={`${fmtMoney(main.pf.profit - main.SPY.profit, cur)} vs index P&L`} />
+        <Tile label="Alpha vs QQQ" value={fmtPP(aQqq)} valueClass={tone(aQqq)} sub={`${fmtMoney(main.pf.profit - main.QQQ.profit, cur)} vs index P&L`} />
+      </div>
+
       <Card>
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold text-slate-900">{period.label}: value vs replicas</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{period.label}: value vs identical flows in the indices</h2>
           <span className="text-xs text-slate-500">
-            {fmtDay(main.d0)} → {fmtDay(main.d1)} · {main.annualised ? "IRR" : "period return"} {fmtPct(headline(main.pf, main).value)} vs SPY {fmtPct(headline(main.SPY, main).value)} · QQQ {fmtPct(headline(main.QQQ, main).value)}
+            {fmtDay(main.d0)} → {fmtDay(main.d1)} · {Math.round(main.days)} days · net invested in period {fmtMoney(invested, cur)}
           </span>
         </div>
         <ValueChart data={downsample(main.series ?? [])} cur={cur} />
+        <Note>
+          Replica = every dollar you invested or withdrew, on the same dates, put into the index instead. IRR is money-weighted (XIRR). Periods under 90 days show the period return, not an annualised figure.
+        </Note>
+      </Card>
+
+      <Card>
+        <h2 className="mb-3 text-sm font-semibold text-slate-900">Where the INR gain came from</h2>
+        <table className="w-full text-sm">
+          <tbody>
+            {[
+              ["Price gains (USD, at closing FX)", dec.price],
+              ["Dividends (est., after 25% WHT)", dec.dividends],
+              ["Currency (USD/INR moves on invested capital)", dec.fx],
+            ].map(([l, v]) => (
+              <tr key={l as string} className="border-b border-slate-100">
+                <td className="py-2 text-slate-600">{l}</td>
+                <td className={`py-2 text-right tabular-nums ${tone(v as number)}`}>{fmtINR(v as number)}</td>
+              </tr>
+            ))}
+            <tr>
+              <td className="py-2 font-semibold text-slate-900">Total INR gain</td>
+              <td className={`py-2 text-right font-semibold tabular-nums ${tone(dec.total)}`}>{fmtINR(dec.total)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div className="mt-3 text-xs text-slate-500">
+          USD/INR {dec.fxRateStart.toFixed(2)} → {dec.fxRateEnd.toFixed(2)} ({fmtPct(dec.fxRateEnd / dec.fxRateStart - 1, 1, true)}). INR IRR {fmtPct(inr.pf.irr)} vs USD IRR {fmtPct(usd.pf.irr)}
+          {main.annualised ? "" : " (period return shown on the tiles)"}.
+          {opts.dividends ? "" : " Dividends are excluded; switch on “Est. dividends” to include them."}
+        </div>
       </Card>
 
       <Card className="overflow-x-auto p-0">
@@ -105,8 +153,8 @@ export default async function Performance({ searchParams }: { searchParams: Prom
                 <Td className={tone(inr.pf.irr)}>{cell(inr, "pf")}</Td>
                 <Td>{cell(usd, "SPY")}</Td>
                 <Td>{cell(usd, "QQQ")}</Td>
-                <Td className={tone(usd.pf.profit)}>{fmtMoney(usd.pf.profit, "USD")}</Td>
-                <Td>{fmtMoney(usd.V1, "USD")}</Td>
+                <Td className={tone(usd.pf.profit)}>{fmtUSD(usd.pf.profit)}</Td>
+                <Td>{fmtUSD(usd.V1)}</Td>
               </tr>
             ))}
           </tbody>

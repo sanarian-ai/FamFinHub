@@ -3,8 +3,9 @@ import { getIndiaPortfolioData } from "@/lib/portfolio/india-data";
 import { inceptionStart } from "@/lib/portfolio/engine";
 import { fmtDay, fmtMoney, fmtPct, fmtPP, tone } from "@/lib/portfolio/format";
 import { alpha, downsample, headline, pickPeriod, periodDefs, runPeriod, stockRows } from "@/lib/portfolio/views";
+import { CATEGORICAL } from "@/app/insights/chartTheme";
 import { HolderToggle, PeriodBar, parseQ } from "../controls";
-import { Note, rowCls, tableCls, Td, Th, theadCls } from "../../ui";
+import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../ui";
 import { ValueChart } from "../ValueChart";
 import { accountsForHolder, EQUITY_BENCHMARKS, BENCHMARK_LABEL, EQUITY_HOLDER_GROUPS, type HolderKey } from "../constants";
 
@@ -41,6 +42,11 @@ export default async function IndiaEquityPerformance({ searchParams }: { searchP
   };
   const HOLDER_LABEL: Record<HolderKey, string> = { ALL: "Both holders", SANGEETH: "Sangeeth (Zerodha)", RIA: "Ria (Kotak + IIFL)" };
 
+  const pf = headline(main.pf, main);
+  const kind = pf.kind === "IRR" ? "IRR" : "Return";
+  const benchTiles = EQUITY_BENCHMARKS.map((b, i) => ({ key: b, label: BENCHMARK_LABEL[b], h: headline(main.bench[b], main), a: alpha(main.pf, main.bench[b], main), dot: CATEGORICAL[(i + 1) % CATEGORICAL.length] }));
+  const invested = main.net - main.V0;
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3">
@@ -48,14 +54,29 @@ export default async function IndiaEquityPerformance({ searchParams }: { searchP
         <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
       </div>
 
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <Tile label="Portfolio value" value={fmtMoney(main.V1, CUR)} sub={fmtDay(main.d1)} />
+        <Tile label={`Portfolio ${kind}`} dot={CATEGORICAL[0]} value={fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}`} />
+        <div />
+        {benchTiles.map((b) => (
+          <Tile key={b.key} label={`${b.label} ${kind}`} dot={b.dot} value={fmtPct(b.h.value)} sub={`same flows · P&L ${fmtMoney(main.bench[b.key].profit, CUR)}`} />
+        ))}
+        {benchTiles.map((b) => (
+          <Tile key={`a-${b.key}`} label={`Alpha vs ${b.label}`} value={fmtPP(b.a)} valueClass={tone(b.a)} sub={`${fmtMoney(main.pf.profit - main.bench[b.key].profit, CUR)} vs index P&L`} />
+        ))}
+      </div>
+
       <Card>
         <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold text-slate-900">{period.label}: value vs replicas</h2>
+          <h2 className="text-sm font-semibold text-slate-900">{period.label}: value vs identical flows in the indices</h2>
           <span className="text-xs text-slate-500">
-            {fmtDay(main.d0)} → {fmtDay(main.d1)} · {main.annualised ? "IRR" : "period return"} {fmtPct(headline(main.pf, main).value)} vs {BENCHMARK_LABEL[B0]} {fmtPct(headline(main.bench[B0], main).value)} · {BENCHMARK_LABEL[B1]} {fmtPct(headline(main.bench[B1], main).value)}
+            {fmtDay(main.d0)} → {fmtDay(main.d1)} · {Math.round(main.days)} days · net invested in period {fmtMoney(invested, CUR)}
           </span>
         </div>
         <ValueChart data={downsample(main.series ?? [])} benchmarks={EQUITY_BENCHMARKS} />
+        <Note>
+          Replica = every rupee you invested or withdrew, on the same dates, put into the index instead. IRR is money-weighted (XIRR). Periods under 90 days show the period return, not an annualised figure.
+        </Note>
       </Card>
 
       <Card className="overflow-x-auto p-0">

@@ -1,18 +1,21 @@
-import { Card, EmptyState } from "@/components/ui";
+import { Badge, Card, EmptyState } from "@/components/ui";
 import { getIndiaPortfolioData } from "@/lib/portfolio/india-data";
-import { fmtDay, fmtMoney, fmtPct, fmtPP, tone } from "@/lib/portfolio/format";
-import { alpha, downsample, headline, pickPeriod, periodDefs, positions, runPeriod } from "@/lib/portfolio/views";
 import { buildLots } from "@/lib/portfolio/engine";
+import { fmtDay, fmtPct, fmtUnits, fmtMoney, tone } from "@/lib/portfolio/format";
+import { disposalRows, positions } from "@/lib/portfolio/views";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
-import { HolderToggle, PeriodBar, parseQ } from "./controls";
-import { Note, Tile } from "../ui";
-import { ValueChart } from "./ValueChart";
-import { accountsForHolder, EQUITY_BENCHMARKS, BENCHMARK_LABEL } from "./constants";
+import { HolderToggle, parseQ } from "./controls";
+import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../ui";
+import { accountsForHolder } from "./constants";
 
 export const dynamic = "force-dynamic";
 const BASE = "/portfolio/india/equity";
 const CUR = "INR" as const;
 
+/** Overview = a summary of current holdings — value, positions, weight, unrealised gain. IRR vs
+ * benchmark and the value-vs-replica chart live on Performance now (see the same restructure on
+ * /portfolio/us): come here first for "what do I have", go to Performance to double down on how
+ * it's doing. */
 export default async function IndiaEquityOverview({ searchParams }: { searchParams: Promise<{ [k: string]: string | string[] | undefined }> }) {
   const q = parseQ(await searchParams);
   const { ctx, ds, channelAccounts } = await getIndiaPortfolioData();
@@ -28,70 +31,57 @@ export default async function IndiaEquityOverview({ searchParams }: { searchPara
     );
   }
 
-  const period = pickPeriod(ctx, q.p, accounts);
-  const opts = { accounts, benchmarks: EQUITY_BENCHMARKS };
-  const r = runPeriod(ctx, period, { ...opts, series: true });
-  // Lots are scoped to this holder's accounts here, not india-data.ts's blended book — that one
-  // spans Equity+PMS+MF (see the combiner in india-data.ts), which would mix in PMS/MF positions.
-  const pos = positions(ctx, buildLots(ds, accounts));
-
-  const pf = headline(r.pf, r);
-  const kind = pf.kind === "IRR" ? "IRR" : "Return";
-  const bench = EQUITY_BENCHMARKS.map((b) => ({ key: b, label: BENCHMARK_LABEL[b], h: headline(r.bench[b], r), a: alpha(r.pf, r.bench[b], r) }));
-  const invested = r.net - r.V0;
+  const book = buildLots(ds, accounts);
+  const pos = positions(ctx, book);
+  const gain = pos.totalValue - pos.totalCost;
+  const disposals = disposalRows(book);
+  const realised = disposals.reduce((a, d) => a + d.gain, 0);
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="text-xs text-slate-500">Prices to {fmtDay(ctx.asof)}</span>
-          <HolderToggle base={BASE} q={q} />
-        </div>
-        <PeriodBar base={BASE} q={q} defs={periodDefs(ctx, accounts)} current={period.key} />
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-slate-500">Prices to {fmtDay(ctx.asof)}</span>
+        <HolderToggle base={BASE} q={q} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <Tile label="Portfolio value" value={fmtMoney(r.V1, CUR)} sub={fmtDay(r.d1)} />
-        <Tile label={`Portfolio ${kind}`} dot={CATEGORICAL[0]} value={fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(r.pf.profit, CUR)}${r.annualised ? "" : " · period return, under 90 days"}`} />
-        <div />
-        {bench.map((b, i) => (
-          <Tile key={b.key} label={`${b.label} ${kind}`} dot={CATEGORICAL[(i + 1) % CATEGORICAL.length]} value={fmtPct(b.h.value)} sub={`same flows · P&L ${fmtMoney(r.bench[b.key].profit, CUR)}`} />
-        ))}
-        {bench.map((b) => (
-          <Tile key={`a-${b.key}`} label={`Alpha vs ${b.label}`} value={fmtPP(b.a)} valueClass={tone(b.a)} sub={`${fmtMoney(r.pf.profit - r.bench[b.key].profit, CUR)} vs index P&L`} />
-        ))}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Tile label="Market value" value={fmtMoney(pos.totalValue, CUR)} sub={fmtDay(ctx.asof)} />
+        <Tile label="Cost basis (open lots)" value={fmtMoney(pos.totalCost, CUR)} sub="incl. fees, FIFO per account" />
+        <Tile label="Unrealised gain" value={fmtMoney(gain, CUR)} valueClass={tone(gain)} sub={`${fmtPct(pos.totalCost ? gain / pos.totalCost : 0, 1, true)} on remaining cost`} />
+        <Tile label="Realised gain (all exits)" value={fmtMoney(realised, CUR)} valueClass={tone(realised)} sub={`${disposals.length} disposal lots · ${new Set(disposals.map((d) => d.symbol)).size} stocks`} />
       </div>
 
-      <Card>
-        <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold text-slate-900">Value vs identical flows in the indices</h2>
-          <span className="text-xs text-slate-500">
-            {fmtDay(r.d0)} → {fmtDay(r.d1)} · {Math.round(r.days)} days · net invested in period {fmtMoney(invested, CUR)}
-          </span>
-        </div>
-        <ValueChart data={downsample(r.series ?? [])} benchmarks={EQUITY_BENCHMARKS} />
-        <Note>
-          Replica = every rupee you invested or withdrew, on the same dates, put into the index instead. IRR is money-weighted (XIRR). Periods under 90 days show the period return, not an annualised figure.
-        </Note>
-      </Card>
-
-      <Card>
-        <h2 className="mb-3 text-sm font-semibold text-slate-900">Concentration</h2>
-        <div className="flex flex-col gap-2">
-          {pos.rows.slice(0, 8).map((p, i) => (
-            <div key={p.symbol} className="flex items-center gap-3 text-sm">
-              <span className="w-20 font-medium text-slate-800">{p.symbol}</span>
-              <div className="h-2.5 flex-1 rounded-full bg-slate-100">
-                <div className="h-2.5 rounded-full" style={{ width: `${Math.max(1, p.weight * 100)}%`, background: CATEGORICAL[i % CATEGORICAL.length] }} />
-              </div>
-              <span className="w-14 text-right tabular-nums text-slate-700">{fmtPct(p.weight)}</span>
-              <span className="w-28 text-right tabular-nums text-slate-500">{fmtMoney(p.value, CUR)}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 text-xs text-slate-500">
-          Top 3 = {fmtPct(pos.rows.slice(0, 3).reduce((a, p) => a + p.weight, 0))} of {fmtMoney(pos.totalValue, CUR)} at current prices. A 30% fall in those three is {fmtMoney(-0.3 * pos.rows.slice(0, 3).reduce((a, p) => a + p.value, 0), CUR)}.
-        </div>
+      <Card className="overflow-x-auto p-0">
+        <div className="px-5 pt-4 text-sm font-semibold text-slate-900">Positions</div>
+        <table className={tableCls}>
+          <thead className={theadCls}>
+            <tr><Th right={false}>Stock</Th><Th>Units</Th><Th>Avg cost</Th><Th>Price</Th><Th>Value</Th><Th>Weight</Th><Th>Unrealised</Th><Th>%</Th></tr>
+          </thead>
+          <tbody>
+            {pos.rows.map((p, i) => (
+              <tr key={p.symbol} className={rowCls}>
+                <Td right={false} className="font-medium text-slate-800">
+                  <span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ background: CATEGORICAL[i % CATEGORICAL.length] }} />
+                  {p.symbol}
+                  {new Set(p.lots.map((l) => l.account)).size > 1 && <span className="ml-2"><Badge tone="blue">multiple accounts</Badge></span>}
+                </Td>
+                <Td>{fmtUnits(p.units)}</Td>
+                <Td>{fmtMoney(p.avgCost, CUR)}</Td>
+                <Td>{fmtMoney(p.price, CUR)}</Td>
+                <Td>{fmtMoney(p.value, CUR)}</Td>
+                <Td>{fmtPct(p.weight)}</Td>
+                <Td className={tone(p.gain)}>{fmtMoney(p.gain, CUR)}</Td>
+                <Td className={tone(p.gainPct)}>{fmtPct(p.gainPct, 1, true)}</Td>
+              </tr>
+            ))}
+            <tr className="border-t border-slate-200 font-semibold">
+              <Td right={false}>Total</Td><Td /><Td /><Td />
+              <Td>{fmtMoney(pos.totalValue, CUR)}</Td><Td>100%</Td>
+              <Td className={tone(gain)}>{fmtMoney(gain, CUR)}</Td><Td className={tone(gain)}>{fmtPct(pos.totalCost ? gain / pos.totalCost : 0, 1, true)}</Td>
+            </tr>
+          </tbody>
+        </table>
+        <div className="px-5 pb-4 pt-2"><Note>For IRR, alpha vs Nifty 50/500 TRI, and the value-vs-benchmark chart, see the Performance tab. For per-lot FIFO detail, see Holdings &amp; lots.</Note></div>
       </Card>
     </div>
   );
