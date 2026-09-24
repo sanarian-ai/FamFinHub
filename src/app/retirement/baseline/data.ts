@@ -4,6 +4,7 @@
  * RetirementDb interface the portable, unit-tested engine/store/persist layer is built against.
  */
 import { prisma } from "@/lib/prisma";
+import type { AssetClassRow } from "@/lib/portfolio/networth";
 
 const PLAN_NAME = "Household retirement plan";
 
@@ -112,4 +113,41 @@ export async function getNetWorthActuals(): Promise<Record<string, NetWorthActua
     if (netWorthKey && r.valueL != null) out[netWorthKey] = { valueL: r.valueL, asOf: r.asOf };
   }
   return out;
+}
+
+
+/**
+ * Bitcoin and real estate as portfolio-visible rows — sourced from the same manual figures the
+ * retirement Assets/Baseline screens edit (networth.bitcoin / networth.realEstate on
+ * RetirementBaselineItem), not from a broker or price feed (neither exists for either class).
+ * "Current value" here just means "the figure last saved on /retirement/assets", and asOf is
+ * that save's lastReviewedAt, not a market price date. Read-only from the portfolio side:
+ * /portfolio/all links back to /retirement/assets rather than offering its own edit control —
+ * consistent with Portfolio staying bottoms-up/read-only and Retirement Assets being the one
+ * editable surface for the manual tracker.
+ */
+export async function getManualTrackedAssets(): Promise<AssetClassRow[]> {
+  let planId: string;
+  try {
+    planId = await getBaselinePlanId();
+  } catch {
+    return [];
+  }
+  const items = await prisma.retirementBaselineItem.findMany({
+    where: { planId, key: { in: ["networth.bitcoin", "networth.realEstate"] } },
+    select: { key: true, valueL: true, lastReviewedAt: true },
+  });
+  const byKey = new Map(items.map((i) => [i.key, i]));
+  const row = (key: "bitcoin" | "realEstate", itemKey: string, label: string): AssetClassRow => {
+    const item = byKey.get(itemKey);
+    return {
+      key, label, group: "manual", href: "/retirement/assets",
+      valueL: item ? Number(item.valueL) : null,
+      asOf: item ? item.lastReviewedAt.toISOString().slice(0, 10) : null,
+    };
+  };
+  return [
+    row("bitcoin", "networth.bitcoin", "BitCoin"),
+    row("realEstate", "networth.realEstate", "Real estate (present value)"),
+  ];
 }

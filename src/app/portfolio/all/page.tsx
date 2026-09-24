@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Card, EmptyState } from "@/components/ui";
 import { fmtINR, fmtDay } from "@/lib/portfolio/format";
 import { getAssetClassBreakdown, type AssetClassGroup, type AssetClassRow } from "@/lib/portfolio/networth";
+import { getManualTrackedAssets } from "@/app/retirement/baseline/data";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
 import { Tile, Th, Td, tableCls, theadCls, rowCls, Note } from "../india/ui";
 
@@ -11,11 +12,13 @@ const GROUP_LABEL: Record<AssetClassGroup, string> = {
   equity: "Equity",
   fund: "Mutual funds",
   retirement: "EPF + NPS",
+  manual: "Bitcoin & real estate",
 };
 const GROUP_COLOR: Record<AssetClassGroup, string> = {
   equity: CATEGORICAL[0],
   fund: CATEGORICAL[1],
   retirement: CATEGORICAL[2],
+  manual: CATEGORICAL[3],
 };
 
 /**
@@ -25,13 +28,15 @@ const GROUP_COLOR: Record<AssetClassGroup, string> = {
  * value" sync draw from. US equity first, per how this page was scoped: "start the portfolio with
  * overall portfolio and not just US equities."
  *
- * Scope: the nine classes that are actually held through a tracked demat/folio/broker account —
- * the same live-wired set as retirement/baseline's net-worth screen. Manual-only figures (fixed
- * deposits, cash, real estate, ESOPs, Future Generali, BitCoin) aren't holdings this app can price
- * itself, so they live only on the fuller net-worth tracker at /retirement/baseline, linked below.
+ * Scope: the nine broker/account-tracked classes, plus two manual ones — Bitcoin and real
+ * estate — folded in via getManualTrackedAssets() (retirement/baseline/data.ts), sourced from
+ * the same figures the retirement Assets screen edits (there's no broker or price feed for
+ * either). Every other manual-only figure (fixed deposits, cash, ESOPs, Future Generali) still
+ * lives only on the fuller net-worth tracker at /retirement/baseline, linked below.
  */
 export default async function AllAssetsPage() {
-  const rows = await getAssetClassBreakdown();
+  const [brokerRows, manualRows] = await Promise.all([getAssetClassBreakdown(), getManualTrackedAssets()]);
+  const rows = [...brokerRows, ...manualRows];
   const priced = rows.filter((r): r is AssetClassRow & { valueL: number } => r.valueL != null);
 
   if (priced.length === 0) {
@@ -43,7 +48,7 @@ export default async function AllAssetsPage() {
   const byGroup = (g: AssetClassGroup) => priced.filter((r) => r.group === g).reduce((s, r) => s + r.valueL, 0);
   // valueL here (and on every AssetClassRow) is in lakhs; fmtINR wants raw rupees, so every call
   // site below multiplies by 1e5. Percentages use the lakhs figures directly — the ratio is unaffected.
-  const groupTotals: { group: AssetClassGroup; valueL: number }[] = (["equity", "fund", "retirement"] as const).map((group) => ({
+  const groupTotals: { group: AssetClassGroup; valueL: number }[] = (["equity", "fund", "retirement", "manual"] as const).map((group) => ({
     group,
     valueL: byGroup(group),
   }));
@@ -55,7 +60,7 @@ export default async function AllAssetsPage() {
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <Tile label="Total tracked" value={fmtINR(total)} sub={newest ? `As of ${fmtDay(newest)}` : undefined} />
         {groupTotals.map((g) => (
           <Tile
@@ -99,6 +104,10 @@ export default async function AllAssetsPage() {
           No current data for: {missing.map((r) => r.label).join(", ")}.
         </Note>
       )}
+      <Note>
+        BitCoin and Real estate have no broker or price feed — their value and &quot;as of&quot; date are
+        whatever was last saved on the retirement Assets screen, not a market price.
+      </Note>
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className={tableCls}>
@@ -150,7 +159,7 @@ export default async function AllAssetsPage() {
 
       <div className="text-sm">
         <Link href="/retirement/baseline" className="font-medium text-slate-600 hover:text-slate-900">
-          Full net worth (incl. FDs, cash, real estate, ESOPs and other manual figures) on the retirement baseline screen &rarr;
+          Full net worth (incl. FDs, cash, ESOPs, Future Generali and other manual figures) on the retirement baseline screen &rarr;
         </Link>
       </div>
     </div>

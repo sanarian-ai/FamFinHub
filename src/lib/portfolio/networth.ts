@@ -194,9 +194,14 @@ export async function getMutualFundsByCategory(): Promise<Record<"EQUITY" | "DEB
 
 export type AssetClassKey =
   | "usEquity" | "indianEquity" | "kabirPms" | "nse"
-  | "mfEquity" | "mfDebt" | "mfHybrid" | "mfCommodity" | "epfNps";
+  | "mfEquity" | "mfDebt" | "mfHybrid" | "mfCommodity" | "epfNps"
+  | "bitcoin" | "realEstate";
 
-export type AssetClassGroup = "equity" | "fund" | "retirement";
+/** "manual" = no broker/price feed at all — bitcoin and real estate, sourced from the retirement
+ *  Assets screen's own manual figures rather than a query in this file. See
+ *  retirement/baseline/data.ts's getManualTrackedAssets(), which returns AssetClassRow-shaped
+ *  rows for those two so /portfolio/all can fold them into the same table. */
+export type AssetClassGroup = "equity" | "fund" | "retirement" | "manual";
 
 export interface AssetClassRow {
   key: AssetClassKey;
