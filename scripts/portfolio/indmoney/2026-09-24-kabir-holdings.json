@@ -1,0 +1,30 @@
+{
+  "account": "KABIR_PMS_RIA",
+  "asOf": "2026-09-24",
+  "holdings": [
+    { "symbol": "EDELWEISS", "qty": 5156 },
+    { "symbol": "PNGSREVA", "qty": 1412 },
+    { "symbol": "PROPEQUITY", "qty": 3600 },
+    { "symbol": "ORIENTBELL", "qty": 1759 },
+    { "symbol": "HERITGFOOD", "qty": 1537 },
+    { "symbol": "HCC", "qty": 29627 },
+    { "symbol": "TIIL", "qty": 194 },
+    { "symbol": "CINELINE", "qty": 6573 },
+    { "symbol": "KCP", "qty": 3657 },
+    { "symbol": "RPSGVENT", "qty": 656 },
+    { "symbol": "RELIGARE", "qty": 2197 },
+    { "symbol": "ALLDIGI", "qty": 686 },
+    { "symbol": "ONWARDTEC", "qty": 1820 },
+    { "symbol": "SCHAND", "qty": 3364 },
+    { "symbol": "JARO", "qty": 984 },
+    { "symbol": "NUVOCO", "qty": 1332 },
+    { "symbol": "AWFIS", "qty": 1624 },
+    { "symbol": "CAPACITE", "qty": 2138 },
+    { "symbol": "TEAMLEASE", "qty": 196 },
+    { "symbol": "KSCL", "qty": 283 },
+    { "symbol": "KAMATHOTEL", "qty": 937 },
+    { "symbol": "TRUECOLORS", "qty": 1200 },
+    { "symbol": "NCLIND", "qty": 276 },
+    { "symbol": "MONTECARLO", "qty": 90 }
+  ]
+}
