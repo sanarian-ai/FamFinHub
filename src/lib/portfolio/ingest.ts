@@ -5,7 +5,7 @@ import { Prisma, type PrismaClient } from "@prisma/client";
 import { splitFactor } from "./splits";
 
 export const MAX_ROWS = 5000;
-const SOURCES = ["indmoney_report", "ibkr_api", "manual", "kabir_pms_report"] as const;
+const SOURCES = ["indmoney_report", "ibkr_api", "manual", "kabir_pms_report", "cams_cas_pdf"] as const;
 const SIDES = ["BUY", "SELL"] as const;
 const CASH_TYPES = ["DIVIDEND", "WITHHOLDING_TAX", "FEE", "DEPOSIT", "WITHDRAWAL", "INTEREST"] as const;
 const ACTION_TYPES = ["SPLIT", "REVERSE_SPLIT", "SYMBOL_CHANGE", "BONUS", "RIGHTS", "DEMERGER"] as const;
@@ -17,6 +17,7 @@ const SESSION_TZ: Record<string, string> = {
   ibkr_api: "America/New_York",
   manual: "America/New_York",
   kabir_pms_report: "Asia/Kolkata",
+  cams_cas_pdf: "Asia/Kolkata",
 };
 export const RECONCILE_TOL = 1e-4; // units
 
@@ -222,14 +223,27 @@ export async function computeReconciliation(prisma: PrismaClient): Promise<Recon
 /** Reconciles and records the outcome as review items (opened, refreshed while open, auto-resolved when matched). */
 export async function reconcile(prisma: PrismaClient): Promise<{ rows: ReconRow[]; opened: number }> {
   const rows = await computeReconciliation(prisma);
+  // Batched, not one round trip per position: a portfolio with many accounts/schemes (e.g. ~30+
+  // mutual fund folios) turned this into O(positions) sequential findFirst calls, which is slow
+  // enough over a real network connection to make ingestion itself time out. One findMany plus a
+  // batched createMany, with only the (normally empty) per-row updates left as small parallel calls.
+  const refIds = rows.map((row) => `${row.account}|${row.symbol}`);
+  const openItems = refIds.length
+    ? await prisma.portfolioReviewItem.findMany({ where: { type: "UNITS_MISMATCH", status: "open", refId: { in: refIds } } })
+    : [];
+  const openByRefId = new Map(openItems.map((i) => [i.refId!, i]));
   let opened = 0;
+  const creates: Prisma.PortfolioReviewItemCreateManyInput[] = [];
+  const updates: Promise<unknown>[] = [];
   for (const row of rows) {
     const refId = `${row.account}|${row.symbol}`;
-    const open = await prisma.portfolioReviewItem.findFirst({ where: { type: "UNITS_MISMATCH", status: "open", refId } });
+    const open = openByRefId.get(refId);
     const detail = `${refId}: rebuilt ${row.rebuilt.toFixed(6)} vs broker ${row.reported.toFixed(6)} as of ${row.asOf} (diff ${row.diff.toFixed(6)})`;
-    if (!row.ok && !open) { await prisma.portfolioReviewItem.create({ data: { type: "UNITS_MISMATCH", refTable: "position_snapshots", refId, detail } }); opened++; }
-    else if (!row.ok && open) await prisma.portfolioReviewItem.update({ where: { id: open.id }, data: { detail } });
-    else if (row.ok && open) await prisma.portfolioReviewItem.update({ where: { id: open.id }, data: { status: "resolved", resolvedAt: new Date() } });
+    if (!row.ok && !open) { creates.push({ type: "UNITS_MISMATCH", refTable: "position_snapshots", refId, detail }); opened++; }
+    else if (!row.ok && open) updates.push(prisma.portfolioReviewItem.update({ where: { id: open.id }, data: { detail } }));
+    else if (row.ok && open) updates.push(prisma.portfolioReviewItem.update({ where: { id: open.id }, data: { status: "resolved", resolvedAt: new Date() } }));
   }
+  if (creates.length) await prisma.portfolioReviewItem.createMany({ data: creates });
+  if (updates.length) await Promise.all(updates);
   return { rows, opened };
 }

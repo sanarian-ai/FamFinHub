@@ -1,0 +1,2128 @@
+{
+  "source": "cams_cas_pdf",
+  "notes": "CAMS/KFintech Consolidated Account Statement, as of 2026-09-23, parsed from cams-cas-sample.pdf.",
+  "securities": [
+    {
+      "symbol": "INF209K01VP1",
+      "name": "Aditya Birla Sun Life Arbitrage Fund - Growth-Direct Plan",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF846K01CX4",
+      "name": "Axis Liquid Fund - Direct Growth",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF194KB1AL4",
+      "name": "Bandhan Small Cap Fund-Direct Plan-Growth",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF740K01PU7",
+      "name": "DSP India T.I.G.E.R. Fund - Direct Plan - Growth",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF754K01OX5",
+      "name": "Edelweiss Gold and Silver ETF Fund of Fund Direct plan Growth (Non Demat)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF754K01ML4",
+      "name": "Edelweiss Recently Listed IPO Fund - DIRECT PLAN GROWTH (Non Demat)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF179KA1KT6",
+      "name": "HDFC Arbitrage Fund - Direct Plan - Growth Option",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF179K01WA6",
+      "name": "HDFC Balanced Advantage Fund - Direct Plan - Growth Option (formerly HDFC Growth Fund, erstwhile HDFC Prudence Fund merged)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF179K01XT4",
+      "name": "HDFC Equity Savings Fund - Direct Plan - Growth Option",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF109K016O4",
+      "name": "ICICI Prudential Arbitrage Fund - Direct Plan - Growth",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF109K015K4",
+      "name": "ICICI Prudential Multi Asset Allocation Fund - Direct Plan - Growth (formerly ICICI Prudential Mutual Fund - Dynamic Plan)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF109K016L0",
+      "name": "ICICI Prudential Large Cap Fund (erstwhile Bluechip Fund) - Direct Plan - Growth (formerly ICICI Prudential Focused Bluechip Equity Fund)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF109KC1RH9",
+      "name": "ICICI Prudential India Opportunities Fund Direct Plan Growth",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF205K01MV6",
+      "name": "Invesco India Mid Cap Fund - Direct Plan Growth (Non Demat)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF174K01LT0",
+      "name": "Kotak Mid Cap Fund Direct Growth",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF174K01LC6",
+      "name": "Kotak Arbitrage Fund - Direct Plan - Growth",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF204K01XZ7",
+      "name": "NIPPON INDIA ARBITRAGE FUND - DIRECT GROWTH PLAN GROWTH OPTION (Non Demat)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF879O01027",
+      "name": "Parag Parikh Flexi Cap Fund - Direct Plan Growth (formerly Parag Parikh Long Term Value Fund)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF879O01175",
+      "name": "Parag Parikh Conservative Hybrid Fund - Direct Plan Growth",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF200K01QU0",
+      "name": "SBI Arbitrage Fund - Direct Growth",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF200K01UP2",
+      "name": "SBI Healthcare Opportunities Fund Direct Growth (formerly SBI Pharma Fund)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF200K01RA0",
+      "name": "SBI Contra Fund - Direct Plan - Growth",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF789F01XA0",
+      "name": "UTI Nifty 50 Index Fund - Direct Plan (Non Demat)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    },
+    {
+      "symbol": "INF789FC12T1",
+      "name": "UTI Nifty Next 50 Index Fund - Direct Plan (Non Demat)",
+      "kind": "MUTUAL_FUND",
+      "currency": "INR",
+      "exchange": null
+    }
+  ],
+  "accounts": [
+    {
+      "key": "MF_FOLIO_Aditya_Birla_Sun_Life_Mutual_Fund_1048241968",
+      "broker": "MF_FOLIO",
+      "name": "Aditya Birla Sun Life Mutual Fund - Folio 1048241968",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_AXIS_Mutual_Fund_910174791981_0",
+      "broker": "MF_FOLIO",
+      "name": "AXIS Mutual Fund - Folio 910174791981 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Bandhan_Mutual_Fund_9639348_81",
+      "broker": "MF_FOLIO",
+      "name": "Bandhan Mutual Fund - Folio 9639348 / 81",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Bandhan_Mutual_Fund_9756800_29",
+      "broker": "MF_FOLIO",
+      "name": "Bandhan Mutual Fund - Folio 9756800 / 29",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_DSP_Mutual_Fund_11305663_31",
+      "broker": "MF_FOLIO",
+      "name": "DSP Mutual Fund - Folio 11305663 / 31",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_DSP_Mutual_Fund_11347466_43",
+      "broker": "MF_FOLIO",
+      "name": "DSP Mutual Fund - Folio 11347466 / 43",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Edelweiss_Mutual_Fund_91035688211_0",
+      "broker": "MF_FOLIO",
+      "name": "Edelweiss Mutual Fund - Folio 91035688211 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Edelweiss_Mutual_Fund_91041637236_0",
+      "broker": "MF_FOLIO",
+      "name": "Edelweiss Mutual Fund - Folio 91041637236 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Edelweiss_Mutual_Fund_91051151905_0",
+      "broker": "MF_FOLIO",
+      "name": "Edelweiss Mutual Fund - Folio 91051151905 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Edelweiss_Mutual_Fund_91051495795_0",
+      "broker": "MF_FOLIO",
+      "name": "Edelweiss Mutual Fund - Folio 91051495795 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_HDFC_Mutual_Fund_31854055_04",
+      "broker": "MF_FOLIO",
+      "name": "HDFC Mutual Fund - Folio 31854055 / 04",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_HDFC_Mutual_Fund_36834932_29",
+      "broker": "MF_FOLIO",
+      "name": "HDFC Mutual Fund - Folio 36834932 / 29",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_HDFC_Mutual_Fund_39199940_70",
+      "broker": "MF_FOLIO",
+      "name": "HDFC Mutual Fund - Folio 39199940 / 70",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_35736632_33",
+      "broker": "MF_FOLIO",
+      "name": "ICICI Prudential Mutual Fund - Folio 35736632 / 33",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "broker": "MF_FOLIO",
+      "name": "ICICI Prudential Mutual Fund - Folio 40110384 / 64",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Invesco_Mutual_Fund_31048249066_0",
+      "broker": "MF_FOLIO",
+      "name": "Invesco Mutual Fund - Folio 31048249066 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Invesco_Mutual_Fund_31048953152_0",
+      "broker": "MF_FOLIO",
+      "name": "Invesco Mutual Fund - Folio 31048953152 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "broker": "MF_FOLIO",
+      "name": "Kotak Mutual Fund - Folio 17276586",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Nippon_India_Mutual_Fund_477426716847_0",
+      "broker": "MF_FOLIO",
+      "name": "Nippon India Mutual Fund - Folio 477426716847 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_Nippon_India_Mutual_Fund_488364000035_0",
+      "broker": "MF_FOLIO",
+      "name": "Nippon India Mutual Fund - Folio 488364000035 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_PPFAS_Mutual_Fund_12951985",
+      "broker": "MF_FOLIO",
+      "name": "PPFAS Mutual Fund - Folio 12951985",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "broker": "MF_FOLIO",
+      "name": "PPFAS Mutual Fund - Folio 17851112",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_PPFAS_Mutual_Fund_18827513",
+      "broker": "MF_FOLIO",
+      "name": "PPFAS Mutual Fund - Folio 18827513",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_SBI_Mutual_Fund_41226678",
+      "broker": "MF_FOLIO",
+      "name": "SBI Mutual Fund - Folio 41226678",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_SBI_Mutual_Fund_50710942",
+      "broker": "MF_FOLIO",
+      "name": "SBI Mutual Fund - Folio 50710942",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_SBI_Mutual_Fund_50841836",
+      "broker": "MF_FOLIO",
+      "name": "SBI Mutual Fund - Folio 50841836",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_UTI_Mutual_Fund_577384977315_0",
+      "broker": "MF_FOLIO",
+      "name": "UTI Mutual Fund - Folio 577384977315 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_UTI_Mutual_Fund_577385378732_0",
+      "broker": "MF_FOLIO",
+      "name": "UTI Mutual Fund - Folio 577385378732 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_UTI_Mutual_Fund_577388635961_0",
+      "broker": "MF_FOLIO",
+      "name": "UTI Mutual Fund - Folio 577388635961 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_UTI_Mutual_Fund_577396123834_0",
+      "broker": "MF_FOLIO",
+      "name": "UTI Mutual Fund - Folio 577396123834 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    },
+    {
+      "key": "MF_FOLIO_UTI_Mutual_Fund_577397133552_0",
+      "broker": "MF_FOLIO",
+      "name": "UTI Mutual Fund - Folio 577397133552 / 0",
+      "holder": "Ria",
+      "baseCurrency": "INR"
+    }
+  ],
+  "transactions": [
+    {
+      "account": "MF_FOLIO_Aditya_Birla_Sun_Life_Mutual_Fund_1048241968",
+      "symbol": "INF209K01VP1",
+      "side": "BUY",
+      "qty": 74052.817,
+      "price": 27.0064,
+      "fee": 100,
+      "execTs": "2024-09-17T10:00:00Z",
+      "tradeDate": "2024-09-17",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:1048241968:INF209K01VP1:2024-09-17:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Aditya_Birla_Sun_Life_Mutual_Fund_1048241968",
+      "symbol": "INF209K01VP1",
+      "side": "BUY",
+      "qty": 73943.024,
+      "price": 27.0465,
+      "fee": 100,
+      "execTs": "2024-09-30T10:00:00Z",
+      "tradeDate": "2024-09-30",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:1048241968:INF209K01VP1:2024-09-30:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Aditya_Birla_Sun_Life_Mutual_Fund_1048241968",
+      "symbol": "INF209K01VP1",
+      "side": "SELL",
+      "qty": 147995.841,
+      "price": 28.7701,
+      "fee": 42.58,
+      "execTs": "2025-07-28T10:00:00Z",
+      "tradeDate": "2025-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:1048241968:INF209K01VP1:2025-07-28:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_AXIS_Mutual_Fund_910174791981_0",
+      "symbol": "INF846K01CX4",
+      "side": "BUY",
+      "qty": 767.497,
+      "price": 2605.7433,
+      "fee": 100,
+      "execTs": "2023-11-06T10:00:00Z",
+      "tradeDate": "2023-11-06",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:910174791981 / 0:INF846K01CX4:2023-11-06:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_AXIS_Mutual_Fund_910174791981_0",
+      "symbol": "INF846K01CX4",
+      "side": "BUY",
+      "qty": 498.873,
+      "price": 2605.7433,
+      "fee": 65,
+      "execTs": "2023-11-06T10:00:00Z",
+      "tradeDate": "2023-11-06",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:910174791981 / 0:INF846K01CX4:2023-11-06:PURCHASE:1",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_AXIS_Mutual_Fund_910174791981_0",
+      "symbol": "INF846K01CX4",
+      "side": "SELL",
+      "qty": 1266.37,
+      "price": 2620.0891,
+      "fee": 0,
+      "execTs": "2023-12-04T10:00:00Z",
+      "tradeDate": "2023-12-04",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:910174791981 / 0:INF846K01CX4:2023-12-04:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_AXIS_Mutual_Fund_910174791981_0",
+      "symbol": "INF846K01CX4",
+      "side": "BUY",
+      "qty": 301.943,
+      "price": 2649.3783,
+      "fee": 40,
+      "execTs": "2024-01-30T10:00:00Z",
+      "tradeDate": "2024-01-30",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:910174791981 / 0:INF846K01CX4:2024-01-30:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_AXIS_Mutual_Fund_910174791981_0",
+      "symbol": "INF846K01CX4",
+      "side": "SELL",
+      "qty": 301.943,
+      "price": 2660.5026,
+      "fee": 0,
+      "execTs": "2024-02-19T10:00:00Z",
+      "tradeDate": "2024-02-19",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:910174791981 / 0:INF846K01CX4:2024-02-19:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Bandhan_Mutual_Fund_9639348_81",
+      "symbol": "INF194KB1AL4",
+      "side": "BUY",
+      "qty": 20052.836,
+      "price": 55.351,
+      "fee": 55.5,
+      "execTs": "2026-07-28T10:00:00Z",
+      "tradeDate": "2026-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:9639348 / 81:INF194KB1AL4:2026-07-28:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Bandhan_Mutual_Fund_9756800_29",
+      "symbol": "INF194KB1AL4",
+      "side": "BUY",
+      "qty": 19472.711,
+      "price": 57,
+      "fee": 55.5,
+      "execTs": "2026-08-07T10:00:00Z",
+      "tradeDate": "2026-08-07",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:9756800 / 29:INF194KB1AL4:2026-08-07:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_DSP_Mutual_Fund_11305663_31",
+      "symbol": "INF740K01PU7",
+      "side": "BUY",
+      "qty": 1893.719,
+      "price": 390.746,
+      "fee": 37,
+      "execTs": "2026-07-28T10:00:00Z",
+      "tradeDate": "2026-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:11305663 / 31:INF740K01PU7:2026-07-28:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_DSP_Mutual_Fund_11347466_43",
+      "symbol": "INF740K01PU7",
+      "side": "BUY",
+      "qty": 1844.894,
+      "price": 401.087,
+      "fee": 37,
+      "execTs": "2026-08-07T10:00:00Z",
+      "tradeDate": "2026-08-07",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:11347466 / 43:INF740K01PU7:2026-08-07:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Edelweiss_Mutual_Fund_91035688211_0",
+      "symbol": "INF754K01OX5",
+      "side": "BUY",
+      "qty": 129326.177,
+      "price": 19.33,
+      "fee": 124.99,
+      "execTs": "2025-08-11T10:00:00Z",
+      "tradeDate": "2025-08-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:91035688211 / 0:INF754K01OX5:2025-08-11:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Edelweiss_Mutual_Fund_91041637236_0",
+      "symbol": "INF754K01OX5",
+      "side": "BUY",
+      "qty": 16331.58,
+      "price": 30.614,
+      "fee": 25,
+      "execTs": "2025-12-23T10:00:00Z",
+      "tradeDate": "2025-12-23",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:91041637236 / 0:INF754K01OX5:2025-12-23:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Edelweiss_Mutual_Fund_91051151905_0",
+      "symbol": "INF754K01ML4",
+      "side": "BUY",
+      "qty": 13401.606,
+      "price": 33.1287,
+      "fee": 22.2,
+      "execTs": "2026-07-28T10:00:00Z",
+      "tradeDate": "2026-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:91051151905 / 0:INF754K01ML4:2026-07-28:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Edelweiss_Mutual_Fund_91051495795_0",
+      "symbol": "INF754K01ML4",
+      "side": "BUY",
+      "qty": 12934.343,
+      "price": 34.3255,
+      "fee": 22.2,
+      "execTs": "2026-08-07T10:00:00Z",
+      "tradeDate": "2026-08-07",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:91051495795 / 0:INF754K01ML4:2026-08-07:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_31854055_04",
+      "symbol": "INF179KA1KT6",
+      "side": "BUY",
+      "qty": 104932.053,
+      "price": 19.059,
+      "fee": 100,
+      "execTs": "2024-09-17T10:00:00Z",
+      "tradeDate": "2024-09-17",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:31854055 / 04:INF179KA1KT6:2024-09-17:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_31854055_04",
+      "symbol": "INF179KA1KT6",
+      "side": "BUY",
+      "qty": 104772.632,
+      "price": 19.088,
+      "fee": 100,
+      "execTs": "2024-09-30T10:00:00Z",
+      "tradeDate": "2024-09-30",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:31854055 / 04:INF179KA1KT6:2024-09-30:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_31854055_04",
+      "symbol": "INF179KA1KT6",
+      "side": "SELL",
+      "qty": 209704.685,
+      "price": 20.26,
+      "fee": 42.49,
+      "execTs": "2025-07-28T10:00:00Z",
+      "tradeDate": "2025-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:31854055 / 04:INF179KA1KT6:2025-07-28:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_36834932_29",
+      "symbol": "INF179K01WA6",
+      "side": "BUY",
+      "qty": 6324.669,
+      "price": 553.361,
+      "fee": 174.99,
+      "execTs": "2025-08-11T10:00:00Z",
+      "tradeDate": "2025-08-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:36834932 / 29:INF179K01WA6:2025-08-11:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_36834932_29",
+      "symbol": "INF179K01WA6",
+      "side": "SELL",
+      "qty": 5375.969,
+      "price": 559.543,
+      "fee": 30.08,
+      "execTs": "2026-07-22T10:00:00Z",
+      "tradeDate": "2026-07-22",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:36834932 / 29:INF179K01WA6:2026-07-22:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_36834932_29",
+      "symbol": "INF179K01WA6",
+      "side": "SELL",
+      "qty": 948.7,
+      "price": 565.195,
+      "fee": 5.36,
+      "execTs": "2026-07-22T10:00:00Z",
+      "tradeDate": "2026-07-22",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:36834932 / 29:INF179K01WA6:2026-07-22:REDEMPTION:1",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_39199940_70",
+      "symbol": "INF179K01XT4",
+      "side": "BUY",
+      "qty": 39374.311,
+      "price": 76.188,
+      "fee": 149.99,
+      "execTs": "2025-12-23T10:00:00Z",
+      "tradeDate": "2025-12-23",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:39199940 / 70:INF179K01XT4:2025-12-23:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_39199940_70",
+      "symbol": "INF179K01XT4",
+      "side": "SELL",
+      "qty": 39374.311,
+      "price": 76.258,
+      "fee": 30.03,
+      "execTs": "2026-07-22T10:00:00Z",
+      "tradeDate": "2026-07-22",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:39199940 / 70:INF179K01XT4:2026-07-22:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_35736632_33",
+      "symbol": "INF109K016O4",
+      "side": "BUY",
+      "qty": 57572.783,
+      "price": 34.7369,
+      "fee": 100,
+      "execTs": "2024-09-17T10:00:00Z",
+      "tradeDate": "2024-09-17",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:35736632 / 33:INF109K016O4:2024-09-17:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_35736632_33",
+      "symbol": "INF109K016O4",
+      "side": "BUY",
+      "qty": 57495.817,
+      "price": 34.7834,
+      "fee": 100,
+      "execTs": "2024-09-30T10:00:00Z",
+      "tradeDate": "2024-09-30",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:35736632 / 33:INF109K016O4:2024-09-30:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_35736632_33",
+      "symbol": "INF109K016O4",
+      "side": "SELL",
+      "qty": 115068.6,
+      "price": 36.9572,
+      "fee": 42.53,
+      "execTs": "2025-07-28T10:00:00Z",
+      "tradeDate": "2025-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:35736632 / 33:INF109K016O4:2025-07-28:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K015K4",
+      "side": "BUY",
+      "qty": 4241.546,
+      "price": 825.1296,
+      "fee": 174.99,
+      "execTs": "2025-08-11T10:00:00Z",
+      "tradeDate": "2025-08-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K015K4:2025-08-11:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016L0",
+      "side": "BUY",
+      "qty": 3421.291,
+      "price": 122.17,
+      "fee": 20.9,
+      "execTs": "2025-09-15T10:00:00Z",
+      "tradeDate": "2025-09-15",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016L0:2025-09-15:SWITCH_IN",
+      "switchGroupId": "SW:2025-09-15:417979.10"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016L0",
+      "side": "BUY",
+      "qty": 3392.137,
+      "price": 123.22,
+      "fee": 20.9,
+      "execTs": "2025-10-15T10:00:00Z",
+      "tradeDate": "2025-10-15",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016L0:2025-10-15:SWITCH_IN",
+      "switchGroupId": "SW:2025-10-15:417979.10"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016L0",
+      "side": "BUY",
+      "qty": 3306.274,
+      "price": 126.42,
+      "fee": 20.9,
+      "execTs": "2025-11-14T10:00:00Z",
+      "tradeDate": "2025-11-14",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016L0:2025-11-14:SWITCH_IN",
+      "switchGroupId": "SW:2025-11-14:417979.10"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016L0",
+      "side": "BUY",
+      "qty": 3309.939,
+      "price": 126.28,
+      "fee": 20.9,
+      "execTs": "2025-12-16T10:00:00Z",
+      "tradeDate": "2025-12-16",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016L0:2025-12-16:SWITCH_IN",
+      "switchGroupId": "SW:2025-12-16:417979.10"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016L0",
+      "side": "BUY",
+      "qty": 3346.51,
+      "price": 124.9,
+      "fee": 20.9,
+      "execTs": "2026-01-14T10:00:00Z",
+      "tradeDate": "2026-01-14",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016L0:2026-01-14:SWITCH_IN",
+      "switchGroupId": "SW:2026-01-14:417979.10"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016L0",
+      "side": "BUY",
+      "qty": 3337.425,
+      "price": 125.24,
+      "fee": 20.9,
+      "execTs": "2026-02-16T10:00:00Z",
+      "tradeDate": "2026-02-16",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016L0:2026-02-16:SWITCH_IN",
+      "switchGroupId": "SW:2026-02-16:417979.10"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016O4",
+      "side": "BUY",
+      "qty": 67456.623,
+      "price": 37.059,
+      "fee": 124.99,
+      "execTs": "2025-08-11T10:00:00Z",
+      "tradeDate": "2025-08-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016O4:2025-08-11:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016O4",
+      "side": "SELL",
+      "qty": 11234.829,
+      "price": 37.2061,
+      "fee": 4.18,
+      "execTs": "2025-09-11T10:00:00Z",
+      "tradeDate": "2025-09-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016O4:2025-09-11:SWITCH_OUT",
+      "switchGroupId": "SW:2025-09-11:418000.00"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016O4",
+      "side": "SELL",
+      "qty": 11174.999,
+      "price": 37.4053,
+      "fee": 4.18,
+      "execTs": "2025-10-13T10:00:00Z",
+      "tradeDate": "2025-10-13",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016O4:2025-10-13:SWITCH_OUT",
+      "switchGroupId": "SW:2025-10-13:418000.00"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016O4",
+      "side": "SELL",
+      "qty": 11124.322,
+      "price": 37.5757,
+      "fee": 4.18,
+      "execTs": "2025-11-12T10:00:00Z",
+      "tradeDate": "2025-11-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016O4:2025-11-12:SWITCH_OUT",
+      "switchGroupId": "SW:2025-11-12:418000.00"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016O4",
+      "side": "SELL",
+      "qty": 11058.487,
+      "price": 37.7994,
+      "fee": 4.18,
+      "execTs": "2025-12-12T10:00:00Z",
+      "tradeDate": "2025-12-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016O4:2025-12-12:SWITCH_OUT",
+      "switchGroupId": "SW:2025-12-12:418000.00"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016O4",
+      "side": "SELL",
+      "qty": 10996.695,
+      "price": 38.0118,
+      "fee": 4.18,
+      "execTs": "2026-01-12T10:00:00Z",
+      "tradeDate": "2026-01-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016O4:2026-01-12:SWITCH_OUT",
+      "switchGroupId": "SW:2026-01-12:418000.00"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016O4",
+      "side": "SELL",
+      "qty": 10931.558,
+      "price": 38.2383,
+      "fee": 4.18,
+      "execTs": "2026-02-12T10:00:00Z",
+      "tradeDate": "2026-02-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016O4:2026-02-12:SWITCH_OUT",
+      "switchGroupId": "SW:2026-02-12:418000.00"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016O4",
+      "side": "SELL",
+      "qty": 935.733,
+      "price": 39.3503,
+      "fee": 0.37,
+      "execTs": "2026-07-22T10:00:00Z",
+      "tradeDate": "2026-07-22",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109K016O4:2026-07-22:SWITCH_OUT",
+      "switchGroupId": "SW:2026-07-22:36821.00"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109KC1RH9",
+      "side": "BUY",
+      "qty": 13119.26,
+      "price": 38.11,
+      "fee": 25,
+      "execTs": "2025-08-11T10:00:00Z",
+      "tradeDate": "2025-08-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109KC1RH9:2025-08-11:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109KC1RH9",
+      "side": "BUY",
+      "qty": 938.068,
+      "price": 39.25,
+      "fee": 1.84,
+      "execTs": "2026-07-24T10:00:00Z",
+      "tradeDate": "2026-07-24",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:40110384 / 64:INF109KC1RH9:2026-07-24:SWITCH_IN",
+      "switchGroupId": "SW:2026-07-24:36819.16"
+    },
+    {
+      "account": "MF_FOLIO_Invesco_Mutual_Fund_31048249066_0",
+      "symbol": "INF205K01MV6",
+      "side": "BUY",
+      "qty": 1846.906,
+      "price": 240.39,
+      "fee": 22.2,
+      "execTs": "2026-07-28T10:00:00Z",
+      "tradeDate": "2026-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:31048249066 / 0:INF205K01MV6:2026-07-28:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Invesco_Mutual_Fund_31048953152_0",
+      "symbol": "INF205K01MV6",
+      "side": "BUY",
+      "qty": 1823.767,
+      "price": 243.44,
+      "fee": 22.2,
+      "execTs": "2026-08-07T10:00:00Z",
+      "tradeDate": "2026-08-07",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:31048953152 / 0:INF205K01MV6:2026-08-07:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LT0",
+      "side": "BUY",
+      "qty": 2602.844,
+      "price": 159.433,
+      "fee": 20.75,
+      "execTs": "2025-09-15T10:00:00Z",
+      "tradeDate": "2025-09-15",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LT0:2025-09-15:SWITCH_IN",
+      "switchGroupId": "SW:2025-09-15:414979.25"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LT0",
+      "side": "BUY",
+      "qty": 2568.116,
+      "price": 161.589,
+      "fee": 20.75,
+      "execTs": "2025-10-15T10:00:00Z",
+      "tradeDate": "2025-10-15",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LT0:2025-10-15:SWITCH_IN",
+      "switchGroupId": "SW:2025-10-15:414979.25"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LT0",
+      "side": "BUY",
+      "qty": 2587.298,
+      "price": 160.391,
+      "fee": 20.75,
+      "execTs": "2025-11-14T10:00:00Z",
+      "tradeDate": "2025-11-14",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LT0:2025-11-14:SWITCH_IN",
+      "switchGroupId": "SW:2025-11-14:414979.25"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LT0",
+      "side": "BUY",
+      "qty": 2642.961,
+      "price": 157.013,
+      "fee": 20.75,
+      "execTs": "2025-12-16T10:00:00Z",
+      "tradeDate": "2025-12-16",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LT0:2025-12-16:SWITCH_IN",
+      "switchGroupId": "SW:2025-12-16:414979.25"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LT0",
+      "side": "BUY",
+      "qty": 2656.394,
+      "price": 156.219,
+      "fee": 20.75,
+      "execTs": "2026-01-14T10:00:00Z",
+      "tradeDate": "2026-01-14",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LT0:2026-01-14:SWITCH_IN",
+      "switchGroupId": "SW:2026-01-14:414979.25"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LT0",
+      "side": "BUY",
+      "qty": 2609.063,
+      "price": 159.053,
+      "fee": 20.75,
+      "execTs": "2026-02-16T10:00:00Z",
+      "tradeDate": "2026-02-16",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LT0:2026-02-16:SWITCH_IN",
+      "switchGroupId": "SW:2026-02-16:414979.25"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LC6",
+      "side": "BUY",
+      "qty": 61965.521,
+      "price": 40.343,
+      "fee": 124.99,
+      "execTs": "2025-08-11T10:00:00Z",
+      "tradeDate": "2025-08-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LC6:2025-08-11:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LC6",
+      "side": "SELL",
+      "qty": 10245.726,
+      "price": 40.5051,
+      "fee": 4.15,
+      "execTs": "2025-09-11T10:00:00Z",
+      "tradeDate": "2025-09-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LC6:2025-09-11:SWITCH_OUT",
+      "switchGroupId": "SW:2025-09-11:415000.00"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LC6",
+      "side": "SELL",
+      "qty": 10192.755,
+      "price": 40.7156,
+      "fee": 4.15,
+      "execTs": "2025-10-13T10:00:00Z",
+      "tradeDate": "2025-10-13",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LC6:2025-10-13:SWITCH_OUT",
+      "switchGroupId": "SW:2025-10-13:415000.00"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LC6",
+      "side": "SELL",
+      "qty": 10145.015,
+      "price": 40.9072,
+      "fee": 4.15,
+      "execTs": "2025-11-12T10:00:00Z",
+      "tradeDate": "2025-11-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LC6:2025-11-12:SWITCH_OUT",
+      "switchGroupId": "SW:2025-11-12:415000.00"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LC6",
+      "side": "SELL",
+      "qty": 10084.2,
+      "price": 41.1539,
+      "fee": 4.15,
+      "execTs": "2025-12-12T10:00:00Z",
+      "tradeDate": "2025-12-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LC6:2025-12-12:SWITCH_OUT",
+      "switchGroupId": "SW:2025-12-12:415000.00"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LC6",
+      "side": "SELL",
+      "qty": 10027.379,
+      "price": 41.3871,
+      "fee": 4.15,
+      "execTs": "2026-01-12T10:00:00Z",
+      "tradeDate": "2026-01-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LC6:2026-01-12:SWITCH_OUT",
+      "switchGroupId": "SW:2026-01-12:415000.00"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LC6",
+      "side": "SELL",
+      "qty": 9965.018,
+      "price": 41.6461,
+      "fee": 4.15,
+      "execTs": "2026-02-12T10:00:00Z",
+      "tradeDate": "2026-02-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17276586:INF174K01LC6:2026-02-12:SWITCH_OUT",
+      "switchGroupId": "SW:2026-02-12:415000.00"
+    },
+    {
+      "account": "MF_FOLIO_Nippon_India_Mutual_Fund_477426716847_0",
+      "symbol": "INF204K01XZ7",
+      "side": "BUY",
+      "qty": 86551.479,
+      "price": 28.8831,
+      "fee": 124.99,
+      "execTs": "2025-08-11T10:00:00Z",
+      "tradeDate": "2025-08-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:477426716847 / 0:INF204K01XZ7:2025-08-11:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Nippon_India_Mutual_Fund_477426716847_0",
+      "symbol": "INF204K01XZ7",
+      "side": "SELL",
+      "qty": 86551.479,
+      "price": 30.7013,
+      "fee": 26.57,
+      "execTs": "2026-07-22T10:00:00Z",
+      "tradeDate": "2026-07-22",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:477426716847 / 0:INF204K01XZ7:2026-07-22:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Nippon_India_Mutual_Fund_488364000035_0",
+      "symbol": "INF204K01XZ7",
+      "side": "BUY",
+      "qty": 73770.915,
+      "price": 27.1096,
+      "fee": 100,
+      "execTs": "2024-09-17T10:00:00Z",
+      "tradeDate": "2024-09-17",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:488364000035 / 0:INF204K01XZ7:2024-09-17:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Nippon_India_Mutual_Fund_488364000035_0",
+      "symbol": "INF204K01XZ7",
+      "side": "BUY",
+      "qty": 73662.498,
+      "price": 27.1495,
+      "fee": 100,
+      "execTs": "2024-09-30T10:00:00Z",
+      "tradeDate": "2024-09-30",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:488364000035 / 0:INF204K01XZ7:2024-09-30:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_Nippon_India_Mutual_Fund_488364000035_0",
+      "symbol": "INF204K01XZ7",
+      "side": "SELL",
+      "qty": 147433.413,
+      "price": 28.8073,
+      "fee": 42.47,
+      "execTs": "2025-07-28T10:00:00Z",
+      "tradeDate": "2025-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:488364000035 / 0:INF204K01XZ7:2025-07-28:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_12951985",
+      "symbol": "INF879O01027",
+      "side": "BUY",
+      "qty": 1933.593,
+      "price": 51.7146,
+      "fee": 5,
+      "execTs": "2022-09-16T10:00:00Z",
+      "tradeDate": "2022-09-16",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:12951985:INF879O01027:2022-09-16:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_12951985",
+      "symbol": "INF879O01027",
+      "side": "SELL",
+      "qty": 1933.593,
+      "price": 91.5833,
+      "fee": 1.77,
+      "execTs": "2025-07-28T10:00:00Z",
+      "tradeDate": "2025-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:12951985:INF879O01027:2025-07-28:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01027",
+      "side": "BUY",
+      "qty": 6198.048,
+      "price": 93.7345,
+      "fee": 29.05,
+      "execTs": "2025-09-15T10:00:00Z",
+      "tradeDate": "2025-09-15",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01027:2025-09-15:SWITCH_IN",
+      "switchGroupId": "SW:2025-09-15:580970.95"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01027",
+      "side": "BUY",
+      "qty": 6215.887,
+      "price": 93.4655,
+      "fee": 29.05,
+      "execTs": "2025-10-15T10:00:00Z",
+      "tradeDate": "2025-10-15",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01027:2025-10-15:SWITCH_IN",
+      "switchGroupId": "SW:2025-10-15:580970.95"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01027",
+      "side": "BUY",
+      "qty": 6161.54,
+      "price": 94.2899,
+      "fee": 29.05,
+      "execTs": "2025-11-14T10:00:00Z",
+      "tradeDate": "2025-11-14",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01027:2025-11-14:SWITCH_IN",
+      "switchGroupId": "SW:2025-11-14:580970.95"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01027",
+      "side": "BUY",
+      "qty": 6152.144,
+      "price": 94.4339,
+      "fee": 29.05,
+      "execTs": "2025-12-16T10:00:00Z",
+      "tradeDate": "2025-12-16",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01027:2025-12-16:SWITCH_IN",
+      "switchGroupId": "SW:2025-12-16:580970.95"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01027",
+      "side": "BUY",
+      "qty": 6190.242,
+      "price": 93.8527,
+      "fee": 29.05,
+      "execTs": "2026-01-14T10:00:00Z",
+      "tradeDate": "2026-01-14",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01027:2026-01-14:SWITCH_IN",
+      "switchGroupId": "SW:2026-01-14:580970.95"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01027",
+      "side": "BUY",
+      "qty": 6249.795,
+      "price": 92.9584,
+      "fee": 29.05,
+      "execTs": "2026-02-16T10:00:00Z",
+      "tradeDate": "2026-02-16",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01027:2026-02-16:SWITCH_IN",
+      "switchGroupId": "SW:2026-02-16:580970.95"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01175",
+      "side": "BUY",
+      "qty": 228758.694,
+      "price": 15.2992,
+      "fee": 174.99,
+      "execTs": "2025-08-11T10:00:00Z",
+      "tradeDate": "2025-08-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01175:2025-08-11:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01175",
+      "side": "SELL",
+      "qty": 22875.869,
+      "price": 15.2864,
+      "fee": 0,
+      "execTs": "2025-09-11T10:00:00Z",
+      "tradeDate": "2025-09-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01175:2025-09-11:SWITCH_OUT",
+      "switchGroupId": "SW:2025-09-11:349689.68"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01175",
+      "side": "SELL",
+      "qty": 15284.655,
+      "price": 15.1335,
+      "fee": 0,
+      "execTs": "2025-09-11T10:00:00Z",
+      "tradeDate": "2025-09-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01175:2025-09-11:SWITCH_OUT:1",
+      "switchGroupId": "SW:2025-09-11:231310.32"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01175",
+      "side": "SELL",
+      "qty": 37852.136,
+      "price": 15.3492,
+      "fee": 0,
+      "execTs": "2025-10-13T10:00:00Z",
+      "tradeDate": "2025-10-13",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01175:2025-10-13:SWITCH_OUT",
+      "switchGroupId": "SW:2025-10-13:581000.00"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01175",
+      "side": "SELL",
+      "qty": 37690.806,
+      "price": 15.4149,
+      "fee": 0,
+      "execTs": "2025-11-12T10:00:00Z",
+      "tradeDate": "2025-11-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01175:2025-11-12:SWITCH_OUT",
+      "switchGroupId": "SW:2025-11-12:581000.00"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01175",
+      "side": "SELL",
+      "qty": 37601.284,
+      "price": 15.4516,
+      "fee": 0,
+      "execTs": "2025-12-12T10:00:00Z",
+      "tradeDate": "2025-12-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01175:2025-12-12:SWITCH_OUT",
+      "switchGroupId": "SW:2025-12-12:581000.00"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01175",
+      "side": "SELL",
+      "qty": 37604.204,
+      "price": 15.4504,
+      "fee": 0,
+      "execTs": "2026-01-12T10:00:00Z",
+      "tradeDate": "2026-01-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01175:2026-01-12:SWITCH_OUT",
+      "switchGroupId": "SW:2026-01-12:581000.00"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01175",
+      "side": "SELL",
+      "qty": 37105.633,
+      "price": 15.658,
+      "fee": 0,
+      "execTs": "2026-02-12T10:00:00Z",
+      "tradeDate": "2026-02-12",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01175:2026-02-12:SWITCH_OUT",
+      "switchGroupId": "SW:2026-02-12:581000.00"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01175",
+      "side": "SELL",
+      "qty": 2744.107,
+      "price": 15.9829,
+      "fee": 0,
+      "execTs": "2026-07-22T10:00:00Z",
+      "tradeDate": "2026-07-22",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:17851112:INF879O01175:2026-07-22:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_18827513",
+      "symbol": "INF879O01027",
+      "side": "BUY",
+      "qty": 5244.649,
+      "price": 95.3305,
+      "fee": 25,
+      "execTs": "2025-12-23T10:00:00Z",
+      "tradeDate": "2025-12-23",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:18827513:INF879O01027:2025-12-23:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_41226678",
+      "symbol": "INF200K01QU0",
+      "side": "BUY",
+      "qty": 58913.464,
+      "price": 33.9464,
+      "fee": 100,
+      "execTs": "2024-09-17T10:00:00Z",
+      "tradeDate": "2024-09-17",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:41226678:INF200K01QU0:2024-09-17:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_41226678",
+      "symbol": "INF200K01QU0",
+      "side": "SELL",
+      "qty": 58913.464,
+      "price": 36.1199,
+      "fee": 21.28,
+      "execTs": "2025-07-28T10:00:00Z",
+      "tradeDate": "2025-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:41226678:INF200K01QU0:2025-07-28:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_50710942",
+      "symbol": "INF200K01UP2",
+      "side": "BUY",
+      "qty": 631.868,
+      "price": 585.5363,
+      "fee": 18.5,
+      "execTs": "2026-07-28T10:00:00Z",
+      "tradeDate": "2026-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:50710942:INF200K01UP2:2026-07-28:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_50710942",
+      "symbol": "INF200K01RA0",
+      "side": "BUY",
+      "qty": 1074.25,
+      "price": 413.2908,
+      "fee": 22.2,
+      "execTs": "2026-07-28T10:00:00Z",
+      "tradeDate": "2026-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:50710942:INF200K01RA0:2026-07-28:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_50841836",
+      "symbol": "INF200K01UP2",
+      "side": "BUY",
+      "qty": 616.433,
+      "price": 600.1975,
+      "fee": 18.5,
+      "execTs": "2026-08-07T10:00:00Z",
+      "tradeDate": "2026-08-07",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:50841836:INF200K01UP2:2026-08-07:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_50841836",
+      "symbol": "INF200K01RA0",
+      "side": "BUY",
+      "qty": 1052.921,
+      "price": 421.6631,
+      "fee": 22.2,
+      "execTs": "2026-08-07T10:00:00Z",
+      "tradeDate": "2026-08-07",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:50841836:INF200K01RA0:2026-08-07:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577384977315_0",
+      "symbol": "INF789F01XA0",
+      "side": "BUY",
+      "qty": 5525.825,
+      "price": 180.9594,
+      "fee": 50,
+      "execTs": "2025-12-11T10:00:00Z",
+      "tradeDate": "2025-12-11",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:577384977315 / 0:INF789F01XA0:2025-12-11:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577384977315_0",
+      "symbol": "INF789F01XA0",
+      "side": "SELL",
+      "qty": 5525.825,
+      "price": 168.6736,
+      "fee": 9.32,
+      "execTs": "2026-07-22T10:00:00Z",
+      "tradeDate": "2026-07-22",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:577384977315 / 0:INF789F01XA0:2026-07-22:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577385378732_0",
+      "symbol": "INF789F01XA0",
+      "side": "BUY",
+      "qty": 5467.41,
+      "price": 182.8928,
+      "fee": 50,
+      "execTs": "2025-12-23T10:00:00Z",
+      "tradeDate": "2025-12-23",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:577385378732 / 0:INF789F01XA0:2025-12-23:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577385378732_0",
+      "symbol": "INF789F01XA0",
+      "side": "SELL",
+      "qty": 5467.41,
+      "price": 168.6736,
+      "fee": 9.22,
+      "execTs": "2026-07-22T10:00:00Z",
+      "tradeDate": "2026-07-22",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:577385378732 / 0:INF789F01XA0:2026-07-22:REDEMPTION",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577388635961_0",
+      "symbol": "INF789FC12T1",
+      "side": "BUY",
+      "qty": 2023.641,
+      "price": 24.7067,
+      "fee": 2.5,
+      "execTs": "2026-03-04T10:00:00Z",
+      "tradeDate": "2026-03-04",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:577388635961 / 0:INF789FC12T1:2026-03-04:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577396123834_0",
+      "symbol": "INF789FC12T1",
+      "side": "BUY",
+      "qty": 5532.516,
+      "price": 26.7496,
+      "fee": 7.4,
+      "execTs": "2026-07-28T10:00:00Z",
+      "tradeDate": "2026-07-28",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:577396123834 / 0:INF789FC12T1:2026-07-28:PURCHASE",
+      "switchGroupId": null
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577397133552_0",
+      "symbol": "INF789FC12T1",
+      "side": "BUY",
+      "qty": 5332.068,
+      "price": 27.7552,
+      "fee": 7.4,
+      "execTs": "2026-08-07T10:00:00Z",
+      "tradeDate": "2026-08-07",
+      "source": "cams_cas_pdf",
+      "brokerRef": "CAMS:577397133552 / 0:INF789FC12T1:2026-08-07:PURCHASE",
+      "switchGroupId": null
+    }
+  ],
+  "positionSnapshots": [
+    {
+      "account": "MF_FOLIO_Aditya_Birla_Sun_Life_Mutual_Fund_1048241968",
+      "symbol": "INF209K01VP1",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_AXIS_Mutual_Fund_910174791981_0",
+      "symbol": "INF846K01CX4",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Bandhan_Mutual_Fund_9639348_81",
+      "symbol": "INF194KB1AL4",
+      "asOf": "2026-09-23",
+      "qty": 20052.836,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Bandhan_Mutual_Fund_9756800_29",
+      "symbol": "INF194KB1AL4",
+      "asOf": "2026-09-23",
+      "qty": 19472.711,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_DSP_Mutual_Fund_11305663_31",
+      "symbol": "INF740K01PU7",
+      "asOf": "2026-09-23",
+      "qty": 1893.719,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_DSP_Mutual_Fund_11347466_43",
+      "symbol": "INF740K01PU7",
+      "asOf": "2026-09-23",
+      "qty": 1844.894,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Edelweiss_Mutual_Fund_91035688211_0",
+      "symbol": "INF754K01OX5",
+      "asOf": "2026-09-23",
+      "qty": 129326.177,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Edelweiss_Mutual_Fund_91041637236_0",
+      "symbol": "INF754K01OX5",
+      "asOf": "2026-09-23",
+      "qty": 16331.58,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Edelweiss_Mutual_Fund_91051151905_0",
+      "symbol": "INF754K01ML4",
+      "asOf": "2026-09-23",
+      "qty": 13401.606,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Edelweiss_Mutual_Fund_91051495795_0",
+      "symbol": "INF754K01ML4",
+      "asOf": "2026-09-23",
+      "qty": 12934.343,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_31854055_04",
+      "symbol": "INF179KA1KT6",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_36834932_29",
+      "symbol": "INF179K01WA6",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_HDFC_Mutual_Fund_39199940_70",
+      "symbol": "INF179K01XT4",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_35736632_33",
+      "symbol": "INF109K016O4",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K015K4",
+      "asOf": "2026-09-22",
+      "qty": 4241.546,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016L0",
+      "asOf": "2026-09-23",
+      "qty": 20113.576,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109K016O4",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_ICICI_Prudential_Mutual_Fund_40110384_64",
+      "symbol": "INF109KC1RH9",
+      "asOf": "2026-09-23",
+      "qty": 14057.328,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Invesco_Mutual_Fund_31048249066_0",
+      "symbol": "INF205K01MV6",
+      "asOf": "2026-09-23",
+      "qty": 1846.906,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Invesco_Mutual_Fund_31048953152_0",
+      "symbol": "INF205K01MV6",
+      "asOf": "2026-09-23",
+      "qty": 1823.767,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LT0",
+      "asOf": "2026-09-23",
+      "qty": 15666.676,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Kotak_Mutual_Fund_17276586",
+      "symbol": "INF174K01LC6",
+      "asOf": "2026-09-23",
+      "qty": 1305.428,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Nippon_India_Mutual_Fund_477426716847_0",
+      "symbol": "INF204K01XZ7",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_Nippon_India_Mutual_Fund_488364000035_0",
+      "symbol": "INF204K01XZ7",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_12951985",
+      "symbol": "INF879O01027",
+      "asOf": "2026-09-22",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01027",
+      "asOf": "2026-09-22",
+      "qty": 37167.656,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_17851112",
+      "symbol": "INF879O01175",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_PPFAS_Mutual_Fund_18827513",
+      "symbol": "INF879O01027",
+      "asOf": "2026-09-22",
+      "qty": 5244.649,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_41226678",
+      "symbol": "INF200K01QU0",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_50710942",
+      "symbol": "INF200K01UP2",
+      "asOf": "2026-09-23",
+      "qty": 631.868,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_50710942",
+      "symbol": "INF200K01RA0",
+      "asOf": "2026-09-22",
+      "qty": 1074.25,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_50841836",
+      "symbol": "INF200K01UP2",
+      "asOf": "2026-09-23",
+      "qty": 616.433,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_SBI_Mutual_Fund_50841836",
+      "symbol": "INF200K01RA0",
+      "asOf": "2026-09-22",
+      "qty": 1052.921,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577384977315_0",
+      "symbol": "INF789F01XA0",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577385378732_0",
+      "symbol": "INF789F01XA0",
+      "asOf": "2026-09-23",
+      "qty": 0,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577388635961_0",
+      "symbol": "INF789FC12T1",
+      "asOf": "2026-09-23",
+      "qty": 2023.641,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577396123834_0",
+      "symbol": "INF789FC12T1",
+      "asOf": "2026-09-23",
+      "qty": 5532.516,
+      "snapshotSource": "cams_cas_pdf"
+    },
+    {
+      "account": "MF_FOLIO_UTI_Mutual_Fund_577397133552_0",
+      "symbol": "INF789FC12T1",
+      "asOf": "2026-09-23",
+      "qty": 5332.068,
+      "snapshotSource": "cams_cas_pdf"
+    }
+  ],
+  "prices": [
+    {
+      "symbol": "INF209K01VP1",
+      "date": "2026-09-23",
+      "close": 30.9996,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF846K01CX4",
+      "date": "2026-09-23",
+      "close": 3167.5264,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF194KB1AL4",
+      "date": "2026-09-23",
+      "close": 58.119,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF194KB1AL4",
+      "date": "2026-09-23",
+      "close": 58.119,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF740K01PU7",
+      "date": "2026-09-23",
+      "close": 398.761,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF740K01PU7",
+      "date": "2026-09-23",
+      "close": 398.761,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF754K01OX5",
+      "date": "2026-09-23",
+      "close": 34.101,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF754K01OX5",
+      "date": "2026-09-23",
+      "close": 34.101,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF754K01ML4",
+      "date": "2026-09-23",
+      "close": 36.3955,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF754K01ML4",
+      "date": "2026-09-23",
+      "close": 36.3955,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF179KA1KT6",
+      "date": "2026-09-23",
+      "close": 21.804,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF179K01WA6",
+      "date": "2026-09-23",
+      "close": 562.908,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF179K01XT4",
+      "date": "2026-09-23",
+      "close": 76.505,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF109K016O4",
+      "date": "2026-09-23",
+      "close": 39.7707,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF109K015K4",
+      "date": "2026-09-22",
+      "close": 889.5139,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF109K016L0",
+      "date": "2026-09-23",
+      "close": 116.82,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF109K016O4",
+      "date": "2026-09-23",
+      "close": 39.7707,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF109KC1RH9",
+      "date": "2026-09-23",
+      "close": 39.24,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF205K01MV6",
+      "date": "2026-09-23",
+      "close": 244.2,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF205K01MV6",
+      "date": "2026-09-23",
+      "close": 244.2,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF174K01LT0",
+      "date": "2026-09-23",
+      "close": 169.359,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF174K01LC6",
+      "date": "2026-09-23",
+      "close": 43.3446,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF204K01XZ7",
+      "date": "2026-09-23",
+      "close": 31.0331,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF204K01XZ7",
+      "date": "2026-09-23",
+      "close": 31.0331,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF879O01027",
+      "date": "2026-09-22",
+      "close": 90.2686,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF879O01027",
+      "date": "2026-09-22",
+      "close": 90.2686,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF879O01175",
+      "date": "2026-09-23",
+      "close": 16.1223,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF879O01027",
+      "date": "2026-09-22",
+      "close": 90.2686,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF200K01QU0",
+      "date": "2026-09-23",
+      "close": 38.8417,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF200K01UP2",
+      "date": "2026-09-23",
+      "close": 610.991,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF200K01RA0",
+      "date": "2026-09-22",
+      "close": 408.6682,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF200K01UP2",
+      "date": "2026-09-23",
+      "close": 610.991,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF200K01RA0",
+      "date": "2026-09-22",
+      "close": 408.6682,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF789F01XA0",
+      "date": "2026-09-23",
+      "close": 165.1195,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF789F01XA0",
+      "date": "2026-09-23",
+      "close": 165.1195,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF789FC12T1",
+      "date": "2026-09-23",
+      "close": 26.9432,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF789FC12T1",
+      "date": "2026-09-23",
+      "close": 26.9432,
+      "priceSource": "cams_cas_pdf"
+    },
+    {
+      "symbol": "INF789FC12T1",
+      "date": "2026-09-23",
+      "close": 26.9432,
+      "priceSource": "cams_cas_pdf"
+    }
+  ]
+}
