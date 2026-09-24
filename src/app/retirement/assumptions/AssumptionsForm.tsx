@@ -125,20 +125,6 @@ export function AssumptionsForm({
         <NumField label="Gross value" value={p.esopAmt} onChange={n("esopAmt")} suffix="₹ Cr" step={0.1} />
       </Section>
 
-      <Section title="Future Generali policy" note="Lump payout and premium are face-value amounts, not grown by inflation. Either a lump payout, a guaranteed income stream from genYear, or both off.">
-        <NumField label="Payout / income start year" value={p.genYear} onChange={n("genYear")} step={1} />
-        <NumField label="Lump payout" value={p.genAmt} onChange={n("genAmt")} suffix="₹ Cr" step={0.1} />
-        <NumField label="Annual premium" value={p.genPrem} onChange={n("genPrem")} suffix="₹ L / yr" step={0.1} />
-        <NumField label="Last premium year" value={p.genLast} onChange={n("genLast")} step={1} />
-        <BoolField label="Guaranteed income stream on" checked={p.genInc} onChange={b("genInc")} />
-      </Section>
-
-      <Section title="Unlisted NSE shares" note="Amount grows at the growth rate below, not general inflation. One-time inflow if a nseYear is set — otherwise held at the tracked value with no scheduled event (see the assets detail page).">
-        <NumField label="Event year (0 = none scheduled)" value={p.nseYear} onChange={n("nseYear")} step={1} />
-        <NumField label="Amount" value={p.nseAmt} onChange={n("nseAmt")} suffix="₹ Cr" step={0.1} />
-        <NumField label="Growth rate" value={p.nseG} onChange={n("nseG")} suffix="%" step={0.1} />
-      </Section>
-
       <Section title="EPF / NPS">
         <NumField label="Withdrawal year" value={p.epfYear} onChange={n("epfYear")} step={1} />
       </Section>

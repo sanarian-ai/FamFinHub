@@ -110,7 +110,7 @@ export default async function PlanPage() {
         </div>
         <p className="mt-3 text-xs text-slate-500">
           Assets you hold today, compared to every future expense the plan projects — before counting any future income
-          (Ria&apos;s salary, rent, the Generali payout) or one-time unlocks (ESOP, EPF/NPS, the property sale). Those
+          (Ria&apos;s salary, rent) or one-time unlocks (ESOP, EPF/NPS, the property sale). Those
           already feed the &ldquo;runs out&rdquo; year above and the success probability below — both run the full
           year-by-year simulation; this number is narrower on purpose: could what&apos;s held today alone cover
           everything ahead.

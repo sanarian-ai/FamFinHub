@@ -33,7 +33,7 @@ const SECTIONS: { title: string; note: string; keys: string[] }[] = [
   {
     title: "Assets and income",
     note: "Balances and recurring non-portfolio income. No ledger reference — these aren't run-rate spend.",
-    keys: ["openingPool", "epf", "rent", "genSumAssured"],
+    keys: ["openingPool", "epf", "rent"],
   },
 ];
 

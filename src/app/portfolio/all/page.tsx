@@ -31,7 +31,7 @@ const GROUP_COLOR: Record<AssetClassGroup, string> = {
  * Scope: the nine broker/account-tracked classes, plus two manual ones — Bitcoin and real
  * estate — folded in via getManualTrackedAssets() (retirement/baseline/data.ts), sourced from
  * the same figures the retirement Assets screen edits (there's no broker or price feed for
- * either). Every other manual-only figure (fixed deposits, cash, ESOPs, Future Generali) still
+ * either). Every other manual-only figure (fixed deposits, cash, ESOPs) still
  * lives only on the fuller net-worth tracker at /retirement/baseline, linked below.
  */
 export default async function AllAssetsPage() {
@@ -159,7 +159,7 @@ export default async function AllAssetsPage() {
 
       <div className="text-sm">
         <Link href="/retirement/baseline" className="font-medium text-slate-600 hover:text-slate-900">
-          Full net worth (incl. FDs, cash, ESOPs, Future Generali and other manual figures) on the retirement baseline screen &rarr;
+          Full net worth (incl. FDs, cash, ESOPs and other manual figures) on the retirement baseline screen &rarr;
         </Link>
       </div>
     </div>
