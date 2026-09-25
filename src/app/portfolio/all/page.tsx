@@ -5,6 +5,7 @@ import { getAssetClassBreakdown, type AssetClassGroup, type AssetClassRow } from
 import { getManualTrackedAssets } from "@/app/retirement/baseline/data";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
 import { Tile, Th, Td, tableCls, theadCls, rowCls, Note } from "../india/ui";
+import { AllSubNav } from "./AllSubNav";
 
 export const dynamic = "force-dynamic";
 
@@ -60,6 +61,8 @@ export default async function AllAssetsPage() {
 
   return (
     <div className="space-y-5">
+      <AllSubNav />
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
         <Tile label="Total tracked" value={fmtINR(total)} sub={newest ? `As of ${fmtDay(newest)}` : undefined} />
         {groupTotals.map((g) => (

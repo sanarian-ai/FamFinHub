@@ -73,8 +73,10 @@ export function buildContext(ds: Dataset): Ctx {
   return { dates, px, fx, div, trades, asof: dates[dates.length - 1] };
 }
 
+export type CF = { ms: number; v: number };
+
 /** Money-weighted annual return by bisection. cfs: dated cash flows, + to investor. */
-export function xirr(cfs: { ms: number; v: number }[]): number | null {
+export function xirr(cfs: CF[]): number | null {
   if (cfs.length < 2) return null;
   const t0 = Math.min(...cfs.map((c) => c.ms));
   const f = (r: number) => { let s = 0; for (const c of cfs) s += c.v / Math.pow(1 + r, (c.ms - t0) / (365 * DAY)); return s; };
@@ -96,6 +98,13 @@ export type RunResult = {
   d0: string; d1: string; days: number; V0: number; V1: number; net: number; divTot: number; hasData: boolean;
   annualised: boolean; // false when the period is shorter than MIN_ANNUALISE_DAYS: show the period return, not the IRR
   pf: Leg; SPY: Leg; QQQ: Leg; bench: Record<string, Leg>; series: SeriesPt[] | null;
+  /** The portfolio's own dated cash-flow stream (INR/USD per RunOpts.currency, + to investor),
+   * including the V0/V1 boundary entries — same list `pf`'s IRR/moic/ret are computed from. Exposed
+   * so a caller combining two books (see combined.ts) can merge two already-correctly-anchored
+   * streams and run one xirr()/legFromCashflows() over the union, instead of extending run() itself
+   * to understand a mixed-currency Ctx (fxAt() applies one multiplier uniformly across a whole run —
+   * see combined.ts's header comment for why that rules out a single merged-Ctx call). */
+  cashflows: CF[];
 };
 
 export function symbolsOf(ctx: Ctx, accounts?: string[]): string[] {
@@ -144,7 +153,6 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
     for (const s of S) for (const [exd, per] of Object.entries(ctx.div[s] ?? {})) if (exd > d0 && exd <= d1) ev.push({ i: idxOn(dates, exd), d: exd, kind: "D", sym: s, per });
   }
   ev.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.kind === "D" ? -1 : 1));
-  type CF = { ms: number; v: number };
   const cfs: Record<string, CF[]> = { pf: [] };
   for (const b of B) cfs[b] = [];
   const bu: Record<string, number> = {};
@@ -194,22 +202,31 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
   const days = (t(d1) - t(d0)) / DAY;
   const startV = V0 * fxAt(i0);
   const T = Math.max(1, t(d1) - t(d0));
-  const leg = (c: CF[]): Leg => {
-    const endV = c[c.length - 1].v;
-    const first = V0 > 0 ? 1 : 0;
-    let den = startV, mid = 0;
-    for (let j = first; j < c.length - 1; j++) { den += -c[j].v * ((t(d1) - c[j].ms) / T); mid += c[j].v; }
-    const gain = endV + mid - (V0 > 0 ? startV : 0);
-    let outs = V0 > 0 ? startV : 0, ins = 0;
-    for (let j = first; j < c.length; j++) { if (c[j].v < 0) outs += -c[j].v; else ins += c[j].v; }
-    return { end: endV, profit: c.reduce((a, x) => a + x.v, 0), irr: xirr(c), ret: den > 0 ? gain / den : null, moic: outs > 0 ? ins / outs : null };
-  };
+  const leg = (c: CF[]): Leg => legFromCashflows(c, startV, t(d1), T);
   const bench: Record<string, Leg> = {};
   for (const b of B) bench[b] = leg(cfs[b]);
   return {
     d0, d1, days, V0: startV, V1: V1 * fx1, net: net * fx1, divTot: divTot * fx1, hasData: cfs.pf.length > 1, annualised: days >= MIN_ANNUALISE_DAYS,
-    pf: leg(cfs.pf), SPY: bench.SPY ?? EMPTY_LEG, QQQ: bench.QQQ ?? EMPTY_LEG, bench, series,
+    pf: leg(cfs.pf), SPY: bench.SPY ?? EMPTY_LEG, QQQ: bench.QQQ ?? EMPTY_LEG, bench, series, cashflows: cfs.pf,
   };
+}
+
+/** Money-weighted Leg stats (IRR/profit/ret/moic) for one dated cash-flow stream `c` (as produced by
+ * `run()`'s `cashflows`/`bench[...]` — the first entry is the -V0 boundary when a starting position
+ * existed, the last is the +V1 boundary). `startV` is that stream's own V0 (already currency-
+ * converted); `d1ms`/`Tms` are the period's end timestamp and duration in ms (`t(d1)` and
+ * `Math.max(1, t(d1) - t(d0))` in run()'s own terms). Extracted from run()'s internal `leg` closure
+ * (step 2) so a caller merging two books' cash-flow streams (combined.ts) can compute the merged
+ * stream's Leg with the exact same math, instead of re-deriving it. */
+export function legFromCashflows(c: CF[], startV: number, d1ms: number, Tms: number): Leg {
+  const endV = c[c.length - 1].v;
+  const first = startV > 0 ? 1 : 0;
+  let den = startV, mid = 0;
+  for (let j = first; j < c.length - 1; j++) { den += -c[j].v * ((d1ms - c[j].ms) / Tms); mid += c[j].v; }
+  const gain = endV + mid - (startV > 0 ? startV : 0);
+  let outs = startV > 0 ? startV : 0, ins = 0;
+  for (let j = first; j < c.length; j++) { if (c[j].v < 0) outs += -c[j].v; else ins += c[j].v; }
+  return { end: endV, profit: c.reduce((a, x) => a + x.v, 0), irr: xirr(c), ret: den > 0 ? gain / den : null, moic: outs > 0 ? ins / outs : null };
 }
 
 // ── FIFO lots and disposals (per account + symbol) ──────────────────────────────────────────
