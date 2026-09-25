@@ -1,124 +1,98 @@
+import { Badge, Card, EmptyState } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
-import { Badge, EmptyState } from "@/components/ui";
-import { fmtINR, fmtUnits, fmtDay } from "@/lib/portfolio/format";
-import { Tile, Th, Td, tableCls, theadCls, rowCls, Note } from "../ui";
+import { getIndiaPortfolioData } from "@/lib/portfolio/india-data";
+import { buildLots } from "@/lib/portfolio/engine";
+import { fmtDay, fmtPct, fmtUnits, fmtMoney, tone } from "@/lib/portfolio/format";
+import { disposalRows, positions } from "@/lib/portfolio/views";
+import { CATEGORICAL } from "@/app/insights/chartTheme";
+import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../ui";
 import { RefreshButton } from "./RefreshButton";
+import { CATEGORY_LABEL } from "./constants";
 
 export const dynamic = "force-dynamic";
+const CUR = "INR" as const;
 
-/**
- * Mutual fund holdings, aggregated by scheme across every CAMS folio (a scheme can legitimately
- * sit in more than one folio — see camsParser.ts). Same minimal current-value treatment as the
- * India equity page (latest broker snapshot x latest known NAV, no lots/IRR here — the engine
- * extension for mutual funds is a separate, not-yet-scoped piece of work); "Refresh NAVs" is the
- * mutual fund counterpart of that page's "Refresh prices" button, sourced from AMFI instead of
- * Yahoo Finance since AMFI is the one that actually publishes MF NAVs.
- */
-export default async function MutualFundsPage() {
-  const snapshots = await prisma.positionSnapshot.findMany({
-    where: { account: { broker: "MF_FOLIO" } },
-    orderBy: { asOf: "desc" },
-    distinct: ["accountId", "securityId"],
-    select: { securityId: true, accountId: true, asOf: true, qty: true, account: { select: { key: true, name: true } } },
-  });
-
-  if (snapshots.length === 0) {
+/** Overview = a summary of current holdings — value, positions, weight, unrealised gain. Same
+ * holdings-summary/deep-dive split as every other channel (Overview vs Performance, locked in
+ * step 3): come here first for "what do I have", go to Performance for IRR vs the four Nifty TRI
+ * indices. Positions are now engine-backed (buildLots/positions over real dated transactions, same
+ * as Equity/PMS) rather than the old qty x latest-NAV snapshot — that page is retired now that the
+ * NAV history backfill (step 5) gives run()/buildLots() real prices to work with, not just today's. */
+export default async function IndiaMfOverview() {
+  const { ctx, ds, channelAccounts } = await getIndiaPortfolioData();
+  const accounts = channelAccounts.MF;
+  const hasTrades = ctx.trades.some((t) => accounts.includes(t.account));
+  if (!hasTrades) {
     return <EmptyState>No mutual fund holdings yet — upload a CAMS Consolidated Account Statement to get started.</EmptyState>;
   }
 
-  const bySecurity = new Map<string, { qty: number; asOf: Date; folios: { key: string; name: string; qty: number }[] }>();
-  for (const s of snapshots) {
-    const qty = Number(s.qty);
-    if (qty <= 0) continue; // fully redeemed / switched out of this folio
-    const existing = bySecurity.get(s.securityId);
-    if (existing) {
-      existing.qty += qty;
-      if (s.asOf > existing.asOf) existing.asOf = s.asOf;
-      existing.folios.push({ key: s.account.key, name: s.account.name, qty });
-    } else {
-      bySecurity.set(s.securityId, { qty, asOf: s.asOf, folios: [{ key: s.account.key, name: s.account.name, qty }] });
-    }
-  }
+  const book = buildLots(ds, accounts);
+  const pos = positions(ctx, book);
+  const gain = pos.totalValue - pos.totalCost;
+  const disposals = disposalRows(book);
+  const realised = disposals.reduce((a, d) => a + d.gain, 0);
 
   const securities = await prisma.security.findMany({
-    where: { id: { in: [...bySecurity.keys()] } },
-    select: { id: true, symbol: true, name: true, prices: { orderBy: { date: "desc" }, take: 1, select: { date: true, close: true } } },
+    where: { symbol: { in: pos.rows.map((r) => r.symbol) } },
+    select: { symbol: true, name: true, mfCategory: true },
   });
-
-  const rows = securities
-    .map((sec) => {
-      const agg = bySecurity.get(sec.id)!;
-      const price = sec.prices[0];
-      const close = price ? Number(price.close) : null;
-      const value = close != null ? agg.qty * close : null;
-      return { id: sec.id, symbol: sec.symbol, name: sec.name, qty: agg.qty, close, priceDate: price?.date ?? null, value, asOf: agg.asOf, folios: agg.folios };
-    })
-    .sort((a, b) => (b.value ?? 0) - (a.value ?? 0));
-
-  const totalValue = rows.reduce((sum, r) => sum + (r.value ?? 0), 0);
-  const withoutPrice = rows.filter((r) => r.close == null).length;
-  const folioCount = new Set(snapshots.filter((s) => Number(s.qty) > 0).map((s) => s.accountId)).size;
-
-  const priceDates = rows.map((r) => r.priceDate).filter((d): d is Date => d != null);
-  const newestPrice = priceDates.length ? priceDates.reduce((a, b) => (a > b ? a : b)) : null;
-  const oldestPrice = priceDates.length ? priceDates.reduce((a, b) => (a < b ? a : b)) : null;
-  const asOfDates = rows.map((r) => r.asOf);
-  const statementAsOf = asOfDates.length ? asOfDates.reduce((a, b) => (a > b ? a : b)) : null;
+  const nameOf = new Map(securities.map((s) => [s.symbol, s.name]));
+  const catOf = new Map(securities.map((s) => [s.symbol, s.mfCategory]));
+  const folioCount = new Set(accounts).size;
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="grid grid-cols-3 gap-4">
-          <Tile label="Holdings value" value={fmtINR(totalValue)} sub={newestPrice ? `NAVs as of ${fmtDay(newestPrice.toISOString().slice(0, 10))}` : "No NAVs"} />
-          <Tile label="Schemes / folios" value={`${rows.length} / ${folioCount}`} sub={statementAsOf ? `Statement as of ${fmtDay(statementAsOf.toISOString().slice(0, 10))}` : undefined} />
-          <Tile
-            label="NAV coverage"
-            value={`${rows.length - withoutPrice}/${rows.length}`}
-            sub={withoutPrice > 0 ? `${withoutPrice} missing a NAV` : "All priced"}
-            valueClass={withoutPrice > 0 ? "text-amber-600" : undefined}
-          />
-        </div>
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-xs text-slate-500">Prices to {fmtDay(ctx.asof)} · {pos.rows.length} scheme{pos.rows.length === 1 ? "" : "s"} across {folioCount} folios</span>
         <RefreshButton />
       </div>
 
-      {oldestPrice && newestPrice && oldestPrice.getTime() !== newestPrice.getTime() && (
-        <Note>
-          NAVs are not all as of the same date (oldest {fmtDay(oldestPrice.toISOString().slice(0, 10))}, newest {fmtDay(newestPrice.toISOString().slice(0, 10))}) —
-          some schemes are on their last known NAV rather than today&apos;s.
-        </Note>
-      )}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Tile label="Market value" value={fmtMoney(pos.totalValue, CUR)} sub={fmtDay(ctx.asof)} />
+        <Tile label="Cost basis (open lots)" value={fmtMoney(pos.totalCost, CUR)} sub="incl. fees, FIFO per folio" />
+        <Tile label="Unrealised gain" value={fmtMoney(gain, CUR)} valueClass={tone(gain)} sub={`${fmtPct(pos.totalCost ? gain / pos.totalCost : 0, 1, true)} on remaining cost`} />
+        <Tile label="Realised gain (all exits)" value={fmtMoney(realised, CUR)} valueClass={tone(realised)} sub={`${disposals.length} disposal lots · ${new Set(disposals.map((d) => d.symbol)).size} schemes`} />
+      </div>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+      <Card className="overflow-x-auto p-0">
+        <div className="px-5 pt-4 text-sm font-semibold text-slate-900">Positions</div>
         <table className={tableCls}>
           <thead className={theadCls}>
-            <tr>
-              <Th right={false}>Scheme</Th>
-              <Th>Units</Th>
-              <Th>NAV</Th>
-              <Th right={false}>As of</Th>
-              <Th>Value (INR)</Th>
-            </tr>
+            <tr><Th right={false}>Scheme</Th><Th>Units</Th><Th>Avg cost</Th><Th>NAV</Th><Th>Value</Th><Th>Weight</Th><Th>Unrealised</Th><Th>%</Th></tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
-              <tr key={r.id} className={rowCls}>
-                <Td right={false}>
-                  <div className="font-medium text-slate-900">{r.name}</div>
-                  <div className="text-xs text-slate-500">
-                    {r.symbol} · {r.folios.length > 1 ? `${r.folios.length} folios` : r.folios[0].key.replace(/^MF_FOLIO_/, "")}
-                  </div>
+            {pos.rows.map((p, i) => (
+              <tr key={p.symbol} className={rowCls}>
+                <Td right={false} className="font-medium text-slate-800">
+                  <span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ background: CATEGORICAL[i % CATEGORICAL.length] }} />
+                  {nameOf.get(p.symbol) ?? p.symbol}
+                  {catOf.get(p.symbol) && <span className="ml-2"><Badge tone="slate">{CATEGORY_LABEL[catOf.get(p.symbol) as string] ?? catOf.get(p.symbol)}</Badge></span>}
+                  {new Set(p.lots.map((l) => l.account)).size > 1 && <span className="ml-2"><Badge tone="blue">multiple folios</Badge></span>}
                 </Td>
-                <Td>{fmtUnits(r.qty)}</Td>
-                <Td>{r.close != null ? fmtINR(r.close) : "–"}</Td>
-                <Td right={false}>
-                  {r.priceDate ? fmtDay(r.priceDate.toISOString().slice(0, 10)) : <Badge tone="amber">no NAV</Badge>}
-                </Td>
-                <Td>{r.value != null ? fmtINR(r.value) : "–"}</Td>
+                <Td>{fmtUnits(p.units)}</Td>
+                <Td>{fmtMoney(p.avgCost, CUR)}</Td>
+                <Td>{fmtMoney(p.price, CUR)}</Td>
+                <Td>{fmtMoney(p.value, CUR)}</Td>
+                <Td>{fmtPct(p.weight)}</Td>
+                <Td className={tone(p.gain)}>{fmtMoney(p.gain, CUR)}</Td>
+                <Td className={tone(p.gainPct)}>{fmtPct(p.gainPct, 1, true)}</Td>
               </tr>
             ))}
+            <tr className="border-t border-slate-200 font-semibold">
+              <Td right={false}>Total</Td><Td /><Td /><Td />
+              <Td>{fmtMoney(pos.totalValue, CUR)}</Td><Td>100%</Td>
+              <Td className={tone(gain)}>{fmtMoney(gain, CUR)}</Td><Td className={tone(gain)}>{fmtPct(pos.totalCost ? gain / pos.totalCost : 0, 1, true)}</Td>
+            </tr>
           </tbody>
         </table>
-      </div>
+        <div className="px-5 pb-4 pt-2">
+          <Note>
+            For IRR, alpha vs the four Nifty TRI indices, and the value-vs-benchmark chart, see the Performance tab. For per-lot FIFO detail, see
+            Holdings &amp; lots. Category badges (Equity/Debt/Hybrid/Commodity) are for identification only — benchmarking is aggregate-channel, not
+            per-scheme.
+          </Note>
+        </div>
+      </Card>
     </div>
   );
 }
