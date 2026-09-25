@@ -230,13 +230,13 @@ export async function getAssetClassBreakdown(): Promise<AssetClassRow[]> {
   });
   return [
     row("usEquity", "US equity", "equity", "/portfolio/us", usEquity),
-    row("indianEquity", "Indian direct equity (IIFL)", "equity", "/portfolio/india", iifl),
-    row("kabirPms", "PMS (Kabir)", "equity", "/portfolio/india", kabirPms),
+    row("indianEquity", "Indian direct equity (IIFL)", "equity", "/portfolio/india/equity", iifl),
+    row("kabirPms", "PMS (Kabir)", "equity", "/portfolio/india/pms", kabirPms),
     row("nse", "NSE's own listed shares", "equity", "/portfolio/india", nse),
-    row("mfEquity", "Mutual funds — Equity", "fund", "/portfolio/mf", mfByCategory.EQUITY),
-    row("mfDebt", "Mutual funds — Debt", "fund", "/portfolio/mf", mfByCategory.DEBT),
-    row("mfHybrid", "Mutual funds — Hybrid", "fund", "/portfolio/mf", mfByCategory.HYBRID),
-    row("mfCommodity", "Mutual funds — Commodity", "fund", "/portfolio/mf", mfByCategory.COMMODITY),
+    row("mfEquity", "Mutual funds — Equity", "fund", "/portfolio/india/mf", mfByCategory.EQUITY),
+    row("mfDebt", "Mutual funds — Debt", "fund", "/portfolio/india/mf", mfByCategory.DEBT),
+    row("mfHybrid", "Mutual funds — Hybrid", "fund", "/portfolio/india/mf", mfByCategory.HYBRID),
+    row("mfCommodity", "Mutual funds — Commodity", "fund", "/portfolio/india/mf", mfByCategory.COMMODITY),
     row("epfNps", "EPF + NPS", "retirement", null, epfNps),
   ];
 }
