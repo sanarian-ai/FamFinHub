@@ -1,32 +1,35 @@
 // Loads the engine Dataset from Postgres. The only DB-touching piece of the engine layer.
 // Lean selects (no joins on the ~15k price rows): symbols are resolved through an id map.
 //
-// Scoped to exclude every INR-native broker (Kabir PMS, CAMS mutual funds): this engine
+// Scoped to USD brokers only (an include-list, not an exclude-list): this engine
 // (buildContext/run/buildLots in engine.ts) is USD/US-market-only — no INR handling, no NSE
 // trading calendar or currency conversion in positions()'s totalValue, and it assumes every
 // symbol that shows up in a trade also has PriceDaily rows in the convention this engine expects.
 // Letting an INR account's trades into ctx.trades here either crashes run()'s px[symbol][i]
 // lookups for any account-unscoped call (e.g. the Overview screen's "all accounts" view) the
-// moment an INR-only symbol shows up in the combined symbol set, or — the bug found and fixed
-// 2026-09-24 — silently sums raw INR position values into totalValue alongside raw USD ones with
-// no currency conversion, inflating "US portfolio" totals by whatever the mixed-in INR accounts
-// are worth (this is exactly what happened once MF_FOLIO accounts existed: the exclude-list here
-// was never extended to cover them, so every mutual fund's INR value was added into what every
-// caller — including the retirement net-worth "international equity" live-wire — treated as a
-// pure-USD total). The same class of bug recurred 2026-09-25: KABIR_CAPITAL_VENTURES and
-// KABIR_FINANCIAL_VENTURES (closed-vehicle PMS) and UNIFI_PMS were added to India's PMS channel
-// (india-data.ts INDIA_CHANNEL_BROKERS.PMS) without being added here -- KABIR_CAPITAL_VENTURES_RIA's
-// trades leaking in crashed buildLots() with an "Oversold" error (a closed position's exit modeled
-// as separate qty=1 SELLs), and KABIR_FINANCIAL_VENTURES/UNIFI_PMS would have silently inflated
-// totals the same way MF_FOLIO once did. Kabir and MF get their own INR-native handling elsewhere (see
-// kabir-pms-p2-log.md "Engine layer" (P3) for Kabir; src/app/portfolio/mf/page.tsx for MF) — not
-// this one. INR_NATIVE_BROKERS must be extended whenever a new INR-denominated broker is added
-// (e.g. IIFL) — an include-list of USD brokers would be more failure-safe than this exclude-list,
-// but is left as a follow-up since it touches the same query shape either way.
+// moment an INR-only symbol shows up in the combined symbol set, or silently sums raw INR position
+// values into totalValue alongside raw USD ones with no currency conversion, inflating "US
+// portfolio" totals by whatever the mixed-in INR accounts are worth.
+//
+// This was an exclude-list (INR_NATIVE_BROKERS) through 2026-09-25 and it bit three times: once
+// when MF_FOLIO accounts were added and never excluded (2026-09-24 fix), again when
+// KABIR_CAPITAL_VENTURES/KABIR_FINANCIAL_VENTURES/UNIFI_PMS were added to India's PMS channel
+// without being excluded (2026-09-24 fix, same day), and a third time when IIFL_DEMAT_RIA gained
+// its first real trade history (2026-09-25 IIFL ingestion) — the exclude-list's own comment named
+// IIFL as the next risk and it still wasn't caught until "Total tracked" on /portfolio/all jumped
+// to ~85Cr from India equity being counted as if every rupee were a dollar. Converted to this
+// include-list on the third recurrence: a new India broker now has to be silently omitted from
+// BOTH the enum's own doc comment AND this list to leak in, instead of just this one. Kabir and MF
+// get their own INR-native handling elsewhere (see kabir-pms-p2-log.md "Engine layer" (P3) for
+// Kabir; src/app/portfolio/mf/page.tsx for MF) — not this one.
 import type { PrismaClient, PortfolioBroker } from "@prisma/client";
 import type { Dataset } from "./engine";
 
-const INR_NATIVE_BROKERS: PortfolioBroker[] = ["KABIR_PMS", "MF_FOLIO", "KABIR_CAPITAL_VENTURES", "KABIR_FINANCIAL_VENTURES", "UNIFI_PMS"];
+// USD-denominated brokers only. A new broker is USD-native ONLY if trades on it are actually
+// priced and settled in USD (US-listed shares) — everything else (any Indian broker/demat/PMS,
+// present or future) must NOT be added here, or its INR trades corrupt the US book's totals as
+// described above.
+const USD_BROKERS: PortfolioBroker[] = ["INDMONEY_ALPACA", "IBKR"];
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -34,7 +37,7 @@ export async function loadDataset(prisma: PrismaClient): Promise<Dataset> {
   const [secs, accs, tx, acts, prices, fx] = await Promise.all([
     prisma.security.findMany({ select: { id: true, symbol: true } }),
     prisma.portfolioAccount.findMany({ select: { id: true, key: true } }),
-    prisma.portfolioTransaction.findMany({ where: { account: { broker: { notIn: INR_NATIVE_BROKERS } } }, select: { accountId: true, securityId: true, side: true, qty: true, price: true, fee: true, tradeDate: true }, orderBy: [{ tradeDate: "asc" }, { execTs: "asc" }] }),
+    prisma.portfolioTransaction.findMany({ where: { account: { broker: { in: USD_BROKERS } } }, select: { accountId: true, securityId: true, side: true, qty: true, price: true, fee: true, tradeDate: true }, orderBy: [{ tradeDate: "asc" }, { execTs: "asc" }] }),
     prisma.corporateAction.findMany({ select: { securityId: true, type: true, effectiveDate: true, ratio: true } }),
     prisma.priceDaily.findMany({ select: { securityId: true, date: true, close: true, dividendPerShare: true } }),
     prisma.fxDaily.findMany({ where: { pair: "USDINR" }, select: { date: true, rate: true } }),
