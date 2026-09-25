@@ -13,7 +13,12 @@
 // are worth (this is exactly what happened once MF_FOLIO accounts existed: the exclude-list here
 // was never extended to cover them, so every mutual fund's INR value was added into what every
 // caller — including the retirement net-worth "international equity" live-wire — treated as a
-// pure-USD total). Kabir and MF get their own INR-native handling elsewhere (see
+// pure-USD total). The same class of bug recurred 2026-09-25: KABIR_CAPITAL_VENTURES and
+// KABIR_FINANCIAL_VENTURES (closed-vehicle PMS) and UNIFI_PMS were added to India's PMS channel
+// (india-data.ts INDIA_CHANNEL_BROKERS.PMS) without being added here -- KABIR_CAPITAL_VENTURES_RIA's
+// trades leaking in crashed buildLots() with an "Oversold" error (a closed position's exit modeled
+// as separate qty=1 SELLs), and KABIR_FINANCIAL_VENTURES/UNIFI_PMS would have silently inflated
+// totals the same way MF_FOLIO once did. Kabir and MF get their own INR-native handling elsewhere (see
 // kabir-pms-p2-log.md "Engine layer" (P3) for Kabir; src/app/portfolio/mf/page.tsx for MF) — not
 // this one. INR_NATIVE_BROKERS must be extended whenever a new INR-denominated broker is added
 // (e.g. IIFL) — an include-list of USD brokers would be more failure-safe than this exclude-list,
@@ -21,7 +26,7 @@
 import type { PrismaClient, PortfolioBroker } from "@prisma/client";
 import type { Dataset } from "./engine";
 
-const INR_NATIVE_BROKERS: PortfolioBroker[] = ["KABIR_PMS", "MF_FOLIO"];
+const INR_NATIVE_BROKERS: PortfolioBroker[] = ["KABIR_PMS", "MF_FOLIO", "KABIR_CAPITAL_VENTURES", "KABIR_FINANCIAL_VENTURES", "UNIFI_PMS"];
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
