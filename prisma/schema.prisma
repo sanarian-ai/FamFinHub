@@ -253,6 +253,7 @@ enum PortfolioSource {
   kabir_pms_report // Nuvama Wealthspectrum portal exports, read via Chrome under the user's logged-in session
   cams_cas_pdf // CAMS/KFintech Consolidated Account Statement, manually uploaded periodically (see mf-equity-irr-tracking-proposal.md)
   manual_closed_vehicle_audit // Hand-audited closed-vehicle ledger (KCV/KFV/Unifi), sourced from statements read this session — see closed-vehicle-historic-irr-ingestion-spec.md.
+  iifl_trade_listing // IIFL demat (Ria) trade listing .xls export, manually uploaded periodically — same NSE/BSE session-date basis as kabir_pms_report/cams_cas_pdf.
 }
 
 enum CorporateActionType {
