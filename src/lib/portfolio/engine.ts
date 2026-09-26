@@ -99,12 +99,20 @@ export type RunResult = {
   annualised: boolean; // false when the period is shorter than MIN_ANNUALISE_DAYS: show the period return, not the IRR
   pf: Leg; SPY: Leg; QQQ: Leg; bench: Record<string, Leg>; series: SeriesPt[] | null;
   /** The portfolio's own dated cash-flow stream (INR/USD per RunOpts.currency, + to investor),
-   * including the V0/V1 boundary entries — same list `pf`'s IRR/moic/ret are computed from. Exposed
-   * so a caller combining two books (see combined.ts) can merge two already-correctly-anchored
-   * streams and run one xirr()/legFromCashflows() over the union, instead of extending run() itself
-   * to understand a mixed-currency Ctx (fxAt() applies one multiplier uniformly across a whole run —
-   * see combined.ts's header comment for why that rules out a single merged-Ctx call). */
+   * including the V0/V1 boundary entries and BOTH trade and dividend events — same list `pf`'s
+   * IRR/moic/ret are computed from. Exposed so a caller combining two books (see combined.ts) can
+   * merge two already-correctly-anchored streams, instead of extending run() itself to understand a
+   * mixed-currency Ctx (fxAt() applies one multiplier uniformly across a whole run — see combined.ts's
+   * header comment for why that rules out a single merged-Ctx call). */
   cashflows: CF[];
+  /** Same shape as `cashflows`, but TRADE events only — no dividend entries. Mirrors exactly what a
+   * benchmark leg's own `cfs[b]` is built from before its post-loop dividend-of-the-benchmark block
+   * runs (see the `if (e.kind === "T")` branch below): the portfolio's own dividends never feed a
+   * benchmark replica's unit count, only its own `cashflows`/`pf` leg. Added 2026-09-26 so
+   * combined.ts can replicate the merged household's flows into a benchmark without double-counting
+   * or misclassifying dividend cash as capital movement — see combined.ts's header for the bug this
+   * fixed. */
+  tradeCashflows: CF[];
 };
 
 export function symbolsOf(ctx: Ctx, accounts?: string[]): string[] {
@@ -153,11 +161,11 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
     for (const s of S) for (const [exd, per] of Object.entries(ctx.div[s] ?? {})) if (exd > d0 && exd <= d1) ev.push({ i: idxOn(dates, exd), d: exd, kind: "D", sym: s, per });
   }
   ev.sort((a, b) => (a.d < b.d ? -1 : a.d > b.d ? 1 : a.kind === "D" ? -1 : 1));
-  const cfs: Record<string, CF[]> = { pf: [] };
+  const cfs: Record<string, CF[]> = { pf: [], trades: [] };
   for (const b of B) cfs[b] = [];
   const bu: Record<string, number> = {};
   for (const b of B) bu[b] = 0;
-  if (V0 > 0) { cfs.pf.push({ ms: t(d0), v: -V0 * fxAt(i0) }); for (const b of B) { cfs[b].push({ ms: t(d0), v: -V0 * fxAt(i0) }); bu[b] = V0 / px[b][i0]; } }
+  if (V0 > 0) { cfs.pf.push({ ms: t(d0), v: -V0 * fxAt(i0) }); cfs.trades.push({ ms: t(d0), v: -V0 * fxAt(i0) }); for (const b of B) { cfs[b].push({ ms: t(d0), v: -V0 * fxAt(i0) }); bu[b] = V0 / px[b][i0]; } }
   let net = V0, divTot = 0;
   const p = { ...pos };
   const series: SeriesPt[] | null = o.series ? [] : null;
@@ -170,6 +178,7 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
         const cash = e.usd!;
         p[e.sym] += e.side === "BUY" ? e.q! : -e.q!;
         cfs.pf.push({ ms: t(e.d), v: cash * fxi });
+        cfs.trades.push({ ms: t(e.d), v: cash * fxi });
         net += -cash;
         for (const b of B) { cfs[b].push({ ms: t(e.d), v: cash * fxi }); bu[b] += -cash / px[b][e.i]; }
       } else {
@@ -198,6 +207,7 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
   let V1 = 0; for (const s of S) V1 += p[s] * px[s][i1];
   const fx1 = fxAt(i1);
   cfs.pf.push({ ms: t(d1), v: V1 * fx1 });
+  cfs.trades.push({ ms: t(d1), v: V1 * fx1 });
   for (const b of B) cfs[b].push({ ms: t(d1), v: bu[b] * px[b][i1] * fx1 });
   const days = (t(d1) - t(d0)) / DAY;
   const startV = V0 * fxAt(i0);
@@ -207,7 +217,7 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
   for (const b of B) bench[b] = leg(cfs[b]);
   return {
     d0, d1, days, V0: startV, V1: V1 * fx1, net: net * fx1, divTot: divTot * fx1, hasData: cfs.pf.length > 1, annualised: days >= MIN_ANNUALISE_DAYS,
-    pf: leg(cfs.pf), SPY: bench.SPY ?? EMPTY_LEG, QQQ: bench.QQQ ?? EMPTY_LEG, bench, series, cashflows: cfs.pf,
+    pf: leg(cfs.pf), SPY: bench.SPY ?? EMPTY_LEG, QQQ: bench.QQQ ?? EMPTY_LEG, bench, series, cashflows: cfs.pf, tradeCashflows: cfs.trades,
   };
 }
 
