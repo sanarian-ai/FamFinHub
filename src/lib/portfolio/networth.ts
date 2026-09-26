@@ -199,25 +199,38 @@ export async function getEpfNpsActual(): Promise<AssetClassActual | null> {
  */
 export async function getMutualFundsByCategory(): Promise<Record<"EQUITY" | "DEBT" | "HYBRID" | "COMMODITY", AssetClassActual | null>> {
   const empty = { EQUITY: null, DEBT: null, HYBRID: null, COMMODITY: null } as const;
-  const accounts = await prisma.portfolioAccount.findMany({ where: { broker: "MF_FOLIO" }, select: { id: true } });
-  if (accounts.length === 0) return { ...empty };
-  const accountIds = accounts.map((a) => a.id);
-  const snapshots = await prisma.positionSnapshot.findMany({
-    where: { accountId: { in: accountIds } }, orderBy: { asOf: "desc" },
-    select: { accountId: true, securityId: true, asOf: true, qty: true },
-  });
-  if (snapshots.length === 0) return { ...empty };
-  const latestByPair = new Map<string, { securityId: string; qty: number }>();
-  for (const s of snapshots) {
-    const k = `${s.accountId}|${s.securityId}`;
-    if (!latestByPair.has(k)) latestByPair.set(k, { securityId: s.securityId, qty: Number(s.qty) });
+  // The three DB round-trips below are wrapped together: a transient failure (e.g. the Postgres
+  // pool being briefly exhausted by getAssetClassBreakdown()'s other lookups) degrades to "no
+  // data" here, same as every sibling get*Actual() function, instead of throwing uncaught and
+  // crashing the whole /portfolio/all page. The mfCategory validation below stays a hard throw —
+  // that's a real data-quality gap (an uncategorized fund), not an infra hiccup, and should keep
+  // surfacing loudly.
+  let secById: Map<string, { id: string; mfCategory: string | null; prices: { date: Date; close: unknown }[] }>;
+  let latestByPair: Map<string, { securityId: string; qty: number }>;
+  try {
+    const accounts = await prisma.portfolioAccount.findMany({ where: { broker: "MF_FOLIO" }, select: { id: true } });
+    if (accounts.length === 0) return { ...empty };
+    const accountIds = accounts.map((a) => a.id);
+    const snapshots = await prisma.positionSnapshot.findMany({
+      where: { accountId: { in: accountIds } }, orderBy: { asOf: "desc" },
+      select: { accountId: true, securityId: true, asOf: true, qty: true },
+    });
+    if (snapshots.length === 0) return { ...empty };
+    latestByPair = new Map<string, { securityId: string; qty: number }>();
+    for (const s of snapshots) {
+      const k = `${s.accountId}|${s.securityId}`;
+      if (!latestByPair.has(k)) latestByPair.set(k, { securityId: s.securityId, qty: Number(s.qty) });
+    }
+    const securityIds = [...new Set([...latestByPair.values()].map((s) => s.securityId))];
+    const securities = await prisma.security.findMany({
+      where: { id: { in: securityIds } },
+      select: { id: true, mfCategory: true, prices: { orderBy: { date: "desc" }, take: 1, select: { date: true, close: true } } },
+    });
+    secById = new Map(securities.map((s) => [s.id, s]));
+  } catch (err) {
+    console.error("getMutualFundsByCategory: DB lookup failed, returning empty", err);
+    return { ...empty };
   }
-  const securityIds = [...new Set([...latestByPair.values()].map((s) => s.securityId))];
-  const securities = await prisma.security.findMany({
-    where: { id: { in: securityIds } },
-    select: { id: true, mfCategory: true, prices: { orderBy: { date: "desc" }, take: 1, select: { date: true, close: true } } },
-  });
-  const secById = new Map(securities.map((s) => [s.id, s]));
   const totals: Record<string, { value: number; asOf: string | null }> = {
     EQUITY: { value: 0, asOf: null }, DEBT: { value: 0, asOf: null }, HYBRID: { value: 0, asOf: null }, COMMODITY: { value: 0, asOf: null },
   };
@@ -267,6 +280,13 @@ export interface AssetClassRow {
  * maps onto its own `networth.*` item keys instead of re-deriving these totals itself.
  */
 export async function getAssetClassBreakdown(): Promise<AssetClassRow[]> {
+  // These 7 lookups run concurrently again — some (getUsEquityActual, getIiflActual,
+  // getCryptoActual) already fan out to 5-7 queries internally, so serializing only the
+  // top-level 7 still left individual calls queuing on a starved pool (~5-12s each, ~41s total)
+  // without fully fixing the risk. The actual fix was the pool size: DATABASE_URL's
+  // connection_limit went from 5 to 15 (see .env), which was verified clean across repeated
+  // concurrent runs of exactly this Promise.all. getMutualFundsByCategory() still has its own
+  // try/catch below as defense-in-depth against a transient DB failure of any kind.
   const [usEquity, kabirPms, iifl, nse, mfByCategory, epfNps, crypto] = await Promise.all([
     getUsEquityActual(), getKabirPmsActual(), getIiflActual(), getNseActual(), getMutualFundsByCategory(), getEpfNpsActual(), getCryptoActual(),
   ]);
