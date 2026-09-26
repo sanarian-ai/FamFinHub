@@ -8,6 +8,7 @@ import { PeriodBar, Toggles, parseQ } from "../controls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../ui";
 import { ValueChart } from "../ValueChart";
 import { BridgePanel } from "../../BridgePanel";
+import { bridgeFromRun } from "@/lib/portfolio/bridge";
 
 export const dynamic = "force-dynamic";
 const BASE = "/portfolio/us/performance";
@@ -46,6 +47,8 @@ export default async function Performance({ searchParams }: { searchParams: Prom
   const aSpy = alpha(main.pf, main.SPY, main), aQqq = alpha(main.pf, main.QQQ, main);
   const invested = main.net - main.V0;
 
+  const bridge = bridgeFromRun(main);
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3">
@@ -81,7 +84,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
         <Note>
           Replica = every dollar you invested or withdrew, on the same dates, put into the index instead. IRR is money-weighted (XIRR). Periods under 90 days show the period return, not an annualised figure.
         </Note>
-        <BridgePanel endpoint={`/api/portfolio/us/bridge?p=${period.key}&cur=${cur}&br=${q.br}&po=${q.po}`} cur={cur} />
+        <BridgePanel bridge={bridge} cur={cur} />
       </Card>
 
       <Card>

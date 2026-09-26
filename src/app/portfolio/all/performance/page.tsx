@@ -13,6 +13,7 @@ import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../india/ui";
 import { AllSubNav } from "../AllSubNav";
 import { ValueChart } from "../ValueChart";
 import { BridgePanel } from "../../BridgePanel";
+import { bridgeFromCombined } from "@/lib/portfolio/bridge";
 import { BENCHMARK_LABEL } from "../constants";
 
 export const dynamic = "force-dynamic";
@@ -107,6 +108,8 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
   const bookV1Sum = main.us.V1 + main.india.V1 + (main.crypto?.V1 ?? 0);
   const reconciled = Math.abs(bookProfitSum - main.all.profit) < 1 && Math.abs(bookV1Sum - main.V1) < 1;
 
+  const bridge = bridgeFromCombined(main);
+
   return (
     <div className="flex flex-col gap-5">
       <AllSubNav />
@@ -160,7 +163,7 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
           FX-normalized, merged cash-flow stream of all books. Periods under 90 days show the period return, not an annualised figure.
           {includeDividends ? " Dividends are included (est., after withholding) on both the household's own return and the benchmark replicas." : " Dividends excluded (price-only view) on both sides."}
         </Note>
-        <BridgePanel endpoint={`/api/portfolio/all/bridge?p=${period.key}&po=${po ?? "0"}`} cur={CUR} />
+        <BridgePanel bridge={bridge} cur={CUR} />
       </Card>
 
       <Card className="overflow-x-auto p-0">

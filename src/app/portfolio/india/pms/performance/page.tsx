@@ -8,6 +8,7 @@ import { PeriodBar, PriceOnlyToggle, parseQ } from "../controls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../ui";
 import { RollupValueChart } from "../../RollupValueChart";
 import { BridgePanel } from "../../../BridgePanel";
+import { bridgeFromRun } from "@/lib/portfolio/bridge";
 import { PMS_BENCHMARK, PMS_BENCHMARK_LABEL, PMS_BENCHMARKS, PMS_BENCHMARK_LABELS } from "../constants";
 
 export const dynamic = "force-dynamic";
@@ -60,6 +61,8 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
   const benchTiles = PMS_BENCHMARKS.map((b, i) => ({ key: b, label: PMS_BENCHMARK_LABELS[b], h: headline(main.bench[b], main), a: alpha(main.pf, main.bench[b], main), dot: CATEGORICAL[(i + 1) % CATEGORICAL.length] }));
   const invested = main.net - main.V0;
 
+  const bridge = bridgeFromRun(main);
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3">
@@ -97,7 +100,7 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
           return, not an annualised figure.
           {q.po === "1" ? " Dividends excluded (price-only view)." : " Dividends included (est., after withholding), where any dividend data exists."}
         </Note>
-        <BridgePanel endpoint={`/api/portfolio/india/pms/bridge?p=${period.key}&po=${q.po}`} cur={CUR} />
+        <BridgePanel bridge={bridge} cur={CUR} />
       </Card>
 
       <Card className="overflow-x-auto p-0">

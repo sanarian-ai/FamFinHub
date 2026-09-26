@@ -8,6 +8,7 @@ import { HolderToggle, PeriodBar, PriceOnlyToggle, parseQ } from "../controls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../ui";
 import { ValueChart } from "../ValueChart";
 import { BridgePanel } from "../../../BridgePanel";
+import { bridgeFromRun } from "@/lib/portfolio/bridge";
 import { accountsForHolder, EQUITY_BENCHMARKS, BENCHMARK_LABEL, EQUITY_HOLDER_GROUPS, type HolderKey } from "../constants";
 
 export const dynamic = "force-dynamic";
@@ -51,6 +52,8 @@ export default async function IndiaEquityPerformance({ searchParams }: { searchP
   const benchTiles = EQUITY_BENCHMARKS.map((b, i) => ({ key: b, label: BENCHMARK_LABEL[b], h: headline(main.bench[b], main), a: alpha(main.pf, main.bench[b], main), dot: CATEGORICAL[(i + 1) % CATEGORICAL.length] }));
   const invested = main.net - main.V0;
 
+  const bridge = bridgeFromRun(main);
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3">
@@ -87,7 +90,7 @@ export default async function IndiaEquityPerformance({ searchParams }: { searchP
           Replica = every rupee you invested or withdrew, on the same dates, put into the index instead. IRR is money-weighted (XIRR). Periods under 90 days show the period return, not an annualised figure.
           {q.po === "1" ? " Dividends excluded (price-only view)." : " Dividends included (est., after withholding) — currently a no-op, no India equity dividend data ingested yet."}
         </Note>
-        <BridgePanel endpoint={`/api/portfolio/india/equity/bridge?p=${period.key}&h=${q.h}&po=${q.po}`} cur={CUR} />
+        <BridgePanel bridge={bridge} cur={CUR} />
       </Card>
 
       <Card className="overflow-x-auto p-0">

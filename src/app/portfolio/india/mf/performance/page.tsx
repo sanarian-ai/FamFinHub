@@ -8,6 +8,7 @@ import { PeriodBar, PriceOnlyToggle, parseQ } from "../controls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../ui";
 import { ValueChart } from "../ValueChart";
 import { BridgePanel } from "../../../BridgePanel";
+import { bridgeFromRun } from "@/lib/portfolio/bridge";
 import { MF_BENCHMARKS, BENCHMARK_LABEL } from "../constants";
 
 export const dynamic = "force-dynamic";
@@ -49,6 +50,8 @@ export default async function IndiaMfPerformance({ searchParams }: { searchParam
   const benchTiles = MF_BENCHMARKS.map((b, i) => ({ key: b, label: BENCHMARK_LABEL[b], h: headline(main.bench[b], main), a: alpha(main.pf, main.bench[b], main), dot: CATEGORICAL[(i + 1) % CATEGORICAL.length] }));
   const invested = main.net - main.V0;
 
+  const bridge = bridgeFromRun(main);
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-end gap-2">
@@ -83,7 +86,7 @@ export default async function IndiaMfPerformance({ searchParams }: { searchParam
           90 days show the period return, not an annualised figure.
           {q.po === "1" ? " Dividends excluded (price-only view)." : " Dividends included (est., after withholding), for any IDCW/dividend-plan schemes."}
         </Note>
-        <BridgePanel endpoint={`/api/portfolio/india/mf/bridge?p=${period.key}&po=${q.po}`} cur={CUR} />
+        <BridgePanel bridge={bridge} cur={CUR} />
       </Card>
 
       <Card className="overflow-x-auto p-0">

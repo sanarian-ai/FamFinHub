@@ -2,59 +2,36 @@
 
 import { useState } from "react";
 import { fmtDay, fmtMoney, fmtPct, tone, type Cur } from "@/lib/portfolio/format";
+import type { Bridge } from "@/lib/portfolio/bridge";
 
-type Bridge = {
-  d0: string;
-  d1: string;
-  annualised: boolean;
-  startValue: number;
-  added: number;
-  withdrawn: number;
-  dividends: number;
-  priceGain: number;
-  totalGain: number;
-  endValue: number;
-  irr: number | null;
-  ret: number | null;
-  checkDiff: number;
-};
-
-type State = { status: "idle" | "loading" | "error" | "done"; data?: Bridge };
-
-/** Collapsed-by-default "why trust this number?" panel for a performance page. Fetches its own data
- * from `endpoint` only on first expand — never part of the page's own server render — so a normal
- * page load pays nothing for it. See lib/portfolio/bridge.ts for what the numbers mean and why
- * they're split the way they are. */
-export function BridgePanel({ endpoint, cur = "INR" }: { endpoint: string; cur?: Cur }) {
+/** Collapsed-by-default "why trust this number?" panel for a performance page. The reconciliation
+ * (`bridge`) is computed server-side by the page itself, from data the page already fetched to render
+ * everything else on it — this component only toggles visibility, it never fetches.
+ *
+ * Previously this component lazily called a dedicated `/api/.../bridge` route on first expand, so a
+ * normal page load "paid nothing" for it. That route, though, re-ran the page's ENTIRE underlying data
+ * load a second time (getPortfolioData/getIndiaPortfolioData/getCryptoPortfolioData + the run/combinedRun
+ * call) purely to recompute a handful of numbers that were already sitting in memory from the page's own
+ * render. bridgeFromRun/bridgeFromCombined are pure functions over that already-computed RunResult /
+ * CombinedRunResult, so there was never a need to refetch anything — doing so just doubled DB load on
+ * every click, which was a real contributor to Supabase's session-pool exhaustion (EMAXCONNSESSION,
+ * 2026-09-26). Switched to a prop on 2026-09-26; the 6 `/bridge` API routes were removed at the same
+ * time. See lib/portfolio/bridge.ts for what the numbers mean and why they're split the way they are. */
+export function BridgePanel({ bridge, cur = "INR" }: { bridge: Bridge; cur?: Cur }) {
   const [open, setOpen] = useState(false);
-  const [state, setState] = useState<State>({ status: "idle" });
-
-  async function onToggle() {
-    const next = !open;
-    setOpen(next);
-    if (next && state.status === "idle") {
-      setState({ status: "loading" });
-      try {
-        const res = await fetch(endpoint);
-        if (!res.ok) throw new Error(String(res.status));
-        const data = (await res.json()) as Bridge;
-        setState({ status: "done", data });
-      } catch {
-        setState({ status: "error" });
-      }
-    }
-  }
 
   return (
     <div className="mt-3 border-t border-slate-100 pt-3">
-      <button type="button" onClick={onToggle} className="text-xs font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="text-xs font-medium text-slate-500 underline decoration-slate-300 underline-offset-2 hover:text-slate-700"
+      >
         {open ? "Hide the math ▲" : "Why trust this number? ▼"}
       </button>
       {open && (
         <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
-          {state.status === "loading" && <div className="text-xs text-slate-400">Loading…</div>}
-          {state.status === "error" && <div className="text-xs text-rose-600">Couldn&apos;t load the reconciliation — try again.</div>}
-          {state.status === "done" && state.data && <BridgeBody b={state.data} cur={cur} />}
+          <BridgeBody b={bridge} cur={cur} />
         </div>
       )}
     </div>
