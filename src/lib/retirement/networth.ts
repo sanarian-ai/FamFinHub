@@ -6,7 +6,7 @@
  * class already has its own engine input under a different key (e.g. EPF/NPS also feeds the
  * plan's opening pool via BASELINE_KEYS' "epf") — the two are intentionally independent numbers.
  *
- * Nine classes are live-wired to existing data providers (see baseline/data.ts getNetWorthActuals):
+ * Ten classes are live-wired to existing data providers (see baseline/data.ts getNetWorthActuals):
  * international equity (US portfolio), PMS (Kabir), mutual funds — split 4 ways by SEBI scheme
  * category (CAMS positions, categorized by fund name onto Security.mfCategory: Equity/Debt/
  * Hybrid/Commodity — arbitrage, equity savings, balanced advantage and multi-asset funds are
@@ -14,7 +14,9 @@
  * value-only — no unit-level data exists for these two), NSE's own listed shares (INDmoney, real
  * units — Sangeeth via Zerodha, Ria via Kotak Securities; NSE listed itself on BSE 2026-09-24),
  * and Indian direct equity (INDmoney, real units — Ria's IIFL/India Infoline demat, 24 holdings,
- * distinct from the Kabir PMS book which is Nuvama-custodied). Everything else is a manual figure
+ * distinct from the Kabir PMS book which is Nuvama-custodied). Crypto (BTC + ETH on CoinDCX) joined
+ * the live-wired set on 2026-09-26, engine-backed off the ingested CoinDCX order history (see
+ * /portfolio/crypto) rather than a manual figure. Everything else is a manual figure
  * the user updates directly, same explicit-save UX as the rest of the baseline screen — a
  * live-wired class is never forced: "Use live value" is an explicit sync action, and the stored
  * figure stays a manually editable number in between syncs.
@@ -28,7 +30,7 @@
  * scripts/retirement/seed-networth.ts; values from there are just a starting point, not kept in
  * sync with the sheet.
  */
-export type NetWorthLiveSource = "usPortfolio" | "kabirPms" | "mfEquity" | "mfDebt" | "mfHybrid" | "mfCommodity" | "epfNps" | "nse" | "iifl" | null;
+export type NetWorthLiveSource = "usPortfolio" | "kabirPms" | "mfEquity" | "mfDebt" | "mfHybrid" | "mfCommodity" | "epfNps" | "nse" | "iifl" | "crypto" | null;
 
 export interface NetWorthClass {
   key: string;
@@ -51,7 +53,7 @@ export const NETWORTH_CLASSES: NetWorthClass[] = [
   { key: "networth.cash", label: "Cash", live: null, sortOrder: 10 },
   { key: "networth.realEstate", label: "Real estate (present value)", live: null, sortOrder: 11 },
   { key: "networth.esops", label: "ESOPs", live: null, sortOrder: 12 },
-  { key: "networth.bitcoin", label: "BitCoin", live: null, sortOrder: 13 },
+  { key: "networth.bitcoin", label: "Crypto (BTC + ETH)", live: "crypto", sortOrder: 13 }, // relabeled + live-wired 2026-09-26: CoinDCX order history ingested, engine-backed (see getCryptoActual in portfolio/networth.ts) — key kept as networth.bitcoin to avoid touching the underlying RetirementBaselineItem row's identity
 ];
 
 export const NETWORTH_KEYS: string[] = NETWORTH_CLASSES.map((c) => c.key);

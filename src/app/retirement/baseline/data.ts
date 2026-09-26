@@ -102,6 +102,7 @@ const ASSET_CLASS_TO_NETWORTH_KEY: Record<string, string> = {
   mfHybrid: "networth.mfHybrid",
   mfCommodity: "networth.mfCommodity",
   epfNps: "networth.epfNps",
+  crypto: "networth.bitcoin", // key kept as networth.bitcoin (see networth.ts) — Bitcoin moved from manual to live-wired 2026-09-26
 };
 
 export async function getNetWorthActuals(): Promise<Record<string, NetWorthActual>> {
@@ -117,14 +118,17 @@ export async function getNetWorthActuals(): Promise<Record<string, NetWorthActua
 
 
 /**
- * Bitcoin and real estate as portfolio-visible rows — sourced from the same manual figures the
- * retirement Assets/Baseline screens edit (networth.bitcoin / networth.realEstate on
- * RetirementBaselineItem), not from a broker or price feed (neither exists for either class).
- * "Current value" here just means "the figure last saved on /retirement/assets", and asOf is
- * that save's lastReviewedAt, not a market price date. Read-only from the portfolio side:
- * /portfolio/all links back to /retirement/assets rather than offering its own edit control —
- * consistent with Portfolio staying bottoms-up/read-only and Retirement Assets being the one
- * editable surface for the manual tracker.
+ * Real estate as a portfolio-visible row — sourced from the same manual figure the retirement
+ * Assets/Baseline screens edit (networth.realEstate on RetirementBaselineItem), not from a broker
+ * or price feed (none exists for it). "Current value" here just means "the figure last saved on
+ * /retirement/assets", and asOf is that save's lastReviewedAt, not a market price date. Read-only
+ * from the portfolio side: /portfolio/all links back to /retirement/assets rather than offering
+ * its own edit control — consistent with Portfolio staying bottoms-up/read-only and Retirement
+ * Assets being the one editable surface for the manual tracker.
+ *
+ * Bitcoin moved OUT of this function on 2026-09-26: it's now engine-backed via getCryptoActual()
+ * in getAssetClassBreakdown() (see /portfolio/crypto), no longer a manual figure — see
+ * networth.ts's "manual" group doc comment.
  */
 export async function getManualTrackedAssets(): Promise<AssetClassRow[]> {
   let planId: string;
@@ -134,11 +138,11 @@ export async function getManualTrackedAssets(): Promise<AssetClassRow[]> {
     return [];
   }
   const items = await prisma.retirementBaselineItem.findMany({
-    where: { planId, key: { in: ["networth.bitcoin", "networth.realEstate"] } },
+    where: { planId, key: "networth.realEstate" },
     select: { key: true, valueL: true, lastReviewedAt: true },
   });
   const byKey = new Map(items.map((i) => [i.key, i]));
-  const row = (key: "bitcoin" | "realEstate", itemKey: string, label: string): AssetClassRow => {
+  const row = (key: "realEstate", itemKey: string, label: string): AssetClassRow => {
     const item = byKey.get(itemKey);
     return {
       key, label, group: "manual", href: "/retirement/assets",
@@ -147,7 +151,6 @@ export async function getManualTrackedAssets(): Promise<AssetClassRow[]> {
     };
   };
   return [
-    row("bitcoin", "networth.bitcoin", "BitCoin"),
     row("realEstate", "networth.realEstate", "Real estate (present value)"),
   ];
 }

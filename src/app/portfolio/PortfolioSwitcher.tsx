@@ -4,9 +4,10 @@ const TABS = [
   { key: "all", label: "All assets", href: "/portfolio/all" },
   { key: "us", label: "US Stocks", href: "/portfolio/us" },
   { key: "india", label: "India", href: "/portfolio/india" },
+  { key: "crypto", label: "Crypto", href: "/portfolio/crypto" },
 ] as const;
 
-/** The 3-tab switcher shown at the top of every /portfolio/* section — one shared copy so a new
+/** The 4-tab switcher shown at the top of every /portfolio/* section — one shared copy so a new
  * section lights up everywhere at once instead of four edits. "All assets" is the landing tab
  * (see portfolio/page.tsx's redirect) — it fronts the cross-asset view built on
  * src/lib/portfolio/networth.ts, the rest are each account's own detail page. */

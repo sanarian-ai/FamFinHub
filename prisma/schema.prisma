@@ -211,6 +211,7 @@ enum PortfolioBroker {
   KABIR_CAPITAL_VENTURES // Closed pre-PMS pooled vehicle, Ria, exited 2024 — see closed-vehicle-historic-irr-ingestion-spec.md.
   KABIR_FINANCIAL_VENTURES // Closed pre-PMS pooled vehicle, Ria, exited 2024 — same spec as above.
   UNIFI_PMS // Unifi Capital PMS (Blended-Rangoli, BCAD 2 Breakout 20), Ria, fully exited 2025 — same spec as above.
+  COINDCX // Sangeeth's personal crypto holdings (BTC, ETH) on CoinDCX — see crypto-data.ts. INR-settled, no FX needed.
 }
 
 enum TradeSide {
@@ -224,6 +225,7 @@ enum SecurityKind {
   BENCHMARK
   MUTUAL_FUND // liquid/arbitrage funds a PMS parks idle cash in; not a portfolio "holding" the client chose
   AGGREGATE_VALUE // a value-only holding with no real per-unit price (e.g. EPF/NPS from INDmoney, rolled up); qty is fixed at 1 and PriceDaily.close carries the whole position's INR value. Excluded from the Yahoo Finance price-refresh job by kind, same as MUTUAL_FUND.
+  CRYPTO // BTC/ETH on CoinDCX, INR-quoted directly. Priced via CoinGecko (cryptoPriceFeed.ts), not Yahoo Finance — excluded from the stock/ETF price route by kind, same reasoning as MUTUAL_FUND/AGGREGATE_VALUE.
 }
 
 // SEBI's own scheme-category descriptor, read off each fund's name (e.g. "Arbitrage Fund" ->
@@ -254,6 +256,7 @@ enum PortfolioSource {
   cams_cas_pdf // CAMS/KFintech Consolidated Account Statement, manually uploaded periodically (see mf-equity-irr-tracking-proposal.md)
   manual_closed_vehicle_audit // Hand-audited closed-vehicle ledger (KCV/KFV/Unifi), sourced from statements read this session — see closed-vehicle-historic-irr-ingestion-spec.md.
   iifl_trade_listing // IIFL demat (Ria) trade listing .xls export, manually uploaded periodically — same NSE/BSE session-date basis as kabir_pms_report/cams_cas_pdf.
+  coindcx_order_history // CoinDCX "Order history" .csv export, manually uploaded periodically. UTC session date (crypto trades 24/7, no exchange session to localize to).
 }
 
 enum CorporateActionType {

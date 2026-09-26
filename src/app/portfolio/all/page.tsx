@@ -13,7 +13,7 @@ const GROUP_LABEL: Record<AssetClassGroup, string> = {
   equity: "Equity",
   fund: "Mutual funds",
   retirement: "EPF + NPS",
-  manual: "Bitcoin & real estate",
+  manual: "Real estate",
 };
 const GROUP_COLOR: Record<AssetClassGroup, string> = {
   equity: CATEGORICAL[0],
@@ -29,10 +29,11 @@ const GROUP_COLOR: Record<AssetClassGroup, string> = {
  * value" sync draw from. US equity first, per how this page was scoped: "start the portfolio with
  * overall portfolio and not just US equities."
  *
- * Scope: the nine broker/account-tracked classes, plus two manual ones — Bitcoin and real
- * estate — folded in via getManualTrackedAssets() (retirement/baseline/data.ts), sourced from
- * the same figures the retirement Assets screen edits (there's no broker or price feed for
- * either). Every other manual-only figure (fixed deposits, cash, ESOPs) still
+ * Scope: the ten broker/account-tracked classes (crypto joined 2026-09-26, engine-backed off the
+ * ingested CoinDCX order history — see /portfolio/crypto), plus one manual one — real estate —
+ * folded in via getManualTrackedAssets() (retirement/baseline/data.ts), sourced from the same
+ * figure the retirement Assets screen edits (there's no broker or price feed for it). Every other
+ * manual-only figure (fixed deposits, cash, ESOPs) still
  * lives only on the fuller net-worth tracker at /retirement/baseline, linked below.
  */
 export default async function AllAssetsPage() {
@@ -108,7 +109,7 @@ export default async function AllAssetsPage() {
         </Note>
       )}
       <Note>
-        BitCoin and Real estate have no broker or price feed — their value and &quot;as of&quot; date are
+        Real estate has no broker or price feed — its value and &quot;as of&quot; date are
         whatever was last saved on the retirement Assets screen, not a market price.
       </Note>
 

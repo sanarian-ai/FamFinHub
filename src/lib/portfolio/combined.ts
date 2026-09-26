@@ -43,24 +43,36 @@ export const US_BENCHMARKS = ["SPY", "QQQ"] as const;
 export type CombinedRunResult = {
   d0: string; d1: string; days: number; annualised: boolean; hasData: boolean;
   V0: number; V1: number; net: number;
-  us: RunResult; india: RunResult; all: Leg;
+  us: RunResult; india: RunResult; crypto?: RunResult; all: Leg;
 };
 
-/** Runs both books over the same [start,end] window and merges them into one household Leg.
+/** Runs each book over the same [start,end] window and merges them into one household Leg.
  * `indiaAccounts` should be the India rollup's full scope (getIndiaPortfolioData().channelAccounts.ALL
  * for Household, or a holder-filtered subset) — the US side has no equivalent account restriction
- * exposed here (always every US account), matching how /portfolio/us itself has no holder toggle. */
-export function combinedRun(usCtx: Ctx, indiaCtx: Ctx, indiaAccounts: string[], start: string, end: string, opts: { series?: boolean } = {}): CombinedRunResult {
+ * exposed here (always every US account), matching how /portfolio/us itself has no holder toggle.
+ *
+ * `cryptoCtx` is optional and additive (added 2026-09-26 when Bitcoin/Ethereum moved to an
+ * engine-backed book — see crypto-data.ts) — existing call sites that omit it are unaffected, same
+ * "generalize, keep back-compat" pattern engine.ts's run() used for its benchmarks param. Crypto
+ * benchmarks against the same Nifty 50 TRI as the India leg (COMBINED_INDIA_BENCHMARK) rather than a
+ * 3rd headline index — it's INR-native already (no currency:"INR" needed) and its Ctx.dates draws
+ * from the same unfiltered global PriceDaily query as US/India (see crypto-load.ts), satisfying the
+ * same d0/d1-alignment precondition documented above. */
+export function combinedRun(
+  usCtx: Ctx, indiaCtx: Ctx, indiaAccounts: string[], start: string, end: string,
+  opts: { series?: boolean; cryptoCtx?: Ctx } = {},
+): CombinedRunResult {
   const us = run(usCtx, start, end, { currency: "INR", benchmarks: US_BENCHMARKS, dividends: true, series: opts.series });
   const india = run(indiaCtx, start, end, { accounts: indiaAccounts, benchmarks: [COMBINED_INDIA_BENCHMARK], dividends: true, series: opts.series });
-  const V0 = us.V0 + india.V0, V1 = us.V1 + india.V1, net = us.net + india.net;
+  const crypto = opts.cryptoCtx ? run(opts.cryptoCtx, start, end, { benchmarks: [COMBINED_INDIA_BENCHMARK], series: opts.series }) : undefined;
+  const V0 = us.V0 + india.V0 + (crypto?.V0 ?? 0), V1 = us.V1 + india.V1 + (crypto?.V1 ?? 0), net = us.net + india.net + (crypto?.net ?? 0);
   const d0ms = Date.parse(`${us.d0}T00:00:00Z`), d1ms = Date.parse(`${us.d1}T00:00:00Z`);
   const T = Math.max(1, d1ms - d0ms);
-  const merged: CF[] = [...us.cashflows, ...india.cashflows];
+  const merged: CF[] = [...us.cashflows, ...india.cashflows, ...(crypto?.cashflows ?? [])];
   const all = legFromCashflows(merged, V0, d1ms, T);
   return {
-    d0: us.d0, d1: us.d1, days: us.days, annualised: us.annualised, hasData: us.hasData && india.hasData,
-    V0, V1, net, us, india, all,
+    d0: us.d0, d1: us.d1, days: us.days, annualised: us.annualised, hasData: us.hasData && india.hasData && (crypto ? crypto.hasData : true),
+    V0, V1, net, us, india, crypto, all,
   };
 }
 

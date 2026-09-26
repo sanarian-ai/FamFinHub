@@ -5,11 +5,11 @@ import { Prisma, type PrismaClient } from "@prisma/client";
 import { splitFactor } from "./splits";
 
 export const MAX_ROWS = 5000;
-const SOURCES = ["indmoney_report", "ibkr_api", "manual", "kabir_pms_report", "cams_cas_pdf", "manual_closed_vehicle_audit", "iifl_trade_listing"] as const;
+const SOURCES = ["indmoney_report", "ibkr_api", "manual", "kabir_pms_report", "cams_cas_pdf", "manual_closed_vehicle_audit", "iifl_trade_listing", "coindcx_order_history"] as const;
 const SIDES = ["BUY", "SELL"] as const;
 const CASH_TYPES = ["DIVIDEND", "WITHHOLDING_TAX", "FEE", "DEPOSIT", "WITHDRAWAL", "INTEREST"] as const;
 const ACTION_TYPES = ["SPLIT", "REVERSE_SPLIT", "SYMBOL_CHANGE", "BONUS", "RIGHTS", "DEMERGER"] as const;
-const KINDS = ["STOCK", "ETF", "BENCHMARK", "MUTUAL_FUND"] as const;
+const KINDS = ["STOCK", "ETF", "BENCHMARK", "MUTUAL_FUND", "CRYPTO"] as const;
 // The session-date convention differs by market: US sources settle to the America/New_York session
 // date, the Kabir PMS (NSE/BSE, via Nuvama) to the Asia/Kolkata session date.
 const SESSION_TZ: Record<string, string> = {
@@ -23,6 +23,7 @@ const SESSION_TZ: Record<string, string> = {
   // fallback below silently used America/New_York, which shifts a midnight-UTC execTs to the previous
   // calendar day — found while building the closed-vehicle ingestion script (step 4).
   iifl_trade_listing: "Asia/Kolkata", // IIFL demat (Ria) NSE trade listing — same basis as the other India sources above.
+  coindcx_order_history: "UTC", // CoinDCX order history — crypto trades 24/7, no exchange session to localize a "trading day" to, so the trade's own UTC calendar date is used as-is.
 };
 export const RECONCILE_TOL = 1e-4; // units
 

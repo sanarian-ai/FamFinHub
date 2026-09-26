@@ -4,6 +4,7 @@ import { fmtDay, fmtINR, fmtPct, fmtUnits, fmtUSD, tone } from "@/lib/portfolio/
 import { disposalRows, positions } from "@/lib/portfolio/views";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
 import { HealthStrip, Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "./ui";
+import { RefreshButton } from "./RefreshButton";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,10 @@ export default async function Overview() {
 
   return (
     <div className="flex flex-col gap-5">
-      <HealthStrip h={health} />
+      <div className="flex items-center justify-between gap-3">
+        <HealthStrip h={health} />
+        <RefreshButton />
+      </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Tile label="Market value" value={fmtUSD(pos.totalValue)} sub={`${fmtINR(pos.totalValue * fx)} at ${fx.toFixed(2)} · ${fmtDay(ctx.asof)}`} />

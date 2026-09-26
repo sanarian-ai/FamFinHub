@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Badge, Card, EmptyState } from "@/components/ui";
 import { getPortfolioData } from "@/lib/portfolio/data";
 import { getIndiaPortfolioData } from "@/lib/portfolio/india-data";
+import { getCryptoPortfolioData } from "@/lib/portfolio/crypto-data";
 import { inceptionStart, type SeriesPt } from "@/lib/portfolio/engine";
 import { combinedRun, COMBINED_INDIA_BENCHMARK } from "@/lib/portfolio/combined";
 import { alpha, downsample, headline, periodDefs } from "@/lib/portfolio/views";
@@ -25,8 +26,14 @@ const ALL_BENCH = ["NIFTY50TRI", "SPY", "QQQ"] as const;
  * header for why this needs no changes to the core engine). Benchmark alpha vs each of the 3 locked
  * indices (Nifty 50 TRI / S&P 500 / QQQ) reuses each book's OWN already-computed single-book replica
  * — same "channel cut" pattern as the India rollup's by-channel table: P&L/value sum exactly to the
- * total, IRR does not (it's money-weighted per scope, not additive). Manual classes (bitcoin, real
- * estate) have no engine-backed IRR at all and stay off this page entirely — see Overview.
+ * total, IRR does not (it's money-weighted per scope, not additive). Real estate has no engine-backed
+ * IRR at all and stays off this page entirely — see Overview. Crypto (BTC + ETH) joined as a 3rd book
+ * on 2026-09-26 (see combined.ts's cryptoCtx param): it folds into every All Assets total (value,
+ * P&L, the merged IRR) and gets its own row in "By book" below, but its own alpha vs Nifty 50 TRI
+ * stays on its own Performance tab rather than being blended into the locked India-vs-Nifty /
+ * US-vs-SPY-QQQ alpha tiles here — those three indices were a locked decision before crypto existed,
+ * and quietly redefining what "Alpha vs Nifty 50 TRI" means on this page felt riskier than just
+ * pointing there.
  *
  * Household-level only: the US book has no per-holder account scoping (unlike the India rollup's
  * Household/Sangeeth/Ria toggle), so this page doesn't offer one either.
@@ -35,11 +42,15 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
   const sp = await searchParams;
   const pKey = typeof sp.p === "string" ? sp.p : undefined;
 
-  const [usData, indiaData] = await Promise.all([getPortfolioData(), getIndiaPortfolioData()]);
+  const [usData, indiaData, cryptoData] = await Promise.all([getPortfolioData(), getIndiaPortfolioData(), getCryptoPortfolioData()]);
   const { ctx: usCtx, empty: usEmpty } = usData;
   const { ctx: indiaCtx, channelAccounts, empty: indiaEmpty } = indiaData;
   const indiaAll = channelAccounts.ALL;
   const indiaHasTrades = indiaCtx.trades.some((t) => indiaAll.includes(t.account));
+  // Crypto is optional/best-effort here, unlike US and India above: if it's ever empty (e.g. a
+  // future reset before a re-seed), the page still renders the US+India combined view rather than
+  // blocking on a 3rd book that didn't exist when this page was first built.
+  const cryptoCtx = cryptoData.empty ? undefined : cryptoData.ctx;
 
   if (usEmpty || indiaEmpty || !indiaHasTrades) {
     return <EmptyState>Combined performance needs dated trade history in both the US and India books.</EmptyState>;
@@ -51,9 +62,9 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
   const defs = periodDefs(spineIsIndia ? indiaCtx : usCtx, spineIsIndia ? indiaAll : undefined);
   const period = defs.find((d) => d.key === pKey) ?? defs.find((d) => d.key === "SI")!;
 
-  const main = combinedRun(usCtx, indiaCtx, indiaAll, period.start, period.end, { series: true });
+  const main = combinedRun(usCtx, indiaCtx, indiaAll, period.start, period.end, { series: true, cryptoCtx });
   const table = defs
-    .map((d) => ({ d, r: combinedRun(usCtx, indiaCtx, indiaAll, d.start, d.end) }))
+    .map((d) => ({ d, r: combinedRun(usCtx, indiaCtx, indiaAll, d.start, d.end, { cryptoCtx }) }))
     .filter((x) => x.r.hasData);
 
   const kind = main.annualised ? "IRR" : "Return";
@@ -69,16 +80,18 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
   // series are index-aligned date-for-date — no need to re-key by date string.
   const mergedSeries: SeriesPt[] = (main.us.series ?? []).map((u, i) => {
     const ind = main.india.series?.[i];
+    const cr = main.crypto?.series?.[i];
     const bench = { [COMBINED_INDIA_BENCHMARK]: ind?.bench[COMBINED_INDIA_BENCHMARK] ?? 0, SPY: u.bench.SPY ?? 0, QQQ: u.bench.QQQ ?? 0 };
-    return { d: u.d, pf: u.pf + (ind?.pf ?? 0), inv: u.inv + (ind?.inv ?? 0), SPY: bench.SPY, QQQ: bench.QQQ, bench };
+    return { d: u.d, pf: u.pf + (ind?.pf ?? 0) + (cr?.pf ?? 0), inv: u.inv + (ind?.inv ?? 0) + (cr?.inv ?? 0), SPY: bench.SPY, QQQ: bench.QQQ, bench };
   });
 
   const bookRows = [
     { key: "us", label: "US Stocks", href: "/portfolio/us/performance", r: main.us },
     { key: "india", label: "India (blended)", href: "/portfolio/india/performance", r: main.india },
+    ...(main.crypto ? [{ key: "crypto", label: "Crypto", href: "/portfolio/crypto/performance", r: main.crypto }] : []),
   ];
-  const bookProfitSum = main.us.pf.profit + main.india.pf.profit;
-  const bookV1Sum = main.us.V1 + main.india.V1;
+  const bookProfitSum = main.us.pf.profit + main.india.pf.profit + (main.crypto?.pf.profit ?? 0);
+  const bookV1Sum = main.us.V1 + main.india.V1 + (main.crypto?.V1 ?? 0);
   const reconciled = Math.abs(bookProfitSum - main.all.profit) < 1 && Math.abs(bookV1Sum - main.V1) < 1;
 
   return (
@@ -159,9 +172,13 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
         <div className="px-5 pb-4 pt-2">
           <Note>
             {reconciled
-              ? "Book P&L and value sum exactly to the All Assets total. IRR itself isn't additive — the combined IRR is its own money-weighted rate over the merged cash-flow stream, not a blend of the two books' rates."
+              ? "Book P&L and value sum exactly to the All Assets total. IRR itself isn't additive — the combined IRR is its own money-weighted rate over the merged cash-flow stream, not a blend of the books' rates."
               : `Book sums (P&L ${fmtMoney(bookProfitSum, CUR)}, value ${fmtMoney(bookV1Sum, CUR)}) don't match the All Assets total — check account scoping.`}{" "}
-            Manual classes (bitcoin, real estate) are value-only and excluded from this page entirely — see Overview.
+            Real estate is value-only and excluded from this page entirely — see Overview. Crypto&apos;s own alpha vs Nifty 50 TRI is on its{" "}
+            <Link href="/portfolio/crypto/performance" className="underline decoration-slate-300 underline-offset-2 hover:decoration-slate-600">
+              own Performance tab
+            </Link>{" "}
+            rather than blended into the tiles above.
           </Note>
         </div>
       </Card>

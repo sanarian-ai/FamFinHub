@@ -31,6 +31,25 @@ export async function getUsEquityActual(): Promise<AssetClassActual | null> {
 }
 
 /**
+ * Engine-backed BTC+ETH value from the CoinDCX crypto channel (crypto-data.ts) — added 2026-09-26
+ * when Bitcoin moved from the retirement screen's manual figure to a real ingested+IRR-tracked
+ * book (see /portfolio/crypto). Already INR-native, no fx conversion needed (unlike US equity above).
+ */
+export async function getCryptoActual(): Promise<AssetClassActual | null> {
+  try {
+    const { getCryptoPortfolioData } = await import("@/lib/portfolio/crypto-data");
+    const { positions } = await import("@/lib/portfolio/views");
+    const { ctx, book, empty } = await getCryptoPortfolioData();
+    if (empty) return null;
+    const pos = positions(ctx, book);
+    if (pos.totalValue <= 0) return null;
+    return { valueL: pos.totalValue / 1e5, asOf: ctx.asof };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Sum of current market value across a single-account, snapshot+price-quoted holding — used for
  * accounts with no lots/IRR engine behind them (Kabir PMS's own PositionSnapshot rows, kept in
  * sync by the price-refresh route; see /portfolio/india's header comment for the wider pattern).
@@ -221,12 +240,12 @@ export async function getMutualFundsByCategory(): Promise<Record<"EQUITY" | "DEB
 export type AssetClassKey =
   | "usEquity" | "indianEquity" | "kabirPms" | "nse"
   | "mfEquity" | "mfDebt" | "mfHybrid" | "mfCommodity" | "epfNps"
-  | "bitcoin" | "realEstate";
+  | "crypto" | "realEstate";
 
-/** "manual" = no broker/price feed at all — bitcoin and real estate, sourced from the retirement
- *  Assets screen's own manual figures rather than a query in this file. See
- *  retirement/baseline/data.ts's getManualTrackedAssets(), which returns AssetClassRow-shaped
- *  rows for those two so /portfolio/all can fold them into the same table. */
+/** "manual" = no broker/price feed at all — just real estate now (bitcoin moved to the
+ *  engine-backed "crypto" class below on 2026-09-26 once CoinDCX order history was ingested). See
+ *  retirement/baseline/data.ts's getManualTrackedAssets(), which returns an AssetClassRow-shaped
+ *  row for real estate so /portfolio/all can fold it into the same table. */
 export type AssetClassGroup = "equity" | "fund" | "retirement" | "manual";
 
 export interface AssetClassRow {
@@ -241,15 +260,15 @@ export interface AssetClassRow {
 }
 
 /**
- * All nine live-tracked asset classes in one call, US equity first (the intended /portfolio/all
+ * All ten live-tracked asset classes in one call, US equity first (the intended /portfolio/all
  * landing order — see PortfolioSwitcher's "All" tab and the page it fronts), then India-related
  * classes. This is the single source both /portfolio/all and the broadened /portfolio/india's
  * "everything" total draw from, and what retirement/baseline/data.ts's getNetWorthActuals() now
  * maps onto its own `networth.*` item keys instead of re-deriving these totals itself.
  */
 export async function getAssetClassBreakdown(): Promise<AssetClassRow[]> {
-  const [usEquity, kabirPms, iifl, nse, mfByCategory, epfNps] = await Promise.all([
-    getUsEquityActual(), getKabirPmsActual(), getIiflActual(), getNseActual(), getMutualFundsByCategory(), getEpfNpsActual(),
+  const [usEquity, kabirPms, iifl, nse, mfByCategory, epfNps, crypto] = await Promise.all([
+    getUsEquityActual(), getKabirPmsActual(), getIiflActual(), getNseActual(), getMutualFundsByCategory(), getEpfNpsActual(), getCryptoActual(),
   ]);
   const row = (key: AssetClassKey, label: string, group: AssetClassGroup, href: string | null, a: AssetClassActual | null): AssetClassRow => ({
     key, label, group, href, valueL: a?.valueL ?? null, asOf: a?.asOf ?? null,
@@ -264,5 +283,6 @@ export async function getAssetClassBreakdown(): Promise<AssetClassRow[]> {
     row("mfHybrid", "Mutual funds — Hybrid", "fund", "/portfolio/india/mf", mfByCategory.HYBRID),
     row("mfCommodity", "Mutual funds — Commodity", "fund", "/portfolio/india/mf", mfByCategory.COMMODITY),
     row("epfNps", "EPF + NPS", "retirement", null, epfNps),
+    row("crypto", "Crypto (BTC + ETH)", "equity", "/portfolio/crypto", crypto),
   ];
 }
