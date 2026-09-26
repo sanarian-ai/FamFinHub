@@ -1,6 +1,6 @@
 import { Badge, Card, EmptyState } from "@/components/ui";
 import { getIndiaPortfolioData } from "@/lib/portfolio/india-data";
-import { inceptionStart, run } from "@/lib/portfolio/engine";
+import { firstTradeDate, inceptionStart, run } from "@/lib/portfolio/engine";
 import { fmtDay, fmtMoney, fmtPct, fmtPP, tone } from "@/lib/portfolio/format";
 import { alpha, downsample, headline, pickPeriod, periodDefs, runPeriod } from "@/lib/portfolio/views";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
@@ -43,6 +43,16 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
       return { key, live: lotAccounts.includes(key), start, r };
     })
     .filter((x): x is { key: string; live: boolean; start: string; r: ReturnType<typeof run> } => x != null);
+
+  // The blended "All periods" table's End value is meaningless before the live Kabir PMS account
+  // existed (pre-23 Jan 2026): the 4 closed vehicles are priced at a flat Rs 0.01 placeholder (see
+  // closed-vehicle-historic-irr-ingestion-spec.md), so a period ending before that date reports a
+  // near-zero blended V1 even though real capital was invested at the time -- flagged in the
+  // 2026-09-26 QA audit ("misleading Rs0 end values"). P&L for the same rows is unaffected (it's
+  // computed from real cash flows, not V1) so only the End value cell is blanked here.
+  const liveAccounts = accounts.filter((a) => lotAccounts.includes(a));
+  const liveTrades = ctx.trades.filter((t) => liveAccounts.includes(t.account));
+  const liveStart = liveTrades.length ? firstTradeDate(ctx, liveAccounts) : null;
 
   const pf = headline(main.pf, main);
   const kind = pf.kind === "IRR" ? "IRR" : "Return";
@@ -122,12 +132,15 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
                   <Td>{hb.value == null ? "n/a" : fmtPct(hb.value)}</Td>
                   <Td className={tone(al)}>{fmtPP(al)}</Td>
                   <Td className={tone(r.pf.profit)}>{fmtMoney(r.pf.profit, CUR)}</Td>
-                  <Td>{fmtMoney(r.V1, CUR)}</Td>
+                  <Td>{liveStart && r.d1 < liveStart ? <span className="text-slate-400">n/a</span> : fmtMoney(r.V1, CUR)}</Td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        <div className="px-5 pb-4 pt-2">
+          <Note>End value shows n/a for any period ending before the live Kabir PMS account started (23 Jan 2026) -- before that, the 4 closed vehicles priced at a flat placeholder make the blended value meaningless. P&amp;L is unaffected; it&apos;s computed from real cash flows.</Note>
+        </div>
       </Card>
     </div>
   );

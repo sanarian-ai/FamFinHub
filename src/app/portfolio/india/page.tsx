@@ -140,7 +140,7 @@ export default async function IndiaOverview({ searchParams }: { searchParams: Pr
 
       {pos.rows.length > 0 && (
         <Card className="overflow-x-auto p-0">
-          <div className="px-5 pt-4 text-sm font-semibold text-slate-900">PMS &amp; Mutual Fund positions</div>
+          <div className="px-5 pt-4 text-sm font-semibold text-slate-900">Engine-tracked positions (Equity + PMS + Mutual Funds)</div>
           <table className={tableCls}>
             <thead className={theadCls}>
               <tr><Th right={false}>Security</Th><Th>Units</Th><Th>Avg cost</Th><Th>Price</Th><Th>Value</Th><Th>Weight</Th><Th>Unrealised</Th><Th>%</Th></tr>
@@ -170,7 +170,7 @@ export default async function IndiaOverview({ searchParams }: { searchParams: Pr
             </tbody>
           </table>
           <div className="px-5 pb-4 pt-2">
-            <Note>Real FIFO positions with dated trade history — feeds IRR, alpha vs Nifty 500 TRI, and the channel/holder cuts on Performance. Includes any Equity accounts with dated trades (none yet).</Note>
+            <Note>Real FIFO positions with dated trade history — feeds IRR, alpha vs Nifty 500 TRI, and the channel/holder cuts on Performance. Includes any Equity, PMS, or Mutual Fund accounts with dated trades.</Note>
           </div>
         </Card>
       )}

@@ -28,12 +28,15 @@ export default async function IndiaEquityPerformance({ searchParams }: { searchP
 
   const table = defs.map((d) => ({ d, r: runPeriod(ctx, d, opts) })).filter((x) => x.r.hasData);
   const stocks = stockRows(ctx, period, opts);
+  // A holder with zero engine-tracked trades (e.g. Sangeeth/Zerodha, no dated trades yet) still gets
+  // an explicit row below rather than being silently dropped -- flagged in the 2026-09-26 QA audit
+  // ("by-holder cuts quietly drop holders with no engine-tracked activity").
   const byHolder = (Object.keys(EQUITY_HOLDER_GROUPS) as HolderKey[]).map((h) => {
     const acc = h === "ALL" ? channelAccounts.EQUITY : (accountsForHolder(h) ?? channelAccounts.EQUITY);
-    if (!ctx.trades.some((t) => acc.includes(t.account))) return null;
+    if (!ctx.trades.some((t) => acc.includes(t.account))) return { h, r: null };
     const start = inceptionStart(ctx, acc);
     return { h, r: runPeriod(ctx, { start, end: ctx.asof }, { accounts: acc, benchmarks: EQUITY_BENCHMARKS }) };
-  }).filter((x): x is { h: HolderKey; r: ReturnType<typeof runPeriod> } => x != null);
+  });
 
   const cell = (r: typeof main, key: string) => {
     const h = headline(r.bench[key] ?? r.pf, r);
@@ -121,19 +124,33 @@ export default async function IndiaEquityPerformance({ searchParams }: { searchP
             <tr><Th right={false}>Scope</Th><Th>IRR</Th><Th>{BENCHMARK_LABEL[B0]}</Th><Th>{BENCHMARK_LABEL[B1]}</Th><Th>P&amp;L</Th><Th>Value</Th></tr>
           </thead>
           <tbody>
-            {byHolder.map(({ h, r }) => (
-              <tr key={h} className={rowCls}>
-                <Td right={false} className="font-medium text-slate-800">
-                  {HOLDER_LABEL[h]}
-                  <div className="text-xs font-normal text-slate-400">since {fmtDay(r.d0)}</div>
-                </Td>
-                <Td className={tone(r.pf.irr)}>{cell(r, "pf")}</Td>
-                <Td>{cell(r, B0)}</Td>
-                <Td>{cell(r, B1)}</Td>
-                <Td className={tone(r.pf.profit)}>{fmtMoney(r.pf.profit, CUR)}</Td>
-                <Td>{fmtMoney(r.V1, CUR)}</Td>
-              </tr>
-            ))}
+            {byHolder.map(({ h, r }) =>
+              r == null ? (
+                <tr key={h} className={rowCls}>
+                  <Td right={false} className="font-medium text-slate-800">
+                    {HOLDER_LABEL[h]}
+                    <div className="text-xs font-normal text-slate-400">no engine-tracked trades yet</div>
+                  </Td>
+                  <Td><span className="text-slate-400">n/a</span></Td>
+                  <Td><span className="text-slate-400">n/a</span></Td>
+                  <Td><span className="text-slate-400">n/a</span></Td>
+                  <Td><span className="text-slate-400">n/a</span></Td>
+                  <Td><span className="text-slate-400">n/a</span></Td>
+                </tr>
+              ) : (
+                <tr key={h} className={rowCls}>
+                  <Td right={false} className="font-medium text-slate-800">
+                    {HOLDER_LABEL[h]}
+                    <div className="text-xs font-normal text-slate-400">since {fmtDay(r.d0)}</div>
+                  </Td>
+                  <Td className={tone(r.pf.irr)}>{cell(r, "pf")}</Td>
+                  <Td>{cell(r, B0)}</Td>
+                  <Td>{cell(r, B1)}</Td>
+                  <Td className={tone(r.pf.profit)}>{fmtMoney(r.pf.profit, CUR)}</Td>
+                  <Td>{fmtMoney(r.V1, CUR)}</Td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </Card>

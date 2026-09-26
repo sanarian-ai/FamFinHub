@@ -52,13 +52,16 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
   const channelV1Sum = byChannel.reduce((s, x) => s + x.r.V1, 0);
   const reconciled = Math.abs(channelProfitSum - main.pf.profit) < 1 && Math.abs(channelV1Sum - main.V1) < 1;
 
+  // A holder with zero engine-tracked trades (e.g. Sangeeth/Zerodha, no dated trades yet) still gets
+  // an explicit row below rather than being silently dropped -- flagged in the 2026-09-26 QA audit
+  // ("by-holder cuts quietly drop holders with no engine-tracked activity").
   const byHolder = HOLDER_ORDER.map((h) => {
     const acc = holderAccounts[h];
-    if (!ctx.trades.some((t) => acc.includes(t.account))) return null;
+    if (!ctx.trades.some((t) => acc.includes(t.account))) return { h, r: null };
     const start = inceptionStart(ctx, acc);
     const sym = symbolsForFilter(ctx, acc, q.oc);
     return { h, r: runPeriod(ctx, { start, end: ctx.asof }, { accounts: acc, benchmarks: [INDIA_BENCHMARK], symbols: sym }) };
-  }).filter((x): x is { h: HolderKey; r: ReturnType<typeof runPeriod> } => x != null);
+  });
 
   const cell = (r: typeof main, isBench: boolean) => {
     const h = headline(isBench ? r.bench[INDIA_BENCHMARK] : r.pf, r);
@@ -153,17 +156,29 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
             <tr><Th right={false}>Scope</Th><Th>IRR</Th><Th>P&amp;L</Th><Th>Value</Th></tr>
           </thead>
           <tbody>
-            {byHolder.map(({ h, r }) => (
-              <tr key={h} className={rowCls}>
-                <Td right={false} className="font-medium text-slate-800">
-                  {HOLDER_LABEL[h]}
-                  <div className="text-xs font-normal text-slate-400">since {fmtDay(r.d0)}</div>
-                </Td>
-                <Td className={tone(r.pf.irr)}>{cell(r, false)}</Td>
-                <Td className={tone(r.pf.profit)}>{fmtMoney(r.pf.profit, CUR)}</Td>
-                <Td>{fmtMoney(r.V1, CUR)}</Td>
-              </tr>
-            ))}
+            {byHolder.map(({ h, r }) =>
+              r == null ? (
+                <tr key={h} className={rowCls}>
+                  <Td right={false} className="font-medium text-slate-800">
+                    {HOLDER_LABEL[h]}
+                    <div className="text-xs font-normal text-slate-400">no engine-tracked trades yet</div>
+                  </Td>
+                  <Td><span className="text-slate-400">n/a</span></Td>
+                  <Td><span className="text-slate-400">n/a</span></Td>
+                  <Td><span className="text-slate-400">n/a</span></Td>
+                </tr>
+              ) : (
+                <tr key={h} className={rowCls}>
+                  <Td right={false} className="font-medium text-slate-800">
+                    {HOLDER_LABEL[h]}
+                    <div className="text-xs font-normal text-slate-400">since {fmtDay(r.d0)}</div>
+                  </Td>
+                  <Td className={tone(r.pf.irr)}>{cell(r, false)}</Td>
+                  <Td className={tone(r.pf.profit)}>{fmtMoney(r.pf.profit, CUR)}</Td>
+                  <Td>{fmtMoney(r.V1, CUR)}</Td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </Card>
