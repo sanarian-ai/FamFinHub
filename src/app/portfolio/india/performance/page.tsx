@@ -8,7 +8,7 @@ import { HolderToggle, OpenClosedToggle, PeriodBar, parseQ } from "../rollupCont
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../ui";
 import { RollupValueChart } from "../RollupValueChart";
 import { RollupSubNav } from "../RollupSubNav";
-import { CHANNEL_LABEL, CHANNEL_ORDER, HOLDER_LABEL, HOLDER_ORDER, INDIA_BENCHMARK, OC_LABEL } from "../rollupConstants";
+import { CHANNEL_LABEL, CHANNEL_ORDER, HOLDER_LABEL, HOLDER_ORDER, INDIA_BENCHMARK, INDIA_BENCHMARKS, INDIA_BENCHMARK_LABEL, OC_LABEL } from "../rollupConstants";
 import { symbolsForFilter } from "../rollupData";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +36,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
   const defs = periodDefs(ctx, accounts);
   const period = pickPeriod(ctx, q.p, accounts);
   const symbols = symbolsForFilter(ctx, accounts, q.oc);
-  const opts = { accounts, benchmarks: [INDIA_BENCHMARK], symbols };
+  const opts = { accounts, benchmarks: INDIA_BENCHMARKS, symbols };
   const main = runPeriod(ctx, period, { ...opts, series: true });
 
   const table = defs.map((d) => ({ d, r: runPeriod(ctx, d, opts) })).filter((x) => x.r.hasData);
@@ -70,8 +70,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
 
   const pf = headline(main.pf, main);
   const kind = pf.kind === "IRR" ? "IRR" : "Return";
-  const bh = headline(main.bench[INDIA_BENCHMARK], main);
-  const a = alpha(main.pf, main.bench[INDIA_BENCHMARK], main);
+  const benchTiles = INDIA_BENCHMARKS.map((b, i) => ({ key: b, label: INDIA_BENCHMARK_LABEL[b], h: headline(main.bench[b], main), a: alpha(main.pf, main.bench[b], main), dot: CATEGORICAL[(i + 1) % CATEGORICAL.length] }));
   const invested = main.net - main.V0;
 
   return (
@@ -86,11 +85,18 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
         <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Tile label="Blended value" value={fmtMoney(main.V1, CUR)} sub={fmtDay(main.d1)} />
         <Tile label={`Blended ${kind}`} dot={CATEGORICAL[0]} value={fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}`} />
-        <Tile label={`${BENCHMARK_LABEL} ${kind}`} dot={CATEGORICAL[1]} value={fmtPct(bh.value)} sub={`same flows · P&L ${fmtMoney(main.bench[INDIA_BENCHMARK].profit, CUR)}`} />
-        <Tile label={`Alpha vs ${BENCHMARK_LABEL}`} value={fmtPP(a)} valueClass={tone(a)} sub={`${fmtMoney(main.pf.profit - main.bench[INDIA_BENCHMARK].profit, CUR)} vs index P&L`} />
+        {benchTiles.map((b) => (
+          <Tile
+            key={b.key}
+            label={`${b.label} ${kind}`}
+            dot={b.dot}
+            value={b.h.value == null ? "n/a" : fmtPct(b.h.value)}
+            sub={<>same flows · <span className={tone(b.a)}>α {fmtPP(b.a)}</span></>}
+          />
+        ))}
       </div>
 
       <Card>
@@ -187,11 +193,19 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
         <div className="px-5 pt-4 text-sm font-semibold text-slate-900">All periods</div>
         <table className={tableCls}>
           <thead className={theadCls}>
-            <tr><Th right={false}>Period</Th><Th>Blended</Th><Th>{BENCHMARK_LABEL}</Th><Th>Alpha</Th><Th>P&amp;L</Th><Th>End value</Th></tr>
+            <tr>
+              <Th right={false}>Period</Th><Th>Blended</Th>
+              {INDIA_BENCHMARKS.map((b) => <Th key={b}>{INDIA_BENCHMARK_LABEL[b]}</Th>)}
+              {INDIA_BENCHMARKS.map((b) => <Th key={`a-${b}`}>α vs {INDIA_BENCHMARK_LABEL[b]}</Th>)}
+              <Th>P&amp;L</Th><Th>End value</Th>
+            </tr>
           </thead>
           <tbody>
             {table.map(({ d, r }) => {
-              const al = alpha(r.pf, r.bench[INDIA_BENCHMARK], r);
+              const benchCell = (b: string) => {
+                const h = headline(r.bench[b], r);
+                return h.value == null ? <span className="text-slate-400">n/a</span> : fmtPct(h.value);
+              };
               return (
                 <tr key={d.key} className={`${rowCls} ${d.key === period.key ? "bg-slate-50" : ""}`}>
                   <Td right={false}>
@@ -200,8 +214,11 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
                     <div className="text-xs text-slate-400">{fmtDay(r.d0)} → {fmtDay(r.d1)}</div>
                   </Td>
                   <Td className={tone(headline(r.pf, r).value)}>{cell(r, false)}</Td>
-                  <Td>{cell(r, true)}</Td>
-                  <Td className={tone(al)}>{fmtPP(al)}</Td>
+                  {INDIA_BENCHMARKS.map((b) => <Td key={b}>{benchCell(b)}</Td>)}
+                  {INDIA_BENCHMARKS.map((b) => {
+                    const al = alpha(r.pf, r.bench[b], r);
+                    return <Td key={`a-${b}`} className={tone(al)}>{fmtPP(al)}</Td>;
+                  })}
                   <Td className={tone(r.pf.profit)}>{fmtMoney(r.pf.profit, CUR)}</Td>
                   <Td>{fmtMoney(r.V1, CUR)}</Td>
                 </tr>

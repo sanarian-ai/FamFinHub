@@ -52,13 +52,21 @@ export default async function Performance({ searchParams }: { searchParams: Prom
         <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Tile label="Portfolio value" value={fmtMoney(main.V1, cur)} sub={`${fmtMoney(other.V1, cur === "USD" ? "INR" : "USD")} · ${fmtDay(main.d1)}`} />
         <Tile label={`Portfolio ${kind}`} dot={CATEGORICAL[0]} value={fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, cur)}${main.annualised ? "" : " · period return, under 90 days"}`} />
-        <Tile label={`S&P 500 ${kind}`} dot={CATEGORICAL[1]} value={fmtPct(spy.value)} sub={`same flows · P&L ${fmtMoney(main.SPY.profit, cur)}`} />
-        <Tile label={`Nasdaq-100 ${kind}`} dot={CATEGORICAL[2]} value={fmtPct(qqq.value)} sub={`same flows · P&L ${fmtMoney(main.QQQ.profit, cur)}`} />
-        <Tile label="Alpha vs SPY" value={fmtPP(aSpy)} valueClass={tone(aSpy)} sub={`${fmtMoney(main.pf.profit - main.SPY.profit, cur)} vs index P&L`} />
-        <Tile label="Alpha vs QQQ" value={fmtPP(aQqq)} valueClass={tone(aQqq)} sub={`${fmtMoney(main.pf.profit - main.QQQ.profit, cur)} vs index P&L`} />
+        <Tile
+          label={`S&P 500 ${kind}`}
+          dot={CATEGORICAL[1]}
+          value={spy.value == null ? "n/a" : fmtPct(spy.value)}
+          sub={<>same flows · <span className={tone(aSpy)}>α {fmtPP(aSpy)}</span></>}
+        />
+        <Tile
+          label={`Nasdaq-100 ${kind}`}
+          dot={CATEGORICAL[2]}
+          value={qqq.value == null ? "n/a" : fmtPct(qqq.value)}
+          sub={<>same flows · <span className={tone(aQqq)}>α {fmtPP(aQqq)}</span></>}
+        />
       </div>
 
       <Card>

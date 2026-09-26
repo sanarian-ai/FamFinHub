@@ -71,6 +71,7 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
   const pf = headline(main.all, main);
   const niftyLeg = main.india.bench[COMBINED_INDIA_BENCHMARK];
   const spLeg = main.us.SPY, qqqLeg = main.us.QQQ;
+  const niftyH = headline(niftyLeg, main), spH = headline(spLeg, main), qqqH = headline(qqqLeg, main);
   const alphaNifty = alpha(main.all, niftyLeg, main);
   const alphaSP = alpha(main.all, spLeg, main);
   const alphaQQQ = alpha(main.all, qqqLeg, main);
@@ -100,7 +101,7 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
 
       <PeriodBar base={BASE} q={{ p: pKey }} defs={defs} current={period.key} />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <Tile label="All Assets value" value={fmtMoney(main.V1, CUR)} sub={fmtDay(main.d1)} />
         <Tile
           label={`All Assets ${kind}`}
@@ -110,16 +111,22 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
           sub={`P&L ${fmtMoney(main.all.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}`}
         />
         <Tile
-          label={`Alpha vs ${BENCHMARK_LABEL.NIFTY50TRI}`}
-          value={fmtPP(alphaNifty)}
-          valueClass={tone(alphaNifty)}
-          sub="India's own flows replicated into the index"
+          label={`${BENCHMARK_LABEL.NIFTY50TRI} ${kind}`}
+          dot={CATEGORICAL[1]}
+          value={niftyH.value == null ? "n/a" : fmtPct(niftyH.value)}
+          sub={<>India&apos;s flows replicated · <span className={tone(alphaNifty)}>α {fmtPP(alphaNifty)}</span></>}
         />
         <Tile
-          label={`Alpha vs ${BENCHMARK_LABEL.SPY} / ${BENCHMARK_LABEL.QQQ}`}
-          value={`${fmtPP(alphaSP)} / ${fmtPP(alphaQQQ)}`}
-          valueClass={tone(alphaSP)}
-          sub="US book's own flows replicated into each index"
+          label={`${BENCHMARK_LABEL.SPY} ${kind}`}
+          dot={CATEGORICAL[2]}
+          value={spH.value == null ? "n/a" : fmtPct(spH.value)}
+          sub={<>US flows replicated · <span className={tone(alphaSP)}>α {fmtPP(alphaSP)}</span></>}
+        />
+        <Tile
+          label={`${BENCHMARK_LABEL.QQQ} ${kind}`}
+          dot={CATEGORICAL[3]}
+          value={qqqH.value == null ? "n/a" : fmtPct(qqqH.value)}
+          sub={<>US flows replicated · <span className={tone(alphaQQQ)}>α {fmtPP(alphaQQQ)}</span></>}
         />
       </div>
 

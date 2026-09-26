@@ -52,15 +52,17 @@ export default async function IndiaMfPerformance({ searchParams }: { searchParam
     <div className="flex flex-col gap-5">
       <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Tile label="Portfolio value" value={fmtMoney(main.V1, CUR)} sub={fmtDay(main.d1)} />
         <Tile label={`Portfolio ${kind}`} dot={CATEGORICAL[0]} value={fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}`} />
-        <div className="hidden xl:block" />
         {benchTiles.map((b) => (
-          <Tile key={b.key} label={`${b.label} ${kind}`} dot={b.dot} value={fmtPct(b.h.value)} sub={`same flows · P&L ${fmtMoney(main.bench[b.key].profit, CUR)}`} />
-        ))}
-        {benchTiles.map((b) => (
-          <Tile key={`a-${b.key}`} label={`Alpha vs ${b.label}`} value={fmtPP(b.a)} valueClass={tone(b.a)} sub={`${fmtMoney(main.pf.profit - main.bench[b.key].profit, CUR)} vs index P&L`} />
+          <Tile
+            key={b.key}
+            label={`${b.label} ${kind}`}
+            dot={b.dot}
+            value={b.h.value == null ? "n/a" : fmtPct(b.h.value)}
+            sub={<>same flows · <span className={tone(b.a)}>α {fmtPP(b.a)}</span></>}
+          />
         ))}
       </div>
 

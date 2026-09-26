@@ -7,7 +7,7 @@ import { CATEGORICAL } from "@/app/insights/chartTheme";
 import { PeriodBar, parseQ } from "../controls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../ui";
 import { RollupValueChart } from "../../RollupValueChart";
-import { PMS_BENCHMARK, PMS_BENCHMARK_LABEL } from "../constants";
+import { PMS_BENCHMARK, PMS_BENCHMARK_LABEL, PMS_BENCHMARKS, PMS_BENCHMARK_LABELS } from "../constants";
 
 export const dynamic = "force-dynamic";
 const BASE = "/portfolio/india/pms/performance";
@@ -27,7 +27,7 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
   const hasTrades = ctx.trades.some((t) => accounts.includes(t.account));
   if (!hasTrades) return <EmptyState>No dated trade history yet for India PMS.</EmptyState>;
 
-  const opts = { accounts, benchmarks: [PMS_BENCHMARK] };
+  const opts = { accounts, benchmarks: PMS_BENCHMARKS };
   const defs = periodDefs(ctx, accounts);
   const period = pickPeriod(ctx, q.p, accounts);
   const main = runPeriod(ctx, period, { ...opts, series: true });
@@ -56,8 +56,7 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
 
   const pf = headline(main.pf, main);
   const kind = pf.kind === "IRR" ? "IRR" : "Return";
-  const benchH = headline(main.bench[PMS_BENCHMARK], main);
-  const a = alpha(main.pf, main.bench[PMS_BENCHMARK], main);
+  const benchTiles = PMS_BENCHMARKS.map((b, i) => ({ key: b, label: PMS_BENCHMARK_LABELS[b], h: headline(main.bench[b], main), a: alpha(main.pf, main.bench[b], main), dot: CATEGORICAL[(i + 1) % CATEGORICAL.length] }));
   const invested = main.net - main.V0;
 
   return (
@@ -66,11 +65,18 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
         <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <Tile label="Blended value" value={fmtMoney(main.V1, CUR)} sub={fmtDay(main.d1)} />
         <Tile label={`Blended ${kind}`} dot={CATEGORICAL[0]} value={fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}`} />
-        <Tile label={`${PMS_BENCHMARK_LABEL} ${kind}`} dot={CATEGORICAL[1]} value={fmtPct(benchH.value)} sub={`same flows · P&L ${fmtMoney(main.bench[PMS_BENCHMARK].profit, CUR)}`} />
-        <Tile label={`Alpha vs ${PMS_BENCHMARK_LABEL}`} value={fmtPP(a)} valueClass={tone(a)} sub={`${fmtMoney(main.pf.profit - main.bench[PMS_BENCHMARK].profit, CUR)} vs index P&L`} />
+        {benchTiles.map((b) => (
+          <Tile
+            key={b.key}
+            label={`${b.label} ${kind}`}
+            dot={b.dot}
+            value={b.h.value == null ? "n/a" : fmtPct(b.h.value)}
+            sub={<>same flows · <span className={tone(b.a)}>α {fmtPP(b.a)}</span></>}
+          />
+        ))}
       </div>
 
       <Card>
@@ -116,11 +122,20 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
         <div className="px-5 pt-4 text-sm font-semibold text-slate-900">All periods · blended</div>
         <table className={tableCls}>
           <thead className={theadCls}>
-            <tr><Th right={false}>Period</Th><Th>Blended</Th><Th>{PMS_BENCHMARK_LABEL}</Th><Th>Alpha</Th><Th>P&amp;L</Th><Th>End value</Th></tr>
+            <tr>
+              <Th right={false}>Period</Th><Th>Blended</Th>
+              {PMS_BENCHMARKS.map((b) => <Th key={b}>{PMS_BENCHMARK_LABELS[b]}</Th>)}
+              {PMS_BENCHMARKS.map((b) => <Th key={`a-${b}`}>α vs {PMS_BENCHMARK_LABELS[b]}</Th>)}
+              <Th>P&amp;L</Th><Th>End value</Th>
+            </tr>
           </thead>
           <tbody>
             {table.map(({ d, r }) => {
-              const h = headline(r.pf, r), hb = headline(r.bench[PMS_BENCHMARK], r), al = alpha(r.pf, r.bench[PMS_BENCHMARK], r);
+              const h = headline(r.pf, r);
+              const benchCell = (b: string) => {
+                const hb = headline(r.bench[b], r);
+                return hb.value == null ? <span className="text-slate-400">n/a</span> : fmtPct(hb.value);
+              };
               return (
                 <tr key={d.key} className={`${rowCls} ${d.key === period.key ? "bg-slate-50" : ""}`}>
                   <Td right={false}>
@@ -129,8 +144,11 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
                     <div className="text-xs text-slate-400">{fmtDay(r.d0)} → {fmtDay(r.d1)}</div>
                   </Td>
                   <Td className={tone(h.value)}>{h.value == null ? "n/a" : fmtPct(h.value)}</Td>
-                  <Td>{hb.value == null ? "n/a" : fmtPct(hb.value)}</Td>
-                  <Td className={tone(al)}>{fmtPP(al)}</Td>
+                  {PMS_BENCHMARKS.map((b) => <Td key={b}>{benchCell(b)}</Td>)}
+                  {PMS_BENCHMARKS.map((b) => {
+                    const al = alpha(r.pf, r.bench[b], r);
+                    return <Td key={`a-${b}`} className={tone(al)}>{fmtPP(al)}</Td>;
+                  })}
                   <Td className={tone(r.pf.profit)}>{fmtMoney(r.pf.profit, CUR)}</Td>
                   <Td>{liveStart && r.d1 < liveStart ? <span className="text-slate-400">n/a</span> : fmtMoney(r.V1, CUR)}</Td>
                 </tr>

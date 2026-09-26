@@ -42,11 +42,15 @@ export default async function CryptoPerformance({ searchParams }: { searchParams
     <div className="flex flex-col gap-5">
       <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
         <Tile label="Portfolio value" value={fmtMoney(main.V1, CUR)} sub={fmtDay(main.d1)} />
         <Tile label={`Portfolio ${kind}`} dot={CATEGORICAL[0]} value={fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}`} />
-        <Tile label={`${bench0.label} ${kind}`} dot={CATEGORICAL[1]} value={fmtPct(bench0.h.value)} sub={`same flows · P&L ${fmtMoney(main.bench[B0].profit, CUR)}`} />
-        <Tile label={`Alpha vs ${bench0.label}`} value={fmtPP(bench0.a)} valueClass={tone(bench0.a)} sub={`${fmtMoney(main.pf.profit - main.bench[B0].profit, CUR)} vs index P&L`} />
+        <Tile
+          label={`${bench0.label} ${kind}`}
+          dot={CATEGORICAL[1]}
+          value={bench0.h.value == null ? "n/a" : fmtPct(bench0.h.value)}
+          sub={<>same flows · <span className={tone(bench0.a)}>α {fmtPP(bench0.a)}</span></>}
+        />
       </div>
 
       <Card>
