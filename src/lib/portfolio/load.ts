@@ -29,7 +29,7 @@ import type { Dataset } from "./engine";
 // priced and settled in USD (US-listed shares) — everything else (any Indian broker/demat/PMS,
 // present or future) must NOT be added here, or its INR trades corrupt the US book's totals as
 // described above.
-const USD_BROKERS: PortfolioBroker[] = ["INDMONEY_ALPACA", "IBKR"];
+export const USD_BROKERS: PortfolioBroker[] = ["INDMONEY_ALPACA", "IBKR"];
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 

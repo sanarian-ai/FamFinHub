@@ -3,6 +3,7 @@ import { Badge, Card, EmptyState } from "@/components/ui";
 import { prisma } from "@/lib/prisma";
 import { fmtDay, fmtUnits, fmtUSD } from "@/lib/portfolio/format";
 import { splitFactor } from "@/lib/portfolio/splits";
+import { USD_BROKERS } from "@/lib/portfolio/load";
 import { Note, rowCls, tableCls, Td, Th, theadCls } from "../ui";
 
 export const dynamic = "force-dynamic";
@@ -14,28 +15,58 @@ export default async function Activity({ searchParams }: { searchParams: Promise
   const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : "");
   const br = s("br"), sym = s("sym"), side = s("side");
 
-  const [accounts, securities, actions, batches, reviews] = await Promise.all([
-    prisma.portfolioAccount.findMany({ select: { id: true, key: true, name: true } }),
+  // Scoped to the US book (USD_BROKERS — see load.ts) throughout this page: without this, the
+  // default "All brokers" view and every list below (stock dropdown, corporate actions, sync
+  // batches, review items) pulled from the WHOLE portfolio, not just US Stocks — CAMS mutual-fund
+  // buys, Kabir PMS trades, IIFL demat trades, and every India-side data-quality flag all leaked
+  // in under a broker label of "INDmoney". Found in the 2026-09-26 QA audit: the same failure mode
+  // as the INR-leak incident (ccf7051), but that fix only covered the value/IRR engine path
+  // (buildContext/run in load.ts), not this page's own separate Prisma queries.
+  const usAccounts = await prisma.portfolioAccount.findMany({ where: { broker: { in: USD_BROKERS } }, select: { id: true, key: true } });
+  const usAccountIds = usAccounts.map((a) => a.id);
+  const [securities, actions, batches, reviews] = await Promise.all([
     prisma.security.findMany({ select: { id: true, symbol: true } }),
     prisma.corporateAction.findMany({ include: { security: { select: { symbol: true } } }, orderBy: { effectiveDate: "desc" } }),
-    prisma.portfolioImportBatch.findMany({ orderBy: { startedAt: "desc" }, take: 15 }),
-    prisma.portfolioReviewItem.findMany({ where: { status: "open" }, orderBy: { createdAt: "desc" }, take: 50 }),
+    // "US-relevant" sync batches = the two US ingest sources (indmoney_report, ibkr_api); every
+    // other PortfolioSource (cams_cas_pdf, kabir_pms_report, manual_closed_vehicle_audit,
+    // iifl_trade_listing) is India-side and doesn't belong on this page.
+    prisma.portfolioImportBatch.findMany({ where: { source: { in: ["indmoney_report", "ibkr_api"] } }, orderBy: { startedAt: "desc" }, take: 15 }),
+    // UNITS_MISMATCH review items encode their account in refId as "<accountKey>|<symbol>" (see
+    // ingest.ts's reconcile()) — scope to the US accounts' keys. OTHER-type items (batch-level
+    // ingest rejections) carry no account/security reference at all, so there's no way to
+    // attribute them to a book; as of this fix all 55 open review items are India-side units
+    // mismatches or historical closed-vehicle ingest rejections, none US, so they're excluded here
+    // rather than guessed at.
+    prisma.portfolioReviewItem.findMany({
+      where: { status: "open", type: "UNITS_MISMATCH", OR: usAccounts.map((a) => ({ refId: { startsWith: `${a.key}|` } })) },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    }),
   ]);
-  const accKey = new Map(accounts.map((a) => [a.id, a.key]));
+  const accKey = new Map(usAccounts.map((a) => [a.id, a.key]));
   const symOf = new Map(securities.map((x) => [x.id, x.symbol]));
   const where = {
-    ...(br ? { account: { key: br === "IBKR" ? "IBKR" : "INDMONEY_ALPACA" } } : {}),
+    account: { id: { in: usAccountIds }, ...(br ? { key: br === "IBKR" ? "IBKR" : "INDMONEY_ALPACA" } : {}) },
     ...(sym ? { security: { symbol: sym } } : {}),
     ...(side === "BUY" || side === "SELL" ? { side: side as "BUY" | "SELL" } : {}),
   };
   const [total, trades, allTotal] = await Promise.all([
     prisma.portfolioTransaction.count({ where }),
     prisma.portfolioTransaction.findMany({ where, orderBy: [{ tradeDate: "desc" }, { execTs: "desc" }], take: LIMIT }),
-    prisma.portfolioTransaction.count(),
+    prisma.portfolioTransaction.count({ where: { account: { id: { in: usAccountIds } } } }),
   ]);
   if (allTotal === 0) return <EmptyState>No trades yet.</EmptyState>;
+  // US-traded symbols only, for both the dropdown and the corporate-actions card below — not every
+  // Security row in the DB (that included Indian MF ISINs, Kabir/Unifi tickers, NSE benchmark
+  // indices, and the EPF/NPS placeholder rows).
+  const usSymbols = new Set(
+    (await prisma.portfolioTransaction.findMany({ where: { account: { id: { in: usAccountIds } } }, select: { securityId: true }, distinct: ["securityId"] }))
+      .map((t) => symOf.get(t.securityId))
+      .filter((s): s is string => !!s),
+  );
+  const usActions = actions.filter((a) => usSymbols.has(a.security.symbol));
   const acts = new Map<string, { effectiveDate: string; ratio: number }[]>();
-  for (const a of actions) {
+  for (const a of usActions) {
     const k = a.security.symbol;
     acts.set(k, [...(acts.get(k) ?? []), { effectiveDate: iso(a.effectiveDate), ratio: Number(a.ratio) }]);
   }
@@ -53,7 +84,7 @@ export default async function Activity({ searchParams }: { searchParams: Promise
     </Link>
   );
   const group = (children: React.ReactNode) => <div className="inline-flex gap-0.5 rounded-lg border border-slate-200 bg-white p-1 shadow-sm">{children}</div>;
-  const symbols = [...new Set(securities.map((x) => x.symbol))].filter((x) => x !== "SPY" && x !== "QQQ").sort();
+  const symbols = [...usSymbols].filter((x) => x !== "SPY" && x !== "QQQ").sort();
 
   return (
     <div className="flex flex-col gap-5">
@@ -107,10 +138,10 @@ export default async function Activity({ searchParams }: { searchParams: Promise
       <div className="grid gap-5 lg:grid-cols-2">
         <Card>
           <h2 className="mb-2 text-sm font-semibold text-slate-900">Corporate actions</h2>
-          {actions.length === 0 ? <div className="text-sm text-slate-500">None recorded.</div> : (
+          {usActions.length === 0 ? <div className="text-sm text-slate-500">None recorded.</div> : (
             <table className={tableCls}>
               <tbody>
-                {actions.map((a) => (
+                {usActions.map((a) => (
                   <tr key={a.id} className={rowCls}>
                     <Td right={false} className="font-medium text-slate-800">{a.security.symbol}</Td>
                     <Td right={false}>{a.type === "SPLIT" ? `${Number(a.ratio)}-for-1 split` : a.type}</Td>

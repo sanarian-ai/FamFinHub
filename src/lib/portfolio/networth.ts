@@ -31,9 +31,13 @@ export async function getUsEquityActual(): Promise<AssetClassActual | null> {
 }
 
 /**
- * Sum of current market value across a single-account, snapshot+price-quoted holding — the shape
- * shared by Kabir PMS and IIFL (both real-unit demat accounts with no lots/IRR engine behind
- * them, same minimal treatment as /portfolio/india — see that page's own header comment).
+ * Sum of current market value across a single-account, snapshot+price-quoted holding — used for
+ * accounts with no lots/IRR engine behind them (Kabir PMS's own PositionSnapshot rows, kept in
+ * sync by the price-refresh route; see /portfolio/india's header comment for the wider pattern).
+ * NOT used for IIFL any more — see getIiflActual() below, which switched to the engine-backed
+ * value on 2026-09-26 after this snapshot path was found ~7% stale (QA audit, "IIFL undervalued"
+ * bug): IIFL's PositionSnapshot rows were seeded once from the INDmoney MCP and never refreshed
+ * after real dated trades were ingested (2026-09-25), while Kabir PMS's snapshots stay live.
  */
 async function getSingleAccountActual(accountKey: string): Promise<AssetClassActual | null> {
   const account = await prisma.portfolioAccount.findUnique({ where: { key: accountKey } });
@@ -74,12 +78,34 @@ export async function getKabirPmsActual(): Promise<AssetClassActual | null> {
 
 /**
  * Sum of current market value across the IIFL_DEMAT account (Ria's India Infoline demat, 24
- * holdings, real units seeded via seed-holdings.ts from the INDmoney MCP). Distinct from PMS
- * (Kabir/Nuvama-custodied) despite both being Ria's Indian equity — kept as separate accounts so
- * the two stay easy to tell apart, per the original ask when this was first scoped.
+ * holdings). Distinct from PMS (Kabir/Nuvama-custodied) despite both being Ria's Indian equity —
+ * kept as separate accounts so the two stay easy to tell apart, per the original ask when this
+ * was first scoped.
+ *
+ * Engine-backed (buildLots/positions over the India dataset), not getSingleAccountActual's
+ * PositionSnapshot lookup — switched 2026-09-26 (QA audit, "IIFL undervalued by ~7%" bug).
+ * IIFL_DEMAT_RIA gained real dated trades and its own FIFO lots engine on 2026-09-25 (commit
+ * `091b782`), but this function kept reading the account's PositionSnapshot rows, seeded once
+ * from the INDmoney MCP before that ingestion and never refreshed since — so /portfolio/all
+ * showed a stale ₹72.56L instead of the correct engine value (₹77.77L, matching
+ * /portfolio/india/equity, the India rollup, and the rollup's Performance "by channel" table).
+ * getKabirPmsActual() was checked at the same time and does NOT have this problem — its
+ * PositionSnapshot rows are kept in sync by the price-refresh route, confirmed to match the
+ * engine value to the rupee — so it was left on getSingleAccountActual() unchanged.
  */
 export async function getIiflActual(): Promise<AssetClassActual | null> {
-  return getSingleAccountActual("IIFL_DEMAT_RIA");
+  try {
+    const { getIndiaPortfolioData } = await import("@/lib/portfolio/india-data");
+    const { buildLots } = await import("@/lib/portfolio/engine");
+    const { positions } = await import("@/lib/portfolio/views");
+    const { ctx, ds } = await getIndiaPortfolioData();
+    const book = buildLots(ds, ["IIFL_DEMAT_RIA"]);
+    const pos = positions(ctx, book);
+    if (pos.totalValue <= 0) return null;
+    return { valueL: pos.totalValue / 1e5, asOf: ctx.asof };
+  } catch {
+    return null;
+  }
 }
 
 /**
