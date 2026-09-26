@@ -8,6 +8,7 @@ import { HolderToggle, OpenClosedToggle, PeriodBar, PriceOnlyToggle, parseQ } fr
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../ui";
 import { RollupValueChart } from "../RollupValueChart";
 import { RollupSubNav } from "../RollupSubNav";
+import { BridgePanel } from "../../BridgePanel";
 import { CHANNEL_LABEL, CHANNEL_ORDER, HOLDER_LABEL, HOLDER_ORDER, INDIA_BENCHMARK, INDIA_BENCHMARKS, INDIA_BENCHMARK_LABEL, OC_LABEL } from "../rollupConstants";
 import { symbolsForFilter } from "../rollupData";
 
@@ -116,6 +117,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
           {q.oc !== "ALL" && ` Filtered to ${OC_LABEL[q.oc].toLowerCase()} positions.`}
           {q.po === "1" ? " Dividends excluded (price-only view)." : " Dividends included (est., after withholding)."}
         </Note>
+        <BridgePanel endpoint={`/api/portfolio/india/bridge?p=${period.key}&h=${q.h}&oc=${q.oc}&po=${q.po}`} cur={CUR} />
       </Card>
 
       <Card className="overflow-x-auto p-0">

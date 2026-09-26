@@ -7,6 +7,7 @@ import { CATEGORICAL } from "@/app/insights/chartTheme";
 import { PeriodBar, PriceOnlyToggle, parseQ } from "../controls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../ui";
 import { RollupValueChart } from "../../RollupValueChart";
+import { BridgePanel } from "../../../BridgePanel";
 import { PMS_BENCHMARK, PMS_BENCHMARK_LABEL, PMS_BENCHMARKS, PMS_BENCHMARK_LABELS } from "../constants";
 
 export const dynamic = "force-dynamic";
@@ -96,6 +97,7 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
           return, not an annualised figure.
           {q.po === "1" ? " Dividends excluded (price-only view)." : " Dividends included (est., after withholding), where any dividend data exists."}
         </Note>
+        <BridgePanel endpoint={`/api/portfolio/india/pms/bridge?p=${period.key}&po=${q.po}`} cur={CUR} />
       </Card>
 
       <Card className="overflow-x-auto p-0">

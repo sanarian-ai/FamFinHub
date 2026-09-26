@@ -7,6 +7,7 @@ import { CATEGORICAL } from "@/app/insights/chartTheme";
 import { PeriodBar, Toggles, parseQ } from "../controls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../ui";
 import { ValueChart } from "../ValueChart";
+import { BridgePanel } from "../../BridgePanel";
 
 export const dynamic = "force-dynamic";
 const BASE = "/portfolio/us/performance";
@@ -80,6 +81,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
         <Note>
           Replica = every dollar you invested or withdrew, on the same dates, put into the index instead. IRR is money-weighted (XIRR). Periods under 90 days show the period return, not an annualised figure.
         </Note>
+        <BridgePanel endpoint={`/api/portfolio/us/bridge?p=${period.key}&cur=${cur}&br=${q.br}&po=${q.po}`} cur={cur} />
       </Card>
 
       <Card>
