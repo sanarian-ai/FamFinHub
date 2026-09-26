@@ -46,6 +46,11 @@ export type IndiaPortfolioData = {
   lotsError: string | null; // set when buildLots() rejected the trade history (e.g. an oversold lot from an
   // unmodeled CAMS transaction type such as a switch or reinvestment) — book falls back to empty rather than
   // crashing every India screen; XIRR/positions still work off ds/ctx, only FIFO lots/disposals are affected.
+  // Symbols priced via the "value at cost" derivation (closedVehicles.ts) rather than a real market/NAV
+  // price — pass to RunOpts.closedVehicleSymbols on any run()/combinedRun() call that can include a PMS
+  // account, so the engine can flag a period whose boundary falls while one of these is still open
+  // (RunResult.unreliableBoundary) instead of presenting a precise-looking but unreliable IRR/return.
+  closedVehicleSymbols: string[];
 };
 
 let memo: { at: number; v: IndiaPortfolioData } | null = null;
@@ -53,7 +58,7 @@ const TTL_MS = 60_000;
 
 export async function getIndiaPortfolioData(): Promise<IndiaPortfolioData> {
   if (memo && Date.now() - memo.at < TTL_MS) return memo.v;
-  const [ds, accs] = await Promise.all([
+  const [{ ds, closedVehicleSymbols: cvSymbols }, accs] = await Promise.all([
     loadIndiaDataset(prisma),
     prisma.portfolioAccount.findMany({ where: { broker: { in: INDIA_BROKERS } }, select: { key: true, broker: true, holder: true, isActive: true } }),
   ]);
@@ -75,7 +80,8 @@ export async function getIndiaPortfolioData(): Promise<IndiaPortfolioData> {
   if (!empty) {
     try { book = buildLots(ds, lotAccounts); } catch (e) { lotsError = e instanceof Error ? e.message : String(e); }
   }
-  const v: IndiaPortfolioData = { ds, ctx, book, empty, channelAccounts, holderAccounts, lotAccounts, lotsError };
+  const closedVehicleSymbols = [...cvSymbols];
+  const v: IndiaPortfolioData = { ds, ctx, book, empty, channelAccounts, holderAccounts, lotAccounts, lotsError, closedVehicleSymbols };
   memo = { at: Date.now(), v };
   return v;
 }

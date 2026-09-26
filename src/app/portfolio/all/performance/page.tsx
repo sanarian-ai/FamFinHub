@@ -54,7 +54,7 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
 
   const [usData, indiaData, cryptoData] = await Promise.all([getPortfolioData(), getIndiaPortfolioData(), getCryptoPortfolioData()]);
   const { ctx: usCtx, empty: usEmpty } = usData;
-  const { ctx: indiaCtx, channelAccounts, empty: indiaEmpty } = indiaData;
+  const { ctx: indiaCtx, channelAccounts, empty: indiaEmpty, closedVehicleSymbols } = indiaData;
   const indiaAll = channelAccounts.ALL;
   const indiaHasTrades = indiaCtx.trades.some((t) => indiaAll.includes(t.account));
   // Crypto is optional/best-effort here, unlike US and India above: if it's ever empty (e.g. a
@@ -72,9 +72,9 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
   const defs = periodDefs(spineIsIndia ? indiaCtx : usCtx, spineIsIndia ? indiaAll : undefined);
   const period = defs.find((d) => d.key === pKey) ?? defs.find((d) => d.key === "SI")!;
 
-  const main = combinedRun(usCtx, indiaCtx, indiaAll, period.start, period.end, { series: true, cryptoCtx, dividends: includeDividends });
+  const main = combinedRun(usCtx, indiaCtx, indiaAll, period.start, period.end, { series: true, cryptoCtx, dividends: includeDividends, closedVehicleSymbols });
   const table = defs
-    .map((d) => ({ d, r: combinedRun(usCtx, indiaCtx, indiaAll, d.start, d.end, { cryptoCtx, dividends: includeDividends }) }))
+    .map((d) => ({ d, r: combinedRun(usCtx, indiaCtx, indiaAll, d.start, d.end, { cryptoCtx, dividends: includeDividends, closedVehicleSymbols }) }))
     .filter((x) => x.r.hasData);
 
   const kind = main.annualised ? "IRR" : "Return";
@@ -124,9 +124,9 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
         <Tile
           label={`All Assets ${kind}`}
           dot={CATEGORICAL[0]}
-          value={pf.value == null ? "n/a" : fmtPct(pf.value)}
+          value={pf.value == null ? "n/a" : main.unreliableBoundary ? `${fmtPct(pf.value)} †` : fmtPct(pf.value)}
           valueClass={tone(pf.value)}
-          sub={`P&L ${fmtMoney(main.all.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}`}
+          sub={`P&L ${fmtMoney(main.all.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}${main.unreliableBoundary ? " · † estimate, see below" : ""}`}
         />
         <Tile
           label={`${BENCHMARK_LABEL.NIFTY50TRI} ${kind}`}
@@ -232,7 +232,17 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
                     {r.days < 364 && <Badge tone={r.annualised ? "slate" : "amber"}>{r.annualised ? "<1Y" : "return, <90d"}</Badge>}
                     <div className="text-xs text-slate-400">{fmtDay(r.d0)} → {fmtDay(r.d1)}</div>
                   </Td>
-                  <Td className={tone(h.value)}>{h.value == null ? "n/a" : fmtPct(h.value)}</Td>
+                  <Td className={tone(h.value)}>
+                    {h.value == null ? "n/a" : fmtPct(h.value)}
+                    {r.unreliableBoundary && (
+                      <span
+                        className="ml-1 cursor-help text-amber-600"
+                        title="A closed PMS vehicle within the India book was still open at the start or end of this period, priced at a value-at-cost estimate — treat this figure as directional, not precise."
+                      >
+                        †
+                      </span>
+                    )}
+                  </Td>
                   <Td>{niftyH.value == null ? "n/a" : fmtPct(niftyH.value)}</Td>
                   <Td>{spH.value == null ? "n/a" : fmtPct(spH.value)}</Td>
                   <Td>{qqqH.value == null ? "n/a" : fmtPct(qqqH.value)}</Td>
@@ -247,7 +257,8 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
           <Note>
             Periods under one year are shown but not comparable with annual figures; under 90 days the period return replaces the annualised
             IRR. Household-level only — the US book has no per-holder account scoping, so there&apos;s no holder toggle here (unlike the India
-            rollup).
+            rollup). The † next to All Assets flags a period whose start or end fell while a closed PMS vehicle was still open — its boundary
+            value there is a &quot;value at cost&quot; estimate, not a real mark, so treat that period&apos;s figure as directional.
           </Note>
         </div>
       </Card>

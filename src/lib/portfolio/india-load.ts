@@ -16,6 +16,7 @@
 // equity/PMS/MF security's price history.
 import type { PrismaClient, PortfolioBroker } from "@prisma/client";
 import type { Dataset } from "./engine";
+import { closedVehicleData } from "./closedVehicles";
 
 export const INDIA_BROKERS: PortfolioBroker[] = [
   "ZERODHA", "KOTAK_SECURITIES", "IIFL_DEMAT", "KABIR_PMS", "MF_FOLIO",
@@ -24,10 +25,12 @@ export const INDIA_BROKERS: PortfolioBroker[] = [
 
 const iso = (d: Date) => d.toISOString().slice(0, 10);
 
-export async function loadIndiaDataset(prisma: PrismaClient): Promise<Dataset> {
+export type IndiaDataset = { ds: Dataset; closedVehicleSymbols: Set<string> };
+
+export async function loadIndiaDataset(prisma: PrismaClient): Promise<IndiaDataset> {
   const [secs, accs, tx, acts, prices] = await Promise.all([
     prisma.security.findMany({ select: { id: true, symbol: true } }),
-    prisma.portfolioAccount.findMany({ select: { id: true, key: true } }),
+    prisma.portfolioAccount.findMany({ select: { id: true, key: true, isActive: true } }),
     prisma.portfolioTransaction.findMany({ where: { account: { broker: { in: INDIA_BROKERS } } }, select: { accountId: true, securityId: true, side: true, qty: true, price: true, fee: true, tradeDate: true }, orderBy: [{ tradeDate: "asc" }, { execTs: "asc" }] }),
     prisma.corporateAction.findMany({ select: { securityId: true, type: true, effectiveDate: true, ratio: true } }),
     prisma.priceDaily.findMany({ select: { securityId: true, date: true, close: true, dividendPerShare: true } }),
@@ -42,5 +45,16 @@ export async function loadIndiaDataset(prisma: PrismaClient): Promise<Dataset> {
     (ds.prices[s] ??= {})[d] = Number(p.close);
     if (p.dividendPerShare != null) (ds.dividends[s] ??= {})[d] = Number(p.dividendPerShare);
   }
-  return ds;
+
+  // Closed-vehicle "value at cost" fix (2026-09-26 — see closedVehicles.ts's header for the full
+  // background). Symbols whose entire trade history sits inside isActive:false accounts get their
+  // DB-loaded price series REPLACED entirely by a derived hold-at-cost series, instead of the flat
+  // Rs 0.01 placeholder previously ingested for them — this is the sole place that placeholder is
+  // consumed downstream (buildContext() only ever reads ds.prices), so overriding it here fixes
+  // every screen that prices these symbols (Overview, PMS page, India rollup, All Assets) at once.
+  const inactiveKeys = new Set(accs.filter((a) => !a.isActive).map((a) => a.key));
+  const { symbols: closedVehicleSymbols, prices: derivedPrices } = closedVehicleData(ds.trades, inactiveKeys);
+  for (const s of closedVehicleSymbols) ds.prices[s] = derivedPrices[s];
+
+  return { ds, closedVehicleSymbols };
 }

@@ -118,6 +118,13 @@ function BridgeBody({ b, cur }: { b: Bridge; cur: Cur }) {
           from a known FX-timing rounding difference between the two.
         </div>
       )}
+      {b.unreliableBoundary && (
+        <div className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-700">
+          A closed PMS vehicle (Kabir Capital/Financial Ventures or a Unifi legacy account) was still open at the start or end of this period.
+          Its value there is estimated at cost, not a real mark, so both rates above are directional — treat them as estimates, not precise
+          figures, for this specific period.
+        </div>
+      )}
     </div>
   );
 }

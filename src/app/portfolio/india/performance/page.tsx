@@ -28,7 +28,7 @@ const CHANNEL_HREF: Partial<Record<(typeof CHANNEL_ORDER)[number], string>> = { 
  */
 export default async function IndiaPerformance({ searchParams }: { searchParams: Promise<{ [k: string]: string | string[] | undefined }> }) {
   const q = parseQ(await searchParams);
-  const { ctx, channelAccounts, holderAccounts } = await getIndiaPortfolioData();
+  const { ctx, channelAccounts, holderAccounts, closedVehicleSymbols } = await getIndiaPortfolioData();
   const accounts = holderAccounts[q.h];
   const hasTrades = ctx.trades.some((t) => accounts.includes(t.account));
   if (!hasTrades) {
@@ -38,7 +38,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
   const defs = periodDefs(ctx, accounts);
   const period = pickPeriod(ctx, q.p, accounts);
   const symbols = symbolsForFilter(ctx, accounts, q.oc);
-  const opts = { accounts, benchmarks: INDIA_BENCHMARKS, symbols, dividends: q.po !== "1" };
+  const opts = { accounts, benchmarks: INDIA_BENCHMARKS, symbols, dividends: q.po !== "1", closedVehicleSymbols };
   const main = runPeriod(ctx, period, { ...opts, series: true });
 
   const table = defs.map((d) => ({ d, r: runPeriod(ctx, d, opts) })).filter((x) => x.r.hasData);
@@ -47,7 +47,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
     const chAccounts = accounts.filter((a) => channelAccounts[ch].includes(a));
     const chHasTrades = ctx.trades.some((t) => chAccounts.includes(t.account));
     const chSymbols = symbolsForFilter(ctx, chAccounts, q.oc);
-    const r = runPeriod(ctx, period, { accounts: chAccounts, benchmarks: [INDIA_BENCHMARK], symbols: chSymbols, dividends: q.po !== "1" });
+    const r = runPeriod(ctx, period, { accounts: chAccounts, benchmarks: [INDIA_BENCHMARK], symbols: chSymbols, dividends: q.po !== "1", closedVehicleSymbols });
     return { ch, chHasTrades, r };
   });
   const channelProfitSum = byChannel.reduce((s, x) => s + x.r.pf.profit, 0);
@@ -62,7 +62,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
     if (!ctx.trades.some((t) => acc.includes(t.account))) return { h, r: null };
     const start = inceptionStart(ctx, acc);
     const sym = symbolsForFilter(ctx, acc, q.oc);
-    return { h, r: runPeriod(ctx, { start, end: ctx.asof }, { accounts: acc, benchmarks: [INDIA_BENCHMARK], symbols: sym, dividends: q.po !== "1" }) };
+    return { h, r: runPeriod(ctx, { start, end: ctx.asof }, { accounts: acc, benchmarks: [INDIA_BENCHMARK], symbols: sym, dividends: q.po !== "1", closedVehicleSymbols }) };
   });
 
   const cell = (r: typeof main, isBench: boolean) => {
@@ -94,7 +94,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Tile label="Blended value" value={fmtMoney(main.V1, CUR)} sub={fmtDay(main.d1)} />
-        <Tile label={`Blended ${kind}`} dot={CATEGORICAL[0]} value={fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}`} />
+        <Tile label={`Blended ${kind}`} dot={CATEGORICAL[0]} value={main.unreliableBoundary ? `${fmtPct(pf.value)} †` : fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}${main.unreliableBoundary ? " · † estimate, see below" : ""}`} />
         {benchTiles.map((b) => (
           <Tile
             key={b.key}
@@ -222,7 +222,17 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
                     {r.days < 364 && <Badge tone={r.annualised ? "slate" : "amber"}>{r.annualised ? "<1Y" : "return, <90d"}</Badge>}
                     <div className="text-xs text-slate-400">{fmtDay(r.d0)} → {fmtDay(r.d1)}</div>
                   </Td>
-                  <Td className={tone(headline(r.pf, r).value)}>{cell(r, false)}</Td>
+                  <Td className={tone(headline(r.pf, r).value)}>
+                    {cell(r, false)}
+                    {r.unreliableBoundary && (
+                      <span
+                        className="ml-1 cursor-help text-amber-600"
+                        title="A closed PMS vehicle was still open at the start or end of this period, priced at a value-at-cost estimate — treat this figure as directional, not precise."
+                      >
+                        †
+                      </span>
+                    )}
+                  </Td>
                   {INDIA_BENCHMARKS.map((b) => <Td key={b}>{benchCell(b)}</Td>)}
                   {INDIA_BENCHMARKS.map((b) => {
                     const al = alpha(r.pf, r.bench[b], r);

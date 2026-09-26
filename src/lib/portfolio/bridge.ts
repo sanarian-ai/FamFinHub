@@ -54,6 +54,12 @@ export type Bridge = {
    *  slightly different (period-end-only) fx conversion for INR runs, see the header comment — but a
    *  LARGE value here would mean something beyond that known FX rounding, worth a closer look. */
   checkDiff: number;
+  /** True when this period's start or end boundary falls while a closed PMS vehicle (KCV/KFV/Unifi
+   *  BLN/BCAD20 etc.) is still open — its value at that boundary is a derived "value at cost"
+   *  estimate, not a real mark, so the IRR/Modified-Dietz above should be read as directional rather
+   *  than precise for this period. See RunResult.unreliableBoundary / closedVehicles.ts. Always false
+   *  for a book with no closed-vehicle accounts (US, crypto, India Equity/MF alone). */
+  unreliableBoundary: boolean;
 };
 
 function splitInterior(tradeCashflows: CF[], v0: number): { added: number; withdrawn: number } {
@@ -89,6 +95,7 @@ export function bridgeFromRun(r: RunResult): Bridge {
     irr: r.pf.irr,
     ret: r.pf.ret,
     checkDiff: Math.abs(dividends - r.divTot),
+    unreliableBoundary: r.unreliableBoundary,
   };
 }
 
@@ -121,5 +128,6 @@ export function bridgeFromCombined(c: CombinedRunResult): Bridge {
     irr: c.all.irr,
     ret: c.all.ret,
     checkDiff: Math.abs(dividends - divTotSum),
+    unreliableBoundary: c.unreliableBoundary,
   };
 }

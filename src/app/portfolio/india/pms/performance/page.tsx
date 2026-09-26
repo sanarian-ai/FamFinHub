@@ -1,6 +1,6 @@
 import { Badge, Card, EmptyState } from "@/components/ui";
 import { getIndiaPortfolioData } from "@/lib/portfolio/india-data";
-import { firstTradeDate, inceptionStart, run } from "@/lib/portfolio/engine";
+import { inceptionStart, run } from "@/lib/portfolio/engine";
 import { fmtDay, fmtMoney, fmtPct, fmtPP, tone } from "@/lib/portfolio/format";
 import { alpha, downsample, headline, pickPeriod, periodDefs, runPeriod } from "@/lib/portfolio/views";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
@@ -24,12 +24,12 @@ const CUR = "INR" as const;
  */
 export default async function IndiaPmsPerformance({ searchParams }: { searchParams: Promise<{ [k: string]: string | string[] | undefined }> }) {
   const q = parseQ(await searchParams);
-  const { ctx, channelAccounts, lotAccounts } = await getIndiaPortfolioData();
+  const { ctx, channelAccounts, lotAccounts, closedVehicleSymbols } = await getIndiaPortfolioData();
   const accounts = channelAccounts.PMS;
   const hasTrades = ctx.trades.some((t) => accounts.includes(t.account));
   if (!hasTrades) return <EmptyState>No dated trade history yet for India PMS.</EmptyState>;
 
-  const opts = { accounts, benchmarks: PMS_BENCHMARKS, dividends: q.po !== "1" };
+  const opts = { accounts, benchmarks: PMS_BENCHMARKS, dividends: q.po !== "1", closedVehicleSymbols };
   const defs = periodDefs(ctx, accounts);
   const period = pickPeriod(ctx, q.p, accounts);
   const main = runPeriod(ctx, period, { ...opts, series: true });
@@ -46,15 +46,15 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
     })
     .filter((x): x is { key: string; live: boolean; start: string; r: ReturnType<typeof run> } => x != null);
 
-  // The blended "All periods" table's End value is meaningless before the live Kabir PMS account
-  // existed (pre-23 Jan 2026): the 4 closed vehicles are priced at a flat Rs 0.01 placeholder (see
-  // closed-vehicle-historic-irr-ingestion-spec.md), so a period ending before that date reports a
-  // near-zero blended V1 even though real capital was invested at the time -- flagged in the
-  // 2026-09-26 QA audit ("misleading Rs0 end values"). P&L for the same rows is unaffected (it's
-  // computed from real cash flows, not V1) so only the End value cell is blanked here.
-  const liveAccounts = accounts.filter((a) => lotAccounts.includes(a));
-  const liveTrades = ctx.trades.filter((t) => liveAccounts.includes(t.account));
-  const liveStart = liveTrades.length ? firstTradeDate(ctx, liveAccounts) : null;
+  // The 4 closed vehicles used to be priced at a flat Rs 0.01 placeholder for their entire holding
+  // life (see closed-vehicle-historic-irr-ingestion-spec.md), which made End value for any period
+  // ending before the live Kabir PMS account started (23 Jan 2026) near-zero and meaningless -- caught
+  // in the 2026-09-26 QA audit ("misleading Rs0 end values") and blanked to "n/a" there as a stopgap.
+  // Fixed 2026-09-26 (Option B): india-load.ts now derives a "value at cost" price for these symbols
+  // instead, so End value below is a real (if estimated) figure for every period -- no more blanking.
+  // What's now flagged instead (Option C) is the IRR/return itself: `r.unreliableBoundary` marks any
+  // period whose boundary falls while a closed vehicle was still open, since that boundary valuation
+  // is still an estimate, not a real mark -- see the dagger next to the Blended cell below.
 
   const pf = headline(main.pf, main);
   const kind = pf.kind === "IRR" ? "IRR" : "Return";
@@ -74,7 +74,7 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <Tile label="Blended value" value={fmtMoney(main.V1, CUR)} sub={fmtDay(main.d1)} />
-        <Tile label={`Blended ${kind}`} dot={CATEGORICAL[0]} value={fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}`} />
+        <Tile label={`Blended ${kind}`} dot={CATEGORICAL[0]} value={main.unreliableBoundary ? `${fmtPct(pf.value)} †` : fmtPct(pf.value)} valueClass={tone(pf.value)} sub={`P&L ${fmtMoney(main.pf.profit, CUR)}${main.annualised ? "" : " · period return, under 90 days"}${main.unreliableBoundary ? " · † estimate, see below" : ""}`} />
         {benchTiles.map((b) => (
           <Tile
             key={b.key}
@@ -152,21 +152,31 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
                     {r.days < 364 && <Badge tone={r.annualised ? "slate" : "amber"}>{r.annualised ? "<1Y" : "return, <90d"}</Badge>}
                     <div className="text-xs text-slate-400">{fmtDay(r.d0)} → {fmtDay(r.d1)}</div>
                   </Td>
-                  <Td className={tone(h.value)}>{h.value == null ? "n/a" : fmtPct(h.value)}</Td>
+                  <Td className={tone(h.value)}>
+                    {h.value == null ? "n/a" : fmtPct(h.value)}
+                    {r.unreliableBoundary && (
+                      <span
+                        className="ml-1 cursor-help text-amber-600"
+                        title="A closed vehicle was still open at the start or end of this period, priced at a value-at-cost estimate — treat this figure as directional, not precise."
+                      >
+                        †
+                      </span>
+                    )}
+                  </Td>
                   {PMS_BENCHMARKS.map((b) => <Td key={b}>{benchCell(b)}</Td>)}
                   {PMS_BENCHMARKS.map((b) => {
                     const al = alpha(r.pf, r.bench[b], r);
                     return <Td key={`a-${b}`} className={tone(al)}>{fmtPP(al)}</Td>;
                   })}
                   <Td className={tone(r.pf.profit)}>{fmtMoney(r.pf.profit, CUR)}</Td>
-                  <Td>{liveStart && r.d1 < liveStart ? <span className="text-slate-400">n/a</span> : fmtMoney(r.V1, CUR)}</Td>
+                  <Td>{fmtMoney(r.V1, CUR)}</Td>
                 </tr>
               );
             })}
           </tbody>
         </table>
         <div className="px-5 pb-4 pt-2">
-          <Note>End value shows n/a for any period ending before the live Kabir PMS account started (23 Jan 2026) -- before that, the 4 closed vehicles priced at a flat placeholder make the blended value meaningless. P&amp;L is unaffected; it&apos;s computed from real cash flows.</Note>
+          <Note>A closed vehicle&apos;s value while open is a &quot;value at cost&quot; estimate (remaining net contribution), not a real mark — the † next to Blended flags any period whose start or end falls during one of those windows, where the IRR/return should be read as directional rather than precise.</Note>
         </div>
       </Card>
     </div>

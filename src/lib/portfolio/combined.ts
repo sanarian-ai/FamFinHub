@@ -58,6 +58,11 @@ export const US_BENCHMARKS = ["SPY", "QQQ"] as const;
 export type CombinedRunResult = {
   d0: string; d1: string; days: number; annualised: boolean; hasData: boolean;
   V0: number; V1: number; net: number;
+  /** True whenever the India book's own unreliableBoundary is true, i.e. this period's boundary
+   * (start or end) falls while a closed PMS vehicle is still open, priced at a "value at cost"
+   * estimate rather than a real mark — see engine.ts's RunResult.unreliableBoundary and
+   * closedVehicles.ts. Only India can set this today (US/crypto pass no closedVehicleSymbols). */
+  unreliableBoundary: boolean;
   us: RunResult; india: RunResult; crypto?: RunResult; all: Leg;
   /** Whole-household replica per index — see the header comment above. Keyed by symbol
    * (COMBINED_INDIA_BENCHMARK/"NIFTY50TRI", "SPY", "QQQ"). */
@@ -150,7 +155,7 @@ function replicateHousehold(
 
 export function combinedRun(
   usCtx: Ctx, indiaCtx: Ctx, indiaAccounts: string[], start: string, end: string,
-  opts: { series?: boolean; cryptoCtx?: Ctx; dividends?: boolean } = {},
+  opts: { series?: boolean; cryptoCtx?: Ctx; dividends?: boolean; closedVehicleSymbols?: Iterable<string> } = {},
 ): CombinedRunResult {
   // Price-only opt-out (2026-09-26): dividends default ON (total return is the economically correct
   // number), with an opt-out for a price-only comparison — same convention as every single-book
@@ -160,7 +165,7 @@ export function combinedRun(
   // total-return stay apples-to-apples — never portfolio-with-dividends vs benchmark-without.
   const includeDividends = opts.dividends ?? true;
   const us = run(usCtx, start, end, { currency: "INR", benchmarks: US_BENCHMARKS, dividends: includeDividends, series: opts.series });
-  const india = run(indiaCtx, start, end, { accounts: indiaAccounts, benchmarks: [COMBINED_INDIA_BENCHMARK], dividends: includeDividends, series: opts.series });
+  const india = run(indiaCtx, start, end, { accounts: indiaAccounts, benchmarks: [COMBINED_INDIA_BENCHMARK], dividends: includeDividends, series: opts.series, closedVehicleSymbols: opts.closedVehicleSymbols });
   const crypto = opts.cryptoCtx ? run(opts.cryptoCtx, start, end, { benchmarks: [COMBINED_INDIA_BENCHMARK], series: opts.series }) : undefined;
   const V0 = us.V0 + india.V0 + (crypto?.V0 ?? 0), V1 = us.V1 + india.V1 + (crypto?.V1 ?? 0), net = us.net + india.net + (crypto?.net ?? 0);
   const d0ms = Date.parse(`${us.d0}T00:00:00Z`), d1ms = Date.parse(`${us.d1}T00:00:00Z`);
@@ -198,7 +203,7 @@ export function combinedRun(
 
   return {
     d0: us.d0, d1: us.d1, days: us.days, annualised: us.annualised, hasData: us.hasData && india.hasData && (crypto ? crypto.hasData : true),
-    V0, V1, net, us, india, crypto, all, allBench, allBenchSeries,
+    V0, V1, net, unreliableBoundary: india.unreliableBoundary, us, india, crypto, all, allBench, allBenchSeries,
   };
 }
 

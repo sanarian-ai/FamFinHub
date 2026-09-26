@@ -158,7 +158,7 @@ async function main() {
 
   // 4. Verification: row counts, per-account XIRR, sums, STP absence, idempotency is left to a
   // second run of this script.
-  const ds = await loadIndiaDataset(prisma);
+  const { ds } = await loadIndiaDataset(prisma);
   const ctx = buildContext(ds);
 
   console.log("\n=== Per-account verification ===");

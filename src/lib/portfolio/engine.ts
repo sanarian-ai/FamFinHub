@@ -90,6 +90,13 @@ export function xirr(cfs: CF[]): number | null {
 export type RunOpts = {
   symbols?: string[]; accounts?: string[]; currency?: "USD" | "INR"; dividends?: boolean; wht?: number; series?: boolean;
   benchmarks?: readonly string[]; // defaults to BENCHMARKS (["SPY","QQQ"]) — pass an India/PMS/MF/combined set instead
+  /** Symbols priced via a derived "value at cost" estimate rather than a real market/NAV price (see
+   * closedVehicles.ts) — e.g. IndiaPortfolioData.closedVehicleSymbols. When set, run() flags
+   * RunResult.unreliableBoundary if any of these symbols held a non-trivial position at the period's
+   * start or end boundary (V0/V1), so a caller can present the IRR/return as an estimate rather than a
+   * precise-looking number for a period cutting into one of these vehicles' open life. Omit for a book
+   * that has none (US, crypto) — no effect on its own math either way. */
+  closedVehicleSymbols?: Iterable<string>;
 };
 export type Leg = { end: number; profit: number; irr: number | null; ret: number | null; moic: number | null };
 const EMPTY_LEG: Leg = { end: 0, profit: 0, irr: null, ret: null, moic: null };
@@ -97,6 +104,12 @@ export type SeriesPt = { d: string; pf: number; SPY: number; QQQ: number; inv: n
 export type RunResult = {
   d0: string; d1: string; days: number; V0: number; V1: number; net: number; divTot: number; hasData: boolean;
   annualised: boolean; // false when the period is shorter than MIN_ANNUALISE_DAYS: show the period return, not the IRR
+  /** True when RunOpts.closedVehicleSymbols was given and at least one of those symbols held a
+   * non-trivial (> ~Rs 1,000) position at d0 or d1 — i.e. this period's IRR/return was computed
+   * against a boundary valuation that includes a "value at cost" estimate, not a real mark, for part
+   * of the portfolio. False (never true) for a run with no closedVehicleSymbols passed. See
+   * closedVehicles.ts for the background. */
+  unreliableBoundary: boolean;
   pf: Leg; SPY: Leg; QQQ: Leg; bench: Record<string, Leg>; series: SeriesPt[] | null;
   /** The portfolio's own dated cash-flow stream (INR/USD per RunOpts.currency, + to investor),
    * including the V0/V1 boundary entries and BOTH trade and dividend events — same list `pf`'s
@@ -151,6 +164,16 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
   const d0 = dates[i0], d1 = dates[i1];
   const pos: Record<string, number> = {}; let V0 = 0;
   for (const s of S) { pos[s] = unitsAt(s, d0, false); V0 += pos[s] * px[s][i0]; }
+  const cvSet = o.closedVehicleSymbols ? new Set(o.closedVehicleSymbols) : null;
+  // Materiality bar for "is this closed vehicle still meaningfully open" — deliberately well above
+  // plain rounding noise. Verified against real data (2026-09-26): after its main exit, UNIFI-BLN
+  // carries a genuine but immaterial ~Rs 1,500 trailing residual (a small BUY recorded after the bulk
+  // redemption, netted by a further small SELL) that would otherwise permanently flag every period
+  // touching "today" as unreliable. Real open capital in these vehicles runs in the lakhs/crores, so
+  // Rs 25,000 cleanly separates "still holds a materially-unpriced position" from bookkeeping noise.
+  const CV_EPS = 25000;
+  let unreliableBoundary = false;
+  if (cvSet) for (const s of S) if (cvSet.has(s) && Math.abs(pos[s] * px[s][i0]) > CV_EPS) unreliableBoundary = true;
   type Ev = { i: number; d: string; kind: "T" | "D"; sym: string; side?: Side; q?: number; usd?: number; per?: number };
   const ev: Ev[] = [];
   for (const x of ctx.trades) {
@@ -205,6 +228,7 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
     }
   }
   let V1 = 0; for (const s of S) V1 += p[s] * px[s][i1];
+  if (cvSet) for (const s of S) if (cvSet.has(s) && Math.abs(p[s] * px[s][i1]) > CV_EPS) unreliableBoundary = true;
   const fx1 = fxAt(i1);
   cfs.pf.push({ ms: t(d1), v: V1 * fx1 });
   cfs.trades.push({ ms: t(d1), v: V1 * fx1 });
@@ -217,6 +241,7 @@ export function run(ctx: Ctx, start: string, end: string, o: RunOpts = {}): RunR
   for (const b of B) bench[b] = leg(cfs[b]);
   return {
     d0, d1, days, V0: startV, V1: V1 * fx1, net: net * fx1, divTot: divTot * fx1, hasData: cfs.pf.length > 1, annualised: days >= MIN_ANNUALISE_DAYS,
+    unreliableBoundary,
     pf: leg(cfs.pf), SPY: bench.SPY ?? EMPTY_LEG, QQQ: bench.QQQ ?? EMPTY_LEG, bench, series, cashflows: cfs.pf, tradeCashflows: cfs.trades,
   };
 }
