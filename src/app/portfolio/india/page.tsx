@@ -5,13 +5,48 @@ import { buildLots } from "@/lib/portfolio/engine";
 import { positions } from "@/lib/portfolio/views";
 import { fmtDay, fmtMoney, fmtPct, fmtUnits, tone } from "@/lib/portfolio/format";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
+import { Fragment } from "react";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "./ui";
 import { RefreshButton } from "./RefreshButton";
 import { RollupSubNav } from "./RollupSubNav";
 import { HolderToggle, parseQ } from "./rollupControls";
+import type { Position } from "@/lib/portfolio/views";
+import type { IndiaChannel } from "@/lib/portfolio/india-data";
 
 export const dynamic = "force-dynamic";
 const CUR = "INR" as const;
+
+// General categorization for the blended "Engine-tracked positions" table below — matches the
+// grouping /portfolio/all's own asset-class table uses (Indian direct equity / PMS / Mutual funds
+// by SEBI category), added 2026-09-26 per Sangeeth's request. "Indian direct equity" here is this
+// page's own broader Equity channel scope (Zerodha + Kotak Securities + IIFL combined, i.e.
+// channelAccounts.EQUITY), not the narrower IIFL-only "indianEquity" class on /portfolio/all — kept
+// unqualified rather than borrowing that page's "(IIFL)" label, which would be wrong here.
+type Category = "equity" | "pms" | "mfEquity" | "mfDebt" | "mfHybrid" | "mfCommodity" | "other";
+const CATEGORY_ORDER: Category[] = ["equity", "pms", "mfEquity", "mfDebt", "mfHybrid", "mfCommodity", "other"];
+const CATEGORY_TABLE_LABEL: Record<Category, string> = {
+  equity: "Indian direct equity",
+  pms: "PMS (Kabir)",
+  mfEquity: "Mutual funds — Equity",
+  mfDebt: "Mutual funds — Debt",
+  mfHybrid: "Mutual funds — Hybrid",
+  mfCommodity: "Mutual funds — Commodity",
+  other: "Other",
+};
+function categoryOf(p: Position, channelAccounts: Record<IndiaChannel, string[]>, mfCatOf: Map<string, string | null>): Category {
+  const acc = p.lots[0]?.account;
+  if (acc && channelAccounts.PMS.includes(acc)) return "pms";
+  if (acc && channelAccounts.MF.includes(acc)) {
+    const c = mfCatOf.get(p.symbol);
+    if (c === "EQUITY") return "mfEquity";
+    if (c === "DEBT") return "mfDebt";
+    if (c === "HYBRID") return "mfHybrid";
+    if (c === "COMMODITY") return "mfCommodity";
+    return "other";
+  }
+  if (acc && channelAccounts.EQUITY.includes(acc)) return "equity";
+  return "other";
+}
 
 type SnapRow = {
   id: string; symbol: string; name: string; qty: number;
@@ -112,6 +147,26 @@ export default async function IndiaOverview({ searchParams }: { searchParams: Pr
     return <EmptyState>No India holdings found yet across any tracked account.</EmptyState>;
   }
 
+  // Real names + category for the blended table: pos.rows is engine-generic (symbol only — an ISIN
+  // for MF, a ticker for Equity/PMS), so this page's own security lookup fills in what Security
+  // already has (name, mfCategory) rather than showing the raw symbol as the primary label. Mirrors
+  // the exact nameOf/catOf pattern india/mf/page.tsx already uses for its own Positions table.
+  const securities = pos.rows.length
+    ? await prisma.security.findMany({
+        where: { symbol: { in: pos.rows.map((r) => r.symbol) } },
+        select: { symbol: true, name: true, mfCategory: true },
+      })
+    : [];
+  const nameOf = new Map(securities.map((s) => [s.symbol, s.name]));
+  const mfCatOf = new Map(securities.map((s) => [s.symbol, s.mfCategory]));
+
+  const grouped = new Map<Category, typeof pos.rows>();
+  for (const p of pos.rows) {
+    const c = categoryOf(p, channelAccounts, mfCatOf);
+    grouped.set(c, [...(grouped.get(c) ?? []), p]);
+  }
+  const categoriesPresent = CATEGORY_ORDER.filter((c) => (grouped.get(c)?.length ?? 0) > 0);
+
   return (
     <div className="flex flex-col gap-5">
       <RollupSubNav />
@@ -146,22 +201,39 @@ export default async function IndiaOverview({ searchParams }: { searchParams: Pr
               <tr><Th right={false}>Security</Th><Th>Units</Th><Th>Avg cost</Th><Th>Price</Th><Th>Value</Th><Th>Weight</Th><Th>Unrealised</Th><Th>%</Th></tr>
             </thead>
             <tbody>
-              {pos.rows.map((p, i) => (
-                <tr key={p.symbol} className={rowCls}>
-                  <Td right={false} className="font-medium text-slate-800">
-                    <span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ background: CATEGORICAL[i % CATEGORICAL.length] }} />
-                    {p.symbol}
-                    {new Set(p.lots.map((l) => l.account)).size > 1 && <span className="ml-2"><Badge tone="blue">multiple accounts</Badge></span>}
-                  </Td>
-                  <Td>{fmtUnits(p.units)}</Td>
-                  <Td>{fmtMoney(p.avgCost, CUR)}</Td>
-                  <Td>{fmtMoney(p.price, CUR)}</Td>
-                  <Td>{fmtMoney(p.value, CUR)}</Td>
-                  <Td>{fmtPct(p.weight)}</Td>
-                  <Td className={tone(p.gain)}>{fmtMoney(p.gain, CUR)}</Td>
-                  <Td className={tone(p.gainPct)}>{fmtPct(p.gainPct, 1, true)}</Td>
-                </tr>
-              ))}
+              {categoriesPresent.map((cat) => {
+                const rows = grouped.get(cat)!;
+                const catValue = rows.reduce((s, p) => s + p.value, 0);
+                return (
+                  <Fragment key={cat}>
+                    <tr className="border-t border-slate-200 bg-slate-50">
+                      <td colSpan={4} className="px-3 py-1.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                        {CATEGORY_TABLE_LABEL[cat]} <span className="font-normal normal-case text-slate-400">· {rows.length} position{rows.length === 1 ? "" : "s"}</span>
+                      </td>
+                      <td className="px-3 py-1.5 text-right text-xs font-semibold tabular-nums text-slate-500">{fmtMoney(catValue, CUR)}</td>
+                      <td className="px-3 py-1.5 text-right text-xs font-semibold tabular-nums text-slate-500">{fmtPct(pos.totalValue ? catValue / pos.totalValue : 0)}</td>
+                      <td colSpan={2} className="px-3 py-1.5" />
+                    </tr>
+                    {rows.map((p, i) => (
+                      <tr key={p.symbol} className={rowCls}>
+                        <Td right={false} className="font-medium text-slate-800">
+                          <span className="mr-2 inline-block h-2 w-2 rounded-full" style={{ background: CATEGORICAL[i % CATEGORICAL.length] }} />
+                          {nameOf.get(p.symbol) ?? p.symbol}
+                          {nameOf.get(p.symbol) && <div className="ml-3.5 text-xs font-normal text-slate-400">{p.symbol}</div>}
+                          {new Set(p.lots.map((l) => l.account)).size > 1 && <span className="ml-2"><Badge tone="blue">multiple accounts</Badge></span>}
+                        </Td>
+                        <Td>{fmtUnits(p.units)}</Td>
+                        <Td>{fmtMoney(p.avgCost, CUR)}</Td>
+                        <Td>{fmtMoney(p.price, CUR)}</Td>
+                        <Td>{fmtMoney(p.value, CUR)}</Td>
+                        <Td>{fmtPct(p.weight)}</Td>
+                        <Td className={tone(p.gain)}>{fmtMoney(p.gain, CUR)}</Td>
+                        <Td className={tone(p.gainPct)}>{fmtPct(p.gainPct, 1, true)}</Td>
+                      </tr>
+                    ))}
+                  </Fragment>
+                );
+              })}
               <tr className="border-t border-slate-200 font-semibold">
                 <Td right={false}>Total</Td><Td /><Td /><Td />
                 <Td>{fmtMoney(pos.totalValue, CUR)}</Td><Td>100%</Td>
@@ -170,7 +242,11 @@ export default async function IndiaOverview({ searchParams }: { searchParams: Pr
             </tbody>
           </table>
           <div className="px-5 pb-4 pt-2">
-            <Note>Real FIFO positions with dated trade history — feeds IRR, alpha vs Nifty 500 TRI, and the channel/holder cuts on Performance. Includes any Equity, PMS, or Mutual Fund accounts with dated trades.</Note>
+            <Note>
+              Real FIFO positions with dated trade history — feeds IRR, alpha vs Nifty 500 TRI, and the channel/holder cuts on Performance.
+              Includes any Equity, PMS, or Mutual Fund accounts with dated trades, grouped the same way as the asset-class breakdown on{" "}
+              <a href="/portfolio/all" className="underline">All Assets</a>.
+            </Note>
           </div>
         </Card>
       )}
