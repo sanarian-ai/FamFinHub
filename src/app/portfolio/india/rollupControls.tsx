@@ -4,15 +4,16 @@ import type { PeriodDef } from "@/lib/portfolio/views";
 import type { HolderKey } from "@/lib/portfolio/india-data";
 import { HOLDER_LABEL, HOLDER_ORDER, OC_LABEL, type OpenClosed } from "./rollupConstants";
 
-export type Q = { p?: string; h?: string; oc?: string };
+export type Q = { p?: string; h?: string; oc?: string; po?: string };
 
-export function parseQ(params: { [k: string]: string | string[] | undefined }): { p?: string; h: HolderKey; oc: OpenClosed } {
+export function parseQ(params: { [k: string]: string | string[] | undefined }): { p?: string; h: HolderKey; oc: OpenClosed; po: "0" | "1" } {
   const s = (k: string) => (typeof params[k] === "string" ? (params[k] as string) : undefined);
   const h = s("h"), oc = s("oc");
   return {
     p: s("p"),
     h: h === "SANGEETH" || h === "RIA" ? h : "HOUSEHOLD",
     oc: oc === "OPEN" || oc === "CLOSED" ? oc : "ALL",
+    po: s("po") === "1" ? "1" : "0",
   };
 }
 
@@ -22,6 +23,7 @@ export function href(base: string, q: Q, patch: Q): string {
   if (m.p && m.p !== "SI") sp.set("p", m.p);
   if (m.h && m.h !== "HOUSEHOLD") sp.set("h", m.h);
   if (m.oc && m.oc !== "ALL") sp.set("oc", m.oc);
+  if (m.po === "1") sp.set("po", "1");
   const s = sp.toString();
   return s ? `${base}?${s}` : base;
 }
@@ -57,6 +59,16 @@ export function OpenClosedToggle({ base, q }: { base: string; q: Q }) {
           {OC_LABEL[k]}
         </Pill>
       ))}
+    </Pills>
+  );
+}
+
+export function PriceOnlyToggle({ base, q }: { base: string; q: Q }) {
+  return (
+    <Pills>
+      <Pill to={href(base, q, { po: q.po === "1" ? "0" : "1" })} active={q.po === "1"}>
+        Price-only (excl. dividends)
+      </Pill>
     </Pills>
   );
 }

@@ -4,7 +4,7 @@ import { getIndiaPortfolioData } from "@/lib/portfolio/india-data";
 import { fmtDay, fmtMoney, fmtPct, fmtPP, tone } from "@/lib/portfolio/format";
 import { alpha, downsample, headline, pickPeriod, periodDefs, runPeriod, stockRows } from "@/lib/portfolio/views";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
-import { PeriodBar, parseQ } from "../controls";
+import { PeriodBar, PriceOnlyToggle, parseQ } from "../controls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../ui";
 import { ValueChart } from "../ValueChart";
 import { MF_BENCHMARKS, BENCHMARK_LABEL } from "../constants";
@@ -23,7 +23,7 @@ export default async function IndiaMfPerformance({ searchParams }: { searchParam
   const hasTrades = ctx.trades.some((t) => accounts.includes(t.account));
   if (!hasTrades) return <EmptyState>No mutual fund holdings yet — upload a CAMS Consolidated Account Statement to get started.</EmptyState>;
 
-  const opts = { accounts, benchmarks: MF_BENCHMARKS };
+  const opts = { accounts, benchmarks: MF_BENCHMARKS, dividends: q.po !== "1" };
   const defs = periodDefs(ctx, accounts);
   const period = pickPeriod(ctx, q.p, accounts);
   const main = runPeriod(ctx, period, { ...opts, series: true });
@@ -50,6 +50,9 @@ export default async function IndiaMfPerformance({ searchParams }: { searchParam
 
   return (
     <div className="flex flex-col gap-5">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <PriceOnlyToggle base={BASE} q={q} />
+      </div>
       <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
@@ -77,6 +80,7 @@ export default async function IndiaMfPerformance({ searchParams }: { searchParam
         <Note>
           Replica = every rupee you invested or withdrew, on the same dates, put into the index instead. IRR is money-weighted (XIRR). Periods under
           90 days show the period return, not an annualised figure.
+          {q.po === "1" ? " Dividends excluded (price-only view)." : " Dividends included (est., after withholding), for any IDCW/dividend-plan schemes."}
         </Note>
       </Card>
 

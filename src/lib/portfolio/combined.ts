@@ -108,7 +108,7 @@ const HOUSEHOLD_BENCHMARKS: { symbol: string; isUSD: boolean }[] = [
 function replicateHousehold(
   interior: CF[], V0: number,
   dates: string[], px: Record<string, number[]>, fx: number[], div: Record<string, number>,
-  symbol: string, isUSD: boolean, d0: string, d1: string, wantSeries: boolean,
+  symbol: string, isUSD: boolean, d0: string, d1: string, wantSeries: boolean, includeDividends: boolean,
 ): { leg: Leg; series: number[] | null } {
   const i0 = idxOn(dates, d0), i1 = idxOn(dates, d1);
   const d0ms = Date.parse(`${d0}T00:00:00Z`), d1ms = Date.parse(`${d1}T00:00:00Z`);
@@ -138,7 +138,7 @@ function replicateHousehold(
       const ei = idxOn(dates, new Date(e.ms).toISOString().slice(0, 10));
       bu += -toBenchCcy(e.v, ei) / px[symbol][ei];
     }
-    const per = dateStr > d0 && dateStr <= d1 ? div[dateStr] : undefined;
+    const per = includeDividends && dateStr > d0 && dateStr <= d1 ? div[dateStr] : undefined;
     if (per !== undefined && buBeforeToday > 0) {
       cfs.push({ ms: dms, v: buBeforeToday * per * (1 - DEFAULT_WHT) * (isUSD ? fx[i] : 1) });
     }
@@ -150,10 +150,17 @@ function replicateHousehold(
 
 export function combinedRun(
   usCtx: Ctx, indiaCtx: Ctx, indiaAccounts: string[], start: string, end: string,
-  opts: { series?: boolean; cryptoCtx?: Ctx } = {},
+  opts: { series?: boolean; cryptoCtx?: Ctx; dividends?: boolean } = {},
 ): CombinedRunResult {
-  const us = run(usCtx, start, end, { currency: "INR", benchmarks: US_BENCHMARKS, dividends: true, series: opts.series });
-  const india = run(indiaCtx, start, end, { accounts: indiaAccounts, benchmarks: [COMBINED_INDIA_BENCHMARK], dividends: true, series: opts.series });
+  // Price-only opt-out (2026-09-26): dividends default ON (total return is the economically correct
+  // number), with an opt-out for a price-only comparison — same convention as every single-book
+  // performance page. Gates BOTH sides of the comparison: each book's own dividend income (via
+  // run()'s `dividends` option) AND the benchmark replica's own dividend income (via
+  // replicateHousehold()'s `includeDividends`), so price-only vs price-only and total-return vs
+  // total-return stay apples-to-apples — never portfolio-with-dividends vs benchmark-without.
+  const includeDividends = opts.dividends ?? true;
+  const us = run(usCtx, start, end, { currency: "INR", benchmarks: US_BENCHMARKS, dividends: includeDividends, series: opts.series });
+  const india = run(indiaCtx, start, end, { accounts: indiaAccounts, benchmarks: [COMBINED_INDIA_BENCHMARK], dividends: includeDividends, series: opts.series });
   const crypto = opts.cryptoCtx ? run(opts.cryptoCtx, start, end, { benchmarks: [COMBINED_INDIA_BENCHMARK], series: opts.series }) : undefined;
   const V0 = us.V0 + india.V0 + (crypto?.V0 ?? 0), V1 = us.V1 + india.V1 + (crypto?.V1 ?? 0), net = us.net + india.net + (crypto?.net ?? 0);
   const d0ms = Date.parse(`${us.d0}T00:00:00Z`), d1ms = Date.parse(`${us.d1}T00:00:00Z`);
@@ -184,7 +191,7 @@ export function combinedRun(
   const allBench: Record<string, Leg> = {};
   const allBenchSeries: Record<string, number[]> | null = opts.series ? {} : null;
   for (const { symbol, isUSD } of HOUSEHOLD_BENCHMARKS) {
-    const rep = replicateHousehold(interiorTrades, V0, usCtx.dates, usCtx.px, usCtx.fx, usCtx.div[symbol] ?? {}, symbol, isUSD, us.d0, us.d1, !!opts.series);
+    const rep = replicateHousehold(interiorTrades, V0, usCtx.dates, usCtx.px, usCtx.fx, usCtx.div[symbol] ?? {}, symbol, isUSD, us.d0, us.d1, !!opts.series, includeDividends);
     allBench[symbol] = rep.leg;
     if (allBenchSeries) allBenchSeries[symbol] = rep.series!;
   }

@@ -2,13 +2,13 @@ import Link from "next/link";
 import clsx from "clsx";
 import type { PeriodDef } from "@/lib/portfolio/views";
 
-export type Q = { p?: string; cur?: string; br?: string; div?: string };
+export type Q = { p?: string; cur?: string; br?: string; po?: string };
 
-export function parseQ(params: { [k: string]: string | string[] | undefined }): Required<Pick<Q, "cur" | "br" | "div">> & { p?: string } {
+export function parseQ(params: { [k: string]: string | string[] | undefined }): Required<Pick<Q, "cur" | "br" | "po">> & { p?: string } {
   const s = (k: string) => (typeof params[k] === "string" ? (params[k] as string) : undefined);
   const cur = s("cur") === "INR" ? "INR" : "USD";
   const br = s("br") === "INDmoney" || s("br") === "IBKR" ? (s("br") as string) : "ALL";
-  return { p: s("p"), cur, br, div: s("div") === "1" ? "1" : "0" };
+  return { p: s("p"), cur, br, po: s("po") === "1" ? "1" : "0" };
 }
 
 export function href(base: string, q: Q, patch: Q): string {
@@ -17,7 +17,7 @@ export function href(base: string, q: Q, patch: Q): string {
   if (m.p && m.p !== "SI") sp.set("p", m.p);
   if (m.cur && m.cur !== "USD") sp.set("cur", m.cur);
   if (m.br && m.br !== "ALL") sp.set("br", m.br);
-  if (m.div === "1") sp.set("div", "1");
+  if (m.po === "1") sp.set("po", "1");
   const s = sp.toString();
   return s ? `${base}?${s}` : base;
 }
@@ -33,7 +33,7 @@ function Pill({ to, active, children }: { to: string; active: boolean; children:
   );
 }
 
-export function Toggles({ base, q, showBroker = false, showDividends = false }: { base: string; q: Q; showBroker?: boolean; showDividends?: boolean }) {
+export function Toggles({ base, q, showBroker = false, showPriceOnly = false }: { base: string; q: Q; showBroker?: boolean; showPriceOnly?: boolean }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Pills>
@@ -52,10 +52,10 @@ export function Toggles({ base, q, showBroker = false, showDividends = false }: 
           ))}
         </Pills>
       )}
-      {showDividends && (
+      {showPriceOnly && (
         <Pills>
-          <Pill to={href(base, q, { div: q.div === "1" ? "0" : "1" })} active={q.div === "1"}>
-            Est. dividends (25% WHT)
+          <Pill to={href(base, q, { po: q.po === "1" ? "0" : "1" })} active={q.po === "1"}>
+            Price-only (excl. dividends)
           </Pill>
         </Pills>
       )}

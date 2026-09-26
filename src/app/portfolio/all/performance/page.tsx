@@ -8,7 +8,7 @@ import { combinedRun, COMBINED_INDIA_BENCHMARK } from "@/lib/portfolio/combined"
 import { alpha, downsample, headline, periodDefs } from "@/lib/portfolio/views";
 import { fmtDay, fmtMoney, fmtPct, fmtPP, tone } from "@/lib/portfolio/format";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
-import { PeriodBar } from "../../india/rollupControls";
+import { PeriodBar, PriceOnlyToggle } from "../../india/rollupControls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../india/ui";
 import { AllSubNav } from "../AllSubNav";
 import { ValueChart } from "../ValueChart";
@@ -43,6 +43,12 @@ const ALL_BENCH = ["NIFTY50TRI", "SPY", "QQQ"] as const;
 export default async function AllPerformance({ searchParams }: { searchParams: Promise<{ [k: string]: string | string[] | undefined }> }) {
   const sp = await searchParams;
   const pKey = typeof sp.p === "string" ? sp.p : undefined;
+  // Price-only opt-out (2026-09-26): defaults to including dividends (total return) on both the All
+  // Assets IRR and the benchmark replicas — see combined.ts's combinedRun() for how the same flag
+  // gates both sides of the comparison consistently.
+  const po = typeof sp.po === "string" ? sp.po : undefined;
+  const q = { p: pKey, po };
+  const includeDividends = po !== "1";
 
   const [usData, indiaData, cryptoData] = await Promise.all([getPortfolioData(), getIndiaPortfolioData(), getCryptoPortfolioData()]);
   const { ctx: usCtx, empty: usEmpty } = usData;
@@ -64,9 +70,9 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
   const defs = periodDefs(spineIsIndia ? indiaCtx : usCtx, spineIsIndia ? indiaAll : undefined);
   const period = defs.find((d) => d.key === pKey) ?? defs.find((d) => d.key === "SI")!;
 
-  const main = combinedRun(usCtx, indiaCtx, indiaAll, period.start, period.end, { series: true, cryptoCtx });
+  const main = combinedRun(usCtx, indiaCtx, indiaAll, period.start, period.end, { series: true, cryptoCtx, dividends: includeDividends });
   const table = defs
-    .map((d) => ({ d, r: combinedRun(usCtx, indiaCtx, indiaAll, d.start, d.end, { cryptoCtx }) }))
+    .map((d) => ({ d, r: combinedRun(usCtx, indiaCtx, indiaAll, d.start, d.end, { cryptoCtx, dividends: includeDividends }) }))
     .filter((x) => x.r.hasData);
 
   const kind = main.annualised ? "IRR" : "Return";
@@ -104,7 +110,10 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
     <div className="flex flex-col gap-5">
       <AllSubNav />
 
-      <PeriodBar base={BASE} q={{ p: pKey }} defs={defs} current={period.key} />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
+        <PriceOnlyToggle base={BASE} q={q} />
+      </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
         <Tile label="All Assets value" value={fmtMoney(main.V1, CUR)} sub={fmtDay(main.d1)} />
@@ -148,6 +157,7 @@ export default async function AllPerformance({ searchParams }: { searchParams: P
           same dates, put into {BENCHMARK_LABEL.NIFTY50TRI}, {BENCHMARK_LABEL.SPY}, or {BENCHMARK_LABEL.QQQ} instead, with USD/INR conversion
           applied on each flow&apos;s own date for the two USD-denominated indices. All Assets IRR is money-weighted (XIRR) over the
           FX-normalized, merged cash-flow stream of all books. Periods under 90 days show the period return, not an annualised figure.
+          {includeDividends ? " Dividends are included (est., after withholding) on both the household's own return and the benchmark replicas." : " Dividends excluded (price-only view) on both sides."}
         </Note>
       </Card>
 

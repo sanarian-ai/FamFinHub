@@ -18,7 +18,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
 
   const cur = q.cur as Cur;
   const accounts = accountsFor(q.br as BrokerKey);
-  const opts = { accounts, currency: cur, dividends: q.div === "1" };
+  const opts = { accounts, currency: cur, dividends: q.po !== "1" };
   const defs = periodDefs(ctx, accounts);
   const period = pickPeriod(ctx, q.p, accounts);
   const main = runPeriod(ctx, period, { ...opts, series: true });
@@ -31,7 +31,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
   const byBroker = (Object.keys(BROKERS) as BrokerKey[]).map((b) => {
     const acc = accountsFor(b);
     const start = inceptionStart(ctx, acc);
-    const o = { accounts: acc, dividends: q.div === "1" };
+    const o = { accounts: acc, dividends: q.po !== "1" };
     return { b, usd: runPeriod(ctx, { start, end: ctx.asof }, { ...o, currency: "USD" }), inr: runPeriod(ctx, { start, end: ctx.asof }, { ...o, currency: "INR" }) };
   });
 
@@ -48,7 +48,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3">
-        <Toggles base={BASE} q={q} showBroker showDividends />
+        <Toggles base={BASE} q={q} showBroker showPriceOnly />
         <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
       </div>
 
@@ -105,7 +105,7 @@ export default async function Performance({ searchParams }: { searchParams: Prom
         <div className="mt-3 text-xs text-slate-500">
           USD/INR {dec.fxRateStart.toFixed(2)} → {dec.fxRateEnd.toFixed(2)} ({fmtPct(dec.fxRateEnd / dec.fxRateStart - 1, 1, true)}). INR IRR {fmtPct(inr.pf.irr)} vs USD IRR {fmtPct(usd.pf.irr)}
           {main.annualised ? "" : " (period return shown on the tiles)"}.
-          {opts.dividends ? "" : " Dividends are excluded; switch on “Est. dividends” to include them."}
+          {opts.dividends ? " Dividends are estimated (25% WHT) and included." : " Dividends excluded — price-only view."}
         </div>
       </Card>
 

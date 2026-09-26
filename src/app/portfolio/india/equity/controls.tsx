@@ -3,15 +3,17 @@ import clsx from "clsx";
 import type { PeriodDef } from "@/lib/portfolio/views";
 import { EQUITY_HOLDER_GROUPS, type HolderKey } from "./constants";
 
-// INR-only (no currency toggle — every account here is already INR) and no dividends toggle
-// (India equity dividend data isn't ingested yet). The one control this screen needs beyond the
-// period bar is who's holdings to show: mirrors us/controls.tsx's Q/parseQ/href/Pills shape.
-export type Q = { p?: string; h?: string };
+// INR-only (no currency toggle — every account here is already INR). Includes a price-only opt-out
+// toggle for consistency with every other performance page (2026-09-26) — India equity dividend
+// data isn't ingested yet, so it's currently a no-op here, but wiring it in now means any future
+// India equity dividend data flows straight into IRR without another round of page changes. Mirrors
+// us/controls.tsx's Q/parseQ/href/Pills shape.
+export type Q = { p?: string; h?: string; po?: string };
 
-export function parseQ(params: { [k: string]: string | string[] | undefined }): { p?: string; h: HolderKey } {
+export function parseQ(params: { [k: string]: string | string[] | undefined }): { p?: string; h: HolderKey; po: "0" | "1" } {
   const s = (k: string) => (typeof params[k] === "string" ? (params[k] as string) : undefined);
   const h = s("h");
-  return { p: s("p"), h: h && h in EQUITY_HOLDER_GROUPS ? (h as HolderKey) : "ALL" };
+  return { p: s("p"), h: h && h in EQUITY_HOLDER_GROUPS ? (h as HolderKey) : "ALL", po: s("po") === "1" ? "1" : "0" };
 }
 
 export function href(base: string, q: Q, patch: Q): string {
@@ -19,6 +21,7 @@ export function href(base: string, q: Q, patch: Q): string {
   const sp = new URLSearchParams();
   if (m.p && m.p !== "SI") sp.set("p", m.p);
   if (m.h && m.h !== "ALL") sp.set("h", m.h);
+  if (m.po === "1") sp.set("po", "1");
   const s = sp.toString();
   return s ? `${base}?${s}` : base;
 }
@@ -44,6 +47,16 @@ export function HolderToggle({ base, q }: { base: string; q: Q }) {
           {HOLDER_LABEL[k]}
         </Pill>
       ))}
+    </Pills>
+  );
+}
+
+export function PriceOnlyToggle({ base, q }: { base: string; q: Q }) {
+  return (
+    <Pills>
+      <Pill to={href(base, q, { po: q.po === "1" ? "0" : "1" })} active={q.po === "1"}>
+        Price-only (excl. dividends)
+      </Pill>
     </Pills>
   );
 }

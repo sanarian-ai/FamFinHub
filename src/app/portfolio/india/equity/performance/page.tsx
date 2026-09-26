@@ -4,7 +4,7 @@ import { inceptionStart } from "@/lib/portfolio/engine";
 import { fmtDay, fmtMoney, fmtPct, fmtPP, tone } from "@/lib/portfolio/format";
 import { alpha, downsample, headline, pickPeriod, periodDefs, runPeriod, stockRows } from "@/lib/portfolio/views";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
-import { HolderToggle, PeriodBar, parseQ } from "../controls";
+import { HolderToggle, PeriodBar, PriceOnlyToggle, parseQ } from "../controls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../ui";
 import { ValueChart } from "../ValueChart";
 import { accountsForHolder, EQUITY_BENCHMARKS, BENCHMARK_LABEL, EQUITY_HOLDER_GROUPS, type HolderKey } from "../constants";
@@ -21,7 +21,7 @@ export default async function IndiaEquityPerformance({ searchParams }: { searchP
   const hasTrades = ctx.trades.some((t) => accounts.includes(t.account));
   if (!hasTrades) return <EmptyState>No dated trade history yet for India Equity.</EmptyState>;
 
-  const opts = { accounts, benchmarks: EQUITY_BENCHMARKS };
+  const opts = { accounts, benchmarks: EQUITY_BENCHMARKS, dividends: q.po !== "1" };
   const defs = periodDefs(ctx, accounts);
   const period = pickPeriod(ctx, q.p, accounts);
   const main = runPeriod(ctx, period, { ...opts, series: true });
@@ -35,7 +35,7 @@ export default async function IndiaEquityPerformance({ searchParams }: { searchP
     const acc = h === "ALL" ? channelAccounts.EQUITY : (accountsForHolder(h) ?? channelAccounts.EQUITY);
     if (!ctx.trades.some((t) => acc.includes(t.account))) return { h, r: null };
     const start = inceptionStart(ctx, acc);
-    return { h, r: runPeriod(ctx, { start, end: ctx.asof }, { accounts: acc, benchmarks: EQUITY_BENCHMARKS }) };
+    return { h, r: runPeriod(ctx, { start, end: ctx.asof }, { accounts: acc, benchmarks: EQUITY_BENCHMARKS, dividends: q.po !== "1" }) };
   });
 
   const cell = (r: typeof main, key: string) => {
@@ -53,7 +53,10 @@ export default async function IndiaEquityPerformance({ searchParams }: { searchP
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3">
-        <HolderToggle base={BASE} q={q} />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <HolderToggle base={BASE} q={q} />
+          <PriceOnlyToggle base={BASE} q={q} />
+        </div>
         <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
       </div>
 
@@ -81,6 +84,7 @@ export default async function IndiaEquityPerformance({ searchParams }: { searchP
         <ValueChart data={downsample(main.series ?? [])} benchmarks={EQUITY_BENCHMARKS} />
         <Note>
           Replica = every rupee you invested or withdrew, on the same dates, put into the index instead. IRR is money-weighted (XIRR). Periods under 90 days show the period return, not an annualised figure.
+          {q.po === "1" ? " Dividends excluded (price-only view)." : " Dividends included (est., after withholding) — currently a no-op, no India equity dividend data ingested yet."}
         </Note>
       </Card>
 

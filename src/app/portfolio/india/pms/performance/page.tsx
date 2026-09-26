@@ -4,7 +4,7 @@ import { firstTradeDate, inceptionStart, run } from "@/lib/portfolio/engine";
 import { fmtDay, fmtMoney, fmtPct, fmtPP, tone } from "@/lib/portfolio/format";
 import { alpha, downsample, headline, pickPeriod, periodDefs, runPeriod } from "@/lib/portfolio/views";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
-import { PeriodBar, parseQ } from "../controls";
+import { PeriodBar, PriceOnlyToggle, parseQ } from "../controls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../../ui";
 import { RollupValueChart } from "../../RollupValueChart";
 import { PMS_BENCHMARK, PMS_BENCHMARK_LABEL, PMS_BENCHMARKS, PMS_BENCHMARK_LABELS } from "../constants";
@@ -27,7 +27,7 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
   const hasTrades = ctx.trades.some((t) => accounts.includes(t.account));
   if (!hasTrades) return <EmptyState>No dated trade history yet for India PMS.</EmptyState>;
 
-  const opts = { accounts, benchmarks: PMS_BENCHMARKS };
+  const opts = { accounts, benchmarks: PMS_BENCHMARKS, dividends: q.po !== "1" };
   const defs = periodDefs(ctx, accounts);
   const period = pickPeriod(ctx, q.p, accounts);
   const main = runPeriod(ctx, period, { ...opts, series: true });
@@ -39,7 +39,7 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
       const trades = ctx.trades.filter((t) => t.account === key);
       if (trades.length === 0) return null;
       const start = inceptionStart(ctx, [key]);
-      const r = run(ctx, start, ctx.asof, { accounts: [key] });
+      const r = run(ctx, start, ctx.asof, { accounts: [key], dividends: q.po !== "1" });
       return { key, live: lotAccounts.includes(key), start, r };
     })
     .filter((x): x is { key: string; live: boolean; start: string; r: ReturnType<typeof run> } => x != null);
@@ -62,6 +62,9 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <PriceOnlyToggle base={BASE} q={q} />
+        </div>
         <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
       </div>
 
@@ -91,6 +94,7 @@ export default async function IndiaPmsPerformance({ searchParams }: { searchPara
           Replica = every rupee contributed or withdrawn across all 5 PMS accounts, on the same dates, put into {PMS_BENCHMARK_LABEL} instead. IRR is
           money-weighted (XIRR), blending the live Kabir PMS account with the 4 closed vehicles' historical flows. Periods under 90 days show the period
           return, not an annualised figure.
+          {q.po === "1" ? " Dividends excluded (price-only view)." : " Dividends included (est., after withholding), where any dividend data exists."}
         </Note>
       </Card>
 

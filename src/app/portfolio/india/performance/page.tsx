@@ -4,7 +4,7 @@ import { inceptionStart } from "@/lib/portfolio/engine";
 import { fmtDay, fmtMoney, fmtPct, fmtPP, tone } from "@/lib/portfolio/format";
 import { alpha, downsample, headline, pickPeriod, periodDefs, runPeriod } from "@/lib/portfolio/views";
 import { CATEGORICAL } from "@/app/insights/chartTheme";
-import { HolderToggle, OpenClosedToggle, PeriodBar, parseQ } from "../rollupControls";
+import { HolderToggle, OpenClosedToggle, PeriodBar, PriceOnlyToggle, parseQ } from "../rollupControls";
 import { Note, rowCls, tableCls, Td, Th, theadCls, Tile } from "../ui";
 import { RollupValueChart } from "../RollupValueChart";
 import { RollupSubNav } from "../RollupSubNav";
@@ -36,7 +36,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
   const defs = periodDefs(ctx, accounts);
   const period = pickPeriod(ctx, q.p, accounts);
   const symbols = symbolsForFilter(ctx, accounts, q.oc);
-  const opts = { accounts, benchmarks: INDIA_BENCHMARKS, symbols };
+  const opts = { accounts, benchmarks: INDIA_BENCHMARKS, symbols, dividends: q.po !== "1" };
   const main = runPeriod(ctx, period, { ...opts, series: true });
 
   const table = defs.map((d) => ({ d, r: runPeriod(ctx, d, opts) })).filter((x) => x.r.hasData);
@@ -45,7 +45,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
     const chAccounts = accounts.filter((a) => channelAccounts[ch].includes(a));
     const chHasTrades = ctx.trades.some((t) => chAccounts.includes(t.account));
     const chSymbols = symbolsForFilter(ctx, chAccounts, q.oc);
-    const r = runPeriod(ctx, period, { accounts: chAccounts, benchmarks: [INDIA_BENCHMARK], symbols: chSymbols });
+    const r = runPeriod(ctx, period, { accounts: chAccounts, benchmarks: [INDIA_BENCHMARK], symbols: chSymbols, dividends: q.po !== "1" });
     return { ch, chHasTrades, r };
   });
   const channelProfitSum = byChannel.reduce((s, x) => s + x.r.pf.profit, 0);
@@ -60,7 +60,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
     if (!ctx.trades.some((t) => acc.includes(t.account))) return { h, r: null };
     const start = inceptionStart(ctx, acc);
     const sym = symbolsForFilter(ctx, acc, q.oc);
-    return { h, r: runPeriod(ctx, { start, end: ctx.asof }, { accounts: acc, benchmarks: [INDIA_BENCHMARK], symbols: sym }) };
+    return { h, r: runPeriod(ctx, { start, end: ctx.asof }, { accounts: acc, benchmarks: [INDIA_BENCHMARK], symbols: sym, dividends: q.po !== "1" }) };
   });
 
   const cell = (r: typeof main, isBench: boolean) => {
@@ -80,7 +80,10 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <HolderToggle base={BASE} q={q} />
-          <OpenClosedToggle base={BASE} q={q} />
+          <div className="flex flex-wrap items-center gap-2">
+            <PriceOnlyToggle base={BASE} q={q} />
+            <OpenClosedToggle base={BASE} q={q} />
+          </div>
         </div>
         <PeriodBar base={BASE} q={q} defs={defs} current={period.key} />
       </div>
@@ -111,6 +114,7 @@ export default async function IndiaPerformance({ searchParams }: { searchParams:
           Replica = every rupee invested or withdrawn, on the same dates, put into {BENCHMARK_LABEL} instead. IRR is money-weighted (XIRR).
           Periods under 90 days show the period return, not an annualised figure.
           {q.oc !== "ALL" && ` Filtered to ${OC_LABEL[q.oc].toLowerCase()} positions.`}
+          {q.po === "1" ? " Dividends excluded (price-only view)." : " Dividends included (est., after withholding)."}
         </Note>
       </Card>
 
