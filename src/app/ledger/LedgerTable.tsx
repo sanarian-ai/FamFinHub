@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { Badge } from "@/components/ui";
 import { formatDate, formatMonth, formatINR } from "@/lib/format";
 import CategoryPicker from "./CategoryPicker";
-import { updateTransactionCategory, bulkUpdateCategory, updateTransactionEffectiveMonth } from "./actions";
+import { updateTransactionCategory, bulkUpdateCategory, updateTransactionEffectiveMonth, bulkDeleteTransactions } from "./actions";
 import type { CategoryOption, LedgerRow } from "./types";
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -139,6 +139,25 @@ export default function LedgerTable({
     });
   }
 
+  function handleBulkDelete() {
+    const ids = Array.from(selected);
+    if (ids.length === 0) return;
+    const confirmed = window.confirm(
+      `Delete ${ids.length} selected transaction${ids.length === 1 ? "" : "s"}? This can't be undone.`
+    );
+    if (!confirmed) return;
+    startTransition(async () => {
+      const { deletedCount, skippedCount } = await bulkDeleteTransactions(ids);
+      setSelected(new Set());
+      if (skippedCount > 0) {
+        window.alert(
+          `Deleted ${deletedCount} transaction${deletedCount === 1 ? "" : "s"}. Skipped ${skippedCount} — ` +
+            `linked to a portfolio funding record, so ${skippedCount === 1 ? "it" : "they"} can't be deleted from here.`
+        );
+      }
+    });
+  }
+
   return (
     <div>
       {selected.size > 0 && (
@@ -162,6 +181,14 @@ export default function LedgerTable({
               />
             )}
           </div>
+          <button
+            type="button"
+            onClick={handleBulkDelete}
+            disabled={isPending}
+            className="rounded-md border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+          >
+            Delete {selected.size} selected…
+          </button>
           <button
             type="button"
             onClick={() => setSelected(new Set())}

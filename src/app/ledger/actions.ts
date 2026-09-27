@@ -56,3 +56,36 @@ export async function updateTransactionEffectiveMonth(transactionId: string, mon
 
   revalidatePath("/ledger");
 }
+
+/**
+ * Permanently deletes a batch of transactions (used by the Ledger's "Delete N selected" bulk
+ * action — the intended use case is clearing out duplicate imports, e.g. the same statement
+ * pulled in twice by both the Gmail parser and a CSV import). Irreversible — the caller is
+ * expected to confirm with the user before invoking this.
+ *
+ * A transaction that's been linked to a portfolio contribution (FundingLink — see schema.prisma)
+ * can't be deleted: the FK has no cascade, so it's excluded from the batch up front rather than
+ * letting the whole deleteMany() fail on one blocked row. Returns counts so the UI can tell the
+ * user when some of their selection was skipped and why, instead of silently deleting less than
+ * they asked for.
+ */
+export async function bulkDeleteTransactions(
+  transactionIds: string[]
+): Promise<{ deletedCount: number; skippedCount: number }> {
+  if (!transactionIds || transactionIds.length === 0) return { deletedCount: 0, skippedCount: 0 };
+
+  const linked = await prisma.fundingLink.findMany({
+    where: { transactionId: { in: transactionIds } },
+    select: { transactionId: true },
+  });
+  const linkedIds = new Set(linked.map((l) => l.transactionId));
+  const deletableIds = transactionIds.filter((id) => !linkedIds.has(id));
+
+  const result = deletableIds.length > 0
+    ? await prisma.transaction.deleteMany({ where: { id: { in: deletableIds } } })
+    : { count: 0 };
+
+  revalidatePath("/ledger");
+
+  return { deletedCount: result.count, skippedCount: transactionIds.length - result.count };
+}
