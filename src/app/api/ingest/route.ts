@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { computeDedupeHash } from "@/lib/dedupe";
+import { computeDedupeHash, descriptionsLikelyMatch, normDescription } from "@/lib/dedupe";
 import {
   fetchActiveCategoryRules,
   matchCategoryRuleFromList,
@@ -64,6 +64,7 @@ export async function POST(req: NextRequest) {
   let matched = 0,
     needsReview = 0,
     duplicates = 0,
+    nearDuplicates = 0,
     errors: { row: number; error: string }[] = [];
 
   for (let i = 0; i < txns.length; i++) {
@@ -87,6 +88,34 @@ export async function POST(req: NextRequest) {
       if (existing) {
         duplicates++;
         continue; // idempotent: re-processing the same email/statement line is a no-op
+      }
+
+      // Near-duplicate guard (added 2026-10-12). The exact hash above only catches byte-identical
+      // descriptions, so the same real transaction arriving a second time with different wording — a
+      // daily alert ("RAZ*Swiggy") vs the statement line ("RAZSwiggy Bangalore IN"), or a statement
+      // re-parsed with different spliced reference fragments — slipped straight through (see
+      // src/lib/dedupe.ts). Skip the row when an EARLIER batch already holds one with the same account,
+      // date and amount and a description that names the same merchant. Deliberately narrow:
+      //   - only earlier batches (importBatchId != this one): two similar rows inside ONE batch are
+      //     left to sourceRef, so genuinely separate same-day purchases in a single statement survive;
+      //   - a candidate whose description is word-for-word identical does NOT count: the hash already
+      //     said "different sourceRef", which is how two identical fares stay two rows;
+      //   - no shared merchant token means a different merchant, so it is inserted as normal.
+      const dayStart = new Date(`${txnDate.toISOString().slice(0, 10)}T00:00:00.000Z`);
+      const dayEnd = new Date(dayStart.getTime() + 86400000);
+      const sameDayRows = await prisma.transaction.findMany({
+        where: {
+          accountId: account?.id ?? null,
+          amount: t.amount,
+          txnDate: { gte: dayStart, lt: dayEnd },
+          OR: [{ importBatchId: null }, { importBatchId: { not: batch.id } }],
+        },
+        select: { rawDescription: true },
+      });
+      const newNorm = normDescription(t.rawDescription);
+      if (sameDayRows.some((r) => normDescription(r.rawDescription) !== newNorm && descriptionsLikelyMatch(r.rawDescription, t.rawDescription))) {
+        nearDuplicates++;
+        continue;
       }
 
       const currency = t.currency ?? "INR";
@@ -173,6 +202,7 @@ export async function POST(req: NextRequest) {
     matched,
     needsReview,
     duplicates,
+    nearDuplicates,
     errors,
   });
 }
