@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
   }
   const scope = scopeParam as Scope;
 
-  const updated: { symbol: string; date: string; close: number }[] = [];
+  const updated: { symbol: string; date: string; close: number; via?: string }[] = [];
   const fallback: string[] = [];
   let requested = 0;
 
