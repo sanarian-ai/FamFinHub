@@ -139,6 +139,9 @@ export default async function InsightsPage({ searchParams }: { searchParams: Pro
         subtitle="13 years of real spend, aggregated live from the ledger — replaces the old per-year Sheet tabs that quietly broke."
         actions={
           <div className="flex items-center gap-2">
+            <Link href="/spend-review" className="text-xs font-medium text-blue-700 hover:underline">
+              Spend Review: committed vs controllable →
+            </Link>
             <YearMultiSelect options={availableYears} selectedKeys={selectedYears == null ? null : [...selectedYears]} />
             <div className="flex rounded-lg border border-slate-300 bg-white p-0.5 text-sm">
               <Link

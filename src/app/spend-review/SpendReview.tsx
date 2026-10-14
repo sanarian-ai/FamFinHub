@@ -12,8 +12,10 @@ import "./SpendReview.css";
 const STORE = "spendReview.v1";
 type Saved = Pick<Opts, "person" | "sep" | "T" | "mult" | "spread" | "plan" | "expected"> & { mode: Mode; cut: number };
 
-export function SpendReview({ data }: { data: SrData }) {
-  const [o, setO] = useState<Opts>(() => defaultOpts(data));
+export type Initial = Partial<Pick<Opts, "person" | "ptype" | "month" | "year" | "fy">>;
+
+export function SpendReview({ data, initial = {} }: { data: SrData; initial?: Initial }) {
+  const [o, setO] = useState<Opts>(() => ({ ...defaultOpts(data), ...initial }));
   const [mode, setMode] = useState<Mode>("sum");
   const [cut, setCut] = useState(0.25);
   const [sel, setSel] = useState<Group[]>([]);
@@ -33,7 +35,7 @@ export function SpendReview({ data }: { data: SrData }) {
         const s = JSON.parse(raw) as Partial<Saved>;
         setO((p) => ({
           ...p,
-          person: s.person ?? p.person, sep: s.sep ?? p.sep, T: s.T ?? p.T, mult: s.mult ?? p.mult, spread: s.spread ?? p.spread,
+          person: initial.person ?? s.person ?? p.person, sep: s.sep ?? p.sep, T: s.T ?? p.T, mult: s.mult ?? p.mult, spread: s.spread ?? p.spread,
           plan: s.plan ?? p.plan, expected: s.expected ?? p.expected,
         }));
         if (s.mode) setMode(s.mode);
@@ -149,6 +151,9 @@ export function SpendReview({ data }: { data: SrData }) {
         <div>
           <h1>Spend Review</h1>
           <p className="sub">Expenditure only · ledger through {lastLbl}{data.partialLast ? " (current month is still in progress)" : ""} · grouped by your Expense Natures</p>
+          <p className="sub" style={{ marginTop: 4 }}>
+            Related: <Link className="lnk" href="/">Dashboard</Link><Link className="lnk" href="/insights">Insights &amp; Trends</Link><Link className="lnk" href="/ledger">Ledger</Link>
+          </p>
         </div>
 
         <section className="panel controls" aria-label="Filters">

@@ -106,6 +106,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     person === "household" ? getUncategorizedFlowRows(trailingStart, trailingEnd) : Promise.resolve([]),
   ]);
 
+  // Deep link into Spend Review carrying the Dashboard's person + period (IST month / calendar year / fiscal year).
+  const istYM = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit" }).format(current.start).slice(0, 7);
+  const spendReviewHref =
+    "/spend-review?" +
+    new URLSearchParams({
+      person,
+      ptype: kind === "month" ? "month" : view === "fy" ? "fy" : "year",
+      ...(kind === "month" ? { month: istYM } : view === "fy" ? { fy: istYM.slice(0, 4) } : { year: istYM.slice(0, 4) }),
+    }).toString();
+
   const accountTotals = sumByAccount(currentExpenditureRows);
   const movers = topMovers(moverCurrentRows, moverPrevRows, 5);
 
@@ -165,15 +175,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           deltaLabel2="vs last year"
           positiveIsBad={false}
         />
-        <StatTile
-          label={`Expense — ${current.label}`}
-          value={formatINR(cashFlowCurrent.expense)}
-          delta={pctChange(cashFlowCurrent.expense, cashFlowPrev.expense)}
-          deltaLabel="vs last period"
-          delta2={pctChange(cashFlowCurrent.expense, cashFlowSameLastYear.expense)}
-          deltaLabel2="vs last year"
-          positiveIsBad={true}
-        />
+        <Link href={spendReviewHref} className="block" title="Open this period in Spend Review">
+          <StatTile
+            label={`Expense — ${current.label}`}
+            value={formatINR(cashFlowCurrent.expense)}
+            delta={pctChange(cashFlowCurrent.expense, cashFlowPrev.expense)}
+            deltaLabel="vs last period"
+            delta2={pctChange(cashFlowCurrent.expense, cashFlowSameLastYear.expense)}
+            deltaLabel2="vs last year"
+            positiveIsBad={true}
+          />
+        </Link>
         <StatTile
           label="Net"
           value={formatINR(cashFlowCurrent.net)}
@@ -212,7 +224,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <Card className={person === "household" ? "lg:col-span-2" : undefined}>
           <div className="mb-1 flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-semibold text-slate-900">Top movers</h2>
-            <Link href="/spend-review" className="text-xs font-medium text-blue-700 hover:underline">
+            <Link href={spendReviewHref} className="text-xs font-medium text-blue-700 hover:underline">
               Explore in Spend Review →
             </Link>
           </div>
