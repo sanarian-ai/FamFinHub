@@ -210,7 +210,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
       <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card className={person === "household" ? "lg:col-span-2" : undefined}>
-          <h2 className="mb-1 text-sm font-semibold text-slate-900">Top movers</h2>
+          <div className="mb-1 flex items-baseline justify-between gap-3">
+            <h2 className="text-sm font-semibold text-slate-900">Top movers</h2>
+            <Link href="/spend-review" className="text-xs font-medium text-blue-700 hover:underline">
+              Explore in Spend Review →
+            </Link>
+          </div>
           <p className="mb-2 text-xs text-slate-400">
             Categories with the largest change, {monthShortLabel(prevMonth.start)} → {monthShortLabel(currentMonth.start)}
           </p>
