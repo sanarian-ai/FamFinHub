@@ -10,7 +10,7 @@ const links = [
   { href: "/portfolio", label: "Portfolio", icon: "💼" },
   { href: "/review", label: "Review Queue", icon: "🔎", badge: true },
   { href: "/insights", label: "Insights & Trends", icon: "📈" },
-  { href: "/spend-review", label: "Spend Review", icon: "🧮" },
+  { href: "/spend-review", label: "Expense Analysis", icon: "🧮" },
   { href: "/mapping", label: "Mapping Admin", icon: "🗂️" },
   { href: "/retirement/plan", label: "Retirement", icon: "🏖️" },
 ];

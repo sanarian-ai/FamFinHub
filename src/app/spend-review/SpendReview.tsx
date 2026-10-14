@@ -149,7 +149,7 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
     <div className="sr">
       <div className="wrap">
         <div>
-          <h1>Spend Review</h1>
+          <h1>Expense Analysis</h1>
           <p className="sub">Expenditure only · ledger through {lastLbl}{data.partialLast ? " (current month is still in progress)" : ""} · grouped by your Expense Natures</p>
           <p className="sub" style={{ marginTop: 4 }}>
             Related: <Link className="lnk" href="/">Dashboard</Link><Link className="lnk" href="/insights">Insights &amp; Trends</Link><Link className="lnk" href="/ledger">Ledger</Link>

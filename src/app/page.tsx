@@ -175,7 +175,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           deltaLabel2="vs last year"
           positiveIsBad={false}
         />
-        <Link href={spendReviewHref} className="block" title="Open this period in Spend Review">
+        <Link href={spendReviewHref} className="block" title="Open this period in Expense Analysis">
           <StatTile
             label={`Expense — ${current.label}`}
             value={formatINR(cashFlowCurrent.expense)}
@@ -225,7 +225,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div className="mb-1 flex items-baseline justify-between gap-3">
             <h2 className="text-sm font-semibold text-slate-900">Top movers</h2>
             <Link href={spendReviewHref} className="text-xs font-medium text-blue-700 hover:underline">
-              Explore in Spend Review →
+              Explore in Expense Analysis →
             </Link>
           </div>
           <p className="mb-2 text-xs text-slate-400">
