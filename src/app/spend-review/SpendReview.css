@@ -1,7 +1,7 @@
 /* Spend Review — scoped under .sr so it cannot leak into the rest of the app. Light-only like the app. */
 .sr{
   --sr-bg:#f4f6f9; --sr-surface:#fcfcfb; --sr-ink:#16202e; --sr-ink2:#4a5668; --sr-muted:#6b7587; --sr-line:#e1e6ed; --sr-line2:#eef1f5;
-  --sr-committed:#2f6fb0; --sr-controllable:#c4690f; --sr-planned:#8a63b8; --sr-other:#0e8f7a;
+  --sr-committed:#2f6fb0; --sr-controllable:#c4690f; --sr-planned:#8a63b8; --sr-other:#0e8f7a; --sr-property:#8c3b2e; --sr-invest:#8a7a12;
   --sr-warn:#b4351f; --sr-warnbg:#fbeae6; --sr-ok:#1f7a55; --sr-okbg:#e5f4ec; --sr-chip:#eef1f5;
   color:var(--sr-ink); font-size:14px; line-height:1.45;
 }
@@ -25,7 +25,7 @@
 .sr select{font:inherit;font-size:12.5px;background:var(--sr-surface);color:var(--sr-ink);border:1px solid var(--sr-line);border-radius:6px;padding:4px 8px}
 .sr .toggle{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--sr-ink2);cursor:pointer;user-select:none}
 .sr input[type=checkbox]{accent-color:var(--sr-ink)}
-.sr .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.sr .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px}
 @media(max-width:860px){.sr .tiles{grid-template-columns:repeat(2,1fr)}}
 .sr .tile{border:1px solid var(--sr-line);border-radius:8px;padding:11px 13px;background:var(--sr-surface);text-align:left;cursor:pointer;color:inherit;user-select:none}
 .sr .tile[aria-pressed="true"]{outline:2px solid var(--sr-ink);outline-offset:-1px}
@@ -133,3 +133,7 @@
 .sr tr.hid td:first-child .tx,.sr tr.hid td:first-child .lnk{text-decoration:none}
 .sr .rowtl{display:flex;gap:8px;align-items:flex-start}
 .sr .banner{font-size:12px;color:var(--sr-ink2);background:var(--sr-chip);border-radius:6px;padding:5px 10px;margin:0 0 4px;display:inline-block}
+
+.sr .scopenote{font-size:12px;color:var(--sr-muted);margin:0 0 12px}
+.sr .scopenote b{color:var(--sr-ink2);font-weight:600}
+.sr .tile.ext{border-color:color-mix(in srgb,var(--sr-ink) 25%,var(--sr-line))}

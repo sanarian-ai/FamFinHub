@@ -1,9 +1,17 @@
 import type { PrismaClient } from "@prisma/client";
-import { MIN_TX, NATURE_GROUP, type SrCat, type SrData, type SrTx } from "./types";
+import { MIN_TX, NATURE_GROUP, type Group, type SrCat, type SrData, type SrTx } from "./types";
 
 const HISTORY_START = "2021-04-01"; // start of FY 2021-22; earlier data lacks reliable account/holder attribution
 
-type Row = { m: string; amt: number; d: string; catId: string; cat: string; typ: string; nat: string; h: string | null };
+type Row = { m: string; amt: number; d: string; catId: string; cat: string; typ: string; nat: string; at: string; h: string | null };
+
+/**
+ * Group of an outflow. The sign decides what counts (a negative amount is an expense wherever it is filed), so negatives filed
+ * under Income count as "other" (e.g. a tax payment filed as "Income Tax Refund"). Investment-type outflows split into
+ * EMIs & property (Planned Asset nature) and Investments. Transfers are never loaded.
+ */
+const groupOf = (r: Row): Group =>
+  r.at === "Investment" ? (r.nat === "Planned Asset" ? "property" : "invest") : r.at === "Income" ? "other" : NATURE_GROUP[r.nat] ?? "other";
 
 const median = (a: number[]) => {
   const s = [...a].sort((x, y) => x - y);
@@ -12,22 +20,22 @@ const median = (a: number[]) => {
 };
 
 /**
- * Loads categorized Expenditure outflows since HISTORY_START, bucketed by month ("counts toward"
+ * Loads categorized outflows (negative amounts) since HISTORY_START, bucketed by month ("counts toward"
  * month, i.e. COALESCE(effectiveMonth, txnDate) in IST — the same basis the Dashboard uses) and by
- * account holder. Read-only. Transfer/Investment/Income categories are excluded by account type, and
- * uncategorized rows are excluded (they surface in the Review Queue, not here).
+ * account holder. Read-only. Transfer-type categories are never loaded (they move money between own accounts); Income and
+ * Investment outflows are loaded and grouped by groupOf. Uncategorized rows are excluded (they surface in the Review Queue).
  */
 export async function getSpendReviewData(prisma: PrismaClient): Promise<SrData> {
   const rows = await prisma.$queryRaw<Row[]>`
     SELECT TO_CHAR(COALESCE(t."effectiveMonth", t."txnDate") AT TIME ZONE 'Asia/Kolkata', 'YYYY-MM') AS m,
            (-t.amount)::float8 AS amt, t."rawDescription" AS d,
-           c.id AS "catId", c.name AS cat, et.name AS typ, en.name AS nat, a.holder AS h
+           c.id AS "catId", c.name AS cat, et.name AS typ, en.name AS nat, en."accountType"::text AS at, a.holder AS h
     FROM transactions t
     JOIN categories c ON c.id = t."categoryId"
     JOIN expense_types et ON et.id = c."expenseTypeId"
     JOIN expense_natures en ON en.id = et."expenseNatureId"
     LEFT JOIN accounts a ON a.id = t."accountId"
-    WHERE en."accountType"::text = 'Expenditure' AND t.amount < 0
+    WHERE en."accountType"::text IN ('Expenditure', 'Investment', 'Income') AND t.amount < 0
       AND COALESCE(t."effectiveMonth", t."txnDate") >= ${HISTORY_START}::timestamp`;
 
   const lastMonth = rows.reduce((mx, r) => (r.m > mx ? r.m : mx), "2021-04");
@@ -53,7 +61,7 @@ export async function getSpendReviewData(prisma: PrismaClient): Promise<SrData> 
     const k = catKey(r);
     let c = cats.get(k);
     if (!c) {
-      c = { id: r.catId, n: r.cat, t: r.typ, nat: r.nat, g: NATURE_GROUP[r.nat] ?? "other", med: 0, by: [0, 1, 2].map(() => Array(months.length).fill(0)) };
+      c = { id: r.catId, n: r.cat, t: r.typ, nat: r.nat, g: groupOf(r), med: 0, by: [0, 1, 2].map(() => Array(months.length).fill(0)) };
       cats.set(k, c);
       amounts.set(k, []);
     }

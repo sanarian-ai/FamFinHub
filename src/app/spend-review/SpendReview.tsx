@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import type { SrData, Group } from "@/lib/spendReview/types";
+import { BASE_GROUPS, SCOPE_GROUPS, type SrData, type Group, type Scope } from "@/lib/spendReview/types";
 import {
-  createEngine, defaultOpts, GROUPS, GKEYS, GSUB, inr, full, cleanDesc, ledgerHref, sum,
+  createEngine, defaultOpts, scopeData, remapHidden, GROUPS, GSUB, inr, full, cleanDesc, ledgerHref, sum,
   type Opts, type Mode, type PType,
 } from "@/lib/spendReview/calc";
 import { TrendChart } from "./TrendChart";
@@ -12,6 +12,13 @@ import "./SpendReview.css";
 
 const STORE = "spendReview.v1";
 type Saved = Pick<Opts, "person" | "sep" | "T" | "mult" | "spread" | "plan" | "expected"> & { mode: Mode; cut: number };
+
+const SCOPES: [Scope, string][] = [["spend", "Spending only"], ["emi", "+ EMIs & property"], ["all", "All cash outflow"]];
+const SCOPE_NOTE: Record<Scope, string> = {
+  spend: "Spending only. Everyday and committed spend, plus tax paid. The sign decides: any negative amount counts, whatever its category is called. Tax paid starts hidden: click its chip below to include it. Switch scope to add EMIs, property and investments.",
+  emi: "Spending + EMIs & property. Tax paid starts hidden. EMI and property payments are added as their own bucket. They are a commitment and partly build an asset, so they stay out of the spending run rate above.",
+  all: "All cash outflow. Tax paid starts hidden. Adds investments on top. Credit card bill payments and transfers between your accounts are never counted, because they move money and would double count spend.",
+};
 
 export type Initial = Partial<Pick<Opts, "person" | "ptype" | "month" | "year" | "fy">>;
 
@@ -53,7 +60,8 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
     } catch { /* ignore */ }
   }, [loaded, o, mode, cut]);
 
-  const eng = useMemo(() => createEngine(data, o), [data, o]);
+  const sdata = useMemo(() => scopeData(data, o.scope), [data, o.scope]);
+  const eng = useMemo(() => createEngine(sdata, o), [sdata, o]);
   const { P, CATS, N, L10 } = eng;
   const L = eng.len();
   const set = <K extends keyof Opts>(k: K, v: Opts[K]) => setO((p) => ({ ...p, [k]: v }));
@@ -65,6 +73,14 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
     set("hidden", next);
     if (drill && next.includes("g:" + drill)) setDrill(null);
   };
+  const changeScope = (next: Scope) => {
+    if (next === o.scope) return;
+    const to = scopeData(data, next);
+    setO((p) => ({ ...p, scope: next, hidden: remapHidden(p.hidden, sdata, to) }));
+    setSel((s) => s.filter((g) => SCOPE_GROUPS[next].includes(g)));
+    setDrill((d) => (d && SCOPE_GROUPS[next].includes(d) ? d : null));
+    setFocus(null); setOpen(new Set()); setUnticked(new Set());
+  };
   const personName = o.person === "all" ? "Household" : o.person === "0" ? data.holders[0] : data.holders[1];
 
   const monthIdx = [...Array(N).keys()].reverse();
@@ -74,13 +90,16 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
   const fullLbl = L10.ml(eng.lastFull).split(" ")[0];
 
   // ---- headline numbers
-  const tot = sum(GKEYS.map((g) => eng.groupReg(g, P.s, P.e)));
-  const lg = eng.largeAll(P.s, P.e);
+  const tot = sum(BASE_GROUPS.map((g) => eng.groupReg(g, P.s, P.e)));
+  const lg = eng.groupLg(BASE_GROUPS, P.s, P.e);
   const all = tot + lg;
+  const ex = (["property", "invest"] as Group[]).filter((g) => eng.gkeys.includes(g)).map((g) => [g, eng.groupReg(g, P.s, P.e) + eng.groupLg([g], P.s, P.e)] as [Group, number]);
+  const grand = all + sum(ex.map((x) => x[1]));
   const cm = eng.groupReg("committed", P.s, P.e), kc = eng.groupReg("controllable", P.s, P.e);
   const pct = (v: number) => (tot ? Math.round((v / tot) * 100) + "%" : "0%");
   const flagged = eng.flaggedIn(P.s, P.e);
   const nL = flagged.length;
+  const nLBase = flagged.filter((t) => BASE_GROUPS.includes(eng.CATS[t.c].g)).length;
   const nLAll = eng.flaggedAllIn(P.s, P.e).length;
   const lgRaw = eng.largeAllRaw(P.s, P.e);
   const lh = eng.LH();
@@ -116,6 +135,7 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
   const opps = eng.opportunities();
   const oppTotal = opps.reduce((t, x) => (unticked.has(x.i) ? t : t + x.annual * cut), 0);
   const planned = eng.plannedItems();
+  const regular = eng.regularItems();
 
   const spark = (i: number, g: Group) => {
     const s = Math.max(0, P.e - 11);
@@ -163,13 +183,17 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
       <div className="wrap">
         <div>
           <h1>Expense Analysis</h1>
-          <p className="sub">Expenditure only · ledger through {lastLbl}{data.partialLast ? " (current month is still in progress)" : ""} · grouped by your Expense Natures</p>
+          <p className="sub">Spending by default; EMIs, property and investments on request · ledger through {lastLbl}{data.partialLast ? " (current month is still in progress)" : ""} · grouped by your Expense Natures</p>
           <p className="sub" style={{ marginTop: 4 }}>
             Related: <Link className="lnk" href="/">Dashboard</Link><Link className="lnk" href="/insights">Insights &amp; Trends</Link><Link className="lnk" href="/ledger">Ledger</Link>
           </p>
         </div>
 
         <section className="panel controls" aria-label="Filters">
+          <span className="lab">Scope</span>
+          <div className="seg" role="group" aria-label="What counts as outflow">
+            {SCOPES.map(([k, t]) => <button key={k} aria-pressed={o.scope === k} onClick={() => changeScope(k)}>{t}</button>)}
+          </div>
           <div className="seg" role="group" aria-label="Period type">
             {([["month", "Month"], ["range", "Range"], ["year", "Calendar year"], ["fy", "Fiscal year"]] as [PType, string][]).map(([k, t]) => (
               <button key={k} aria-pressed={o.ptype === k} onClick={() => set("ptype", k)}>{t}</button>
@@ -230,21 +254,23 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
             <h2 id="sr-h1">1 · Where the money went</h2>
             <p className="sub">{P.label} · {L} month{L > 1 ? "s" : ""} · {personName}. Compared with {P.prev ? P.prevLabel : "no earlier period in the data"}.</p>
           </div></div>
+          <p className="scopenote">{SCOPE_NOTE[o.scope]}</p>
           <p className="said">
             <b>{P.label}:</b> total spend was <b>{inr(all)}</b>{L > 1 ? ` (${inr(all / L)} a month)` : ""}{hiddenKeys.length ? <i> with the hidden items left out</i> : null}. Run-rate spend is <b>{inr(tot)}</b>: committed <b>{inr(cm)}</b> ({pct(cm)}) and controllable <b>{inr(kc)}</b> ({pct(kc)}).
-            {o.sep && !lh && <> {nL} large one-time charge{nL === 1 ? "" : "s"} totalling <b>{inr(lg)}</b> {nL ? (nL === 1 ? "is" : "are") + " shown separately below" : "in this period"}.</>}
+            {o.sep && !lh && <> {nLBase} large one-time charge{nLBase === 1 ? "" : "s"} totalling <b>{inr(lg)}</b> {nLBase ? (nLBase === 1 ? "is" : "are") + " shown separately below" : "in this period"}.</>}
+            {ex.length > 0 && <> Adding {ex.map(([g, v], k) => <Fragment key={g}>{k > 0 ? " and " : ""}{GROUPS[g]} <b>{inr(v)}</b></Fragment>)} takes total cash outflow to <b>{inr(grand)}</b>{L > 1 ? ` (${inr(grand / L)} a month)` : ""}.</>}
             {o.spread && plannedNames.length > 0 && o.ptype === "month" && <> Planned recurring items ({plannedNames.join(", ")}) are shown at their monthly equivalent, not as paid.</>}
           </p>
 
           <div className="tiles">
-            {GKEYS.map((g) => {
+            {eng.gkeys.map((g) => {
               const raw = eng.groupRegAll(g, P.s, P.e), v = eng.groupReg(g, P.s, P.e), avg = v / L, pa = eng.prevAvg((s, e) => eng.groupReg(g, s, e));
               const hg = hiddenKeys.includes("g:" + g);
               const part = !hg && raw - v > 1;
               const rel = hg ? "hidden from all numbers" : pa === null || pa < 500 ? "no comparison" : Math.abs(avg / pa - 1) < 0.08 ? "flat vs prev" : (avg > pa ? "▲ " : "▼ ") + Math.round(Math.abs(avg / pa - 1) * 100) + "% vs prev";
               const on = sel.includes(g);
               return (
-                <div key={g} className={`tile${hg ? " hid" : ""}`} role="button" tabIndex={0} aria-pressed={on} data-drill-on={drill === g ? "1" : "0"}
+                <div key={g} className={`tile${hg ? " hid" : ""}${BASE_GROUPS.includes(g) ? "" : " ext"}`} role="button" tabIndex={0} aria-pressed={on} data-drill-on={drill === g ? "1" : "0"}
                   onClick={(e) => {
                     const t = e.target as HTMLElement;
                     if (t.closest("[data-hide]")) { e.stopPropagation(); toggleHide("g:" + g); return; }
@@ -335,6 +361,28 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
                       <Link className="lnk" href={ledger(x.i)}>Open in Ledger</Link>
                       <button className="lnk" onClick={() => toggleHide("c:" + x.i)}>Hide</button>
                       <button className="lnk" onClick={() => set("plan", { ...o.plan, [c.id]: false })}>Not recurring: treat as large charge</button>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {regular.length > 0 && (
+            <div>
+              <p className="sec">Regular commitments · {regular.length} · paid almost every month, so never treated as large charges</p>
+              {regular.map((x) => {
+                const c = CATS[x.i];
+                const st = x.steps.map((s) => `${s.to > s.from ? "up" : "down"} ${Math.round(Math.abs(s.to / s.from - 1) * 100)}% in ${L10.ml(s.m)} (${inr(s.from)} to ${inr(s.to)})`).join("; ");
+                return (
+                  <div className="lg" key={x.i}>
+                    <span className="num"><b>{inr(x.now)}</b><span className="tx"> /mo now</span></span>
+                    <span><i className="dot" style={{ background: `var(--sr-${c.g})`, marginRight: 6 }} />{c.n} <span className="tx">· {c.nat} › {c.t}</span></span>
+                    <span />
+                    <span className="d">
+                      Paid in {x.paid} of the last {x.n} months, {inr(x.yr)} over the period. {st ? `Instalment ${st}.` : "Steady amount."}{x.first && x.first.x < x.now * 0.9 ? ` Up from ${inr(x.first.x)} in ${L10.ml(x.first.m)}.` : ""}{" "}
+                      <Link className="lnk" href={ledger(x.i)}>Open in Ledger</Link>
+                      <button className="lnk" onClick={() => toggleHide("c:" + x.i)}>Hide</button>
                     </span>
                   </div>
                 );
@@ -439,7 +487,7 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
         <section className="panel" aria-labelledby="sr-h2">
           <div className="panelhead"><div>
             <h2 id="sr-h2">2 · What changed vs your normal</h2>
-            <p className="sub">Run-rate spend per month, {P.label} vs {P.prev ? P.prevLabel : "n/a"}. Vacation, tax and one-off events are shown in section 1, not here. Large one-time charges are excluded when separated.</p>
+            <p className="sub">Run-rate spend per month, {P.label} vs {P.prev ? P.prevLabel : "n/a"}. Vacation, tax and one-off events{o.scope === "spend" ? "" : ", EMIs, property and investments"} are shown in section 1, not here. Large one-time charges are excluded when separated.</p>
             {hiddenKeys.length > 0 && <span className="banner">Hidden items are left out here too: {hiddenKeys.map((k) => eng.hkLabel(k)).join(", ")}</span>}
           </div></div>
           {!mv ? <p className="sub">No earlier period in the data to compare against.</p> : (
@@ -497,7 +545,10 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
               <tr><td><i className="dot" style={{ background: "var(--sr-committed)" }} /> Committed</td><td>Household Fixed, Education Expenses, Medical, Insurance Premium</td></tr>
               <tr><td><i className="dot" style={{ background: "var(--sr-controllable)" }} /> Controllable</td><td>Discretionary Expense (includes Learning, so Ria&apos;s studies stay here), Official Expense</td></tr>
               <tr><td><i className="dot" style={{ background: "var(--sr-planned)" }} /> Vacation</td><td>Vacation (drill by trip)</td></tr>
-              <tr><td><i className="dot" style={{ background: "var(--sr-other)" }} /> Income tax and one-off</td><td>Income Tax, One Off Expenses. Any nature not listed here also lands in this group.</td></tr>
+              <tr><td><i className="dot" style={{ background: "var(--sr-other)" }} /> Income tax and one-off</td><td>Income Tax, One Off Expenses, plus any negative amount filed under an Income category (for example a tax payment filed as &quot;Income Tax Refund&quot;). Any nature not listed here also lands in this group.</td></tr>
+              <tr><td><i className="dot" style={{ background: "var(--sr-property)" }} /> EMIs and property <span className="tx">(scope: + EMIs and property)</span></td><td>Everything under your Planned Asset nature (Investment account type): EMIs, property purchase payments, home loan and loan expenses. EMIs are not large charges: a payment that lands in 9 of the last 12 months with a steady amount is a regular commitment.</td></tr>
+              <tr><td><i className="dot" style={{ background: "var(--sr-invest)" }} /> Investments <span className="tx">(scope: all cash outflow)</span></td><td>Money paid out under the Investments nature. Lumpy by nature, so it usually shows as large charges.</td></tr>
+              <tr><td><i className="dot" style={{ background: "var(--sr-ink2)", opacity: 0.4 }} /> The sign rule</td><td>The sign decides, not the category name: any negative amount is an expense wherever it is filed, and any positive amount is cash coming in (not netted against spend). The one exclusion is Transfers (credit card bill payments, self and investment transfers): they move money between your own accounts and would double count the card spend already in the ledger.</td></tr>
               <tr><td><i className="dot hatch" /> Large one-time charges</td><td>Any single charge at or above the ₹ limit, or at or above half of it and the chosen multiple of its category&apos;s usual charge, in any nature. It keeps its nature tag and is lifted out of the run rate. Categories that are planned recurring are never treated as large. Only charges of ₹7.5k or more are considered.</td></tr>
               <tr><td><i className="dot" style={{ background: "var(--sr-committed)" }} /> Planned recurring</td><td>A category paid on a regular cadence in sizeable amounts, like Kids School Fees or Quarterly Maintenance. Detected when it has 3 or more payments in the last 12 months, similar amounts, a gap of 2 or more months between them and a typical payment of ₹25k or more. You can also mark or unmark any category yourself. It stays in its own group (school fees stay Committed) and can be spread evenly across months or shown as paid.</td></tr>
             </tbody>

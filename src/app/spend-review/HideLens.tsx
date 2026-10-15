@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { GKEYS, GROUPS, PRESETS, inr, sum, type Engine } from "@/lib/spendReview/calc";
+import { GROUPS, PRESETS, inr, sum, type Engine } from "@/lib/spendReview/calc";
 import type { Group } from "@/lib/spendReview/types";
 
 export function EyeIcon({ off }: { off: boolean }) {
@@ -26,7 +26,7 @@ export function HideLens({ eng, hidden, sep, onSet, onToggle }: {
 }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
-  const [openNodes, setOpenNodes] = useState<Set<string>>(new Set(["g:committed", "g:controllable"]));
+  const [openNodes, setOpenNodes] = useState<Set<string>>(new Set(["g:committed", "g:controllable", "g:property"]));
   const wrap = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,7 +60,7 @@ export function HideLens({ eng, hidden, sep, onSet, onToggle }: {
         })}
         <button className="addhide" aria-expanded={open} aria-haspopup="dialog" onClick={() => setOpen((v) => !v)}>+ Hide…</button>
         <span style={{ flex: 1 }} />
-        {PRESETS.map((p) => (
+        {[...PRESETS, ...eng.extraPresets].map((p) => (
           <button key={p.name} className="pchip" aria-pressed={presetOn(p.keys)} title={p.tip} onClick={() => onSet(presetOn(p.keys) ? [] : p.keys)}>{p.name}</button>
         ))}
         {hidden.length > 0 && <button className="lnk" onClick={() => onSet([])}>show all ✕</button>}
@@ -134,7 +134,7 @@ function Tree({ eng, hidden, sep, q, openNodes, setOpenNodes, onSet, onToggle }:
 
   return (
     <>
-      {GKEYS.map((g: Group) => {
+      {eng.gkeys.map((g: Group) => {
         const gk = "g:" + g, gcs = nodeCats((i) => CATS[i].g === g);
         if (!gcs.length) return null;
         const gh = hset.has(gk);

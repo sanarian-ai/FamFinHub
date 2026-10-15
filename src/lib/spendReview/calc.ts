@@ -1,4 +1,4 @@
-import { MIN_TX, type Group, type SrData, type SrTx } from "./types";
+import { MIN_TX, SCOPE_GROUPS, type Group, type Scope, type SrCat, type SrData, type SrTx } from "./types";
 
 export type Person = "all" | "0" | "1";
 export type PType = "month" | "range" | "year" | "fy";
@@ -12,6 +12,7 @@ export type Opts = {
   to: number;
   year: number;
   fy: number; // fiscal year start year (FY 2025-26 -> 2025)
+  scope: Scope; // which outflow groups count (never persisted: always opens on spending only)
   person: Person;
   sep: boolean; // separate large one-time charges
   T: number; // ₹ limit for "large" (0 = none)
@@ -23,8 +24,8 @@ export type Opts = {
   hidden: string[];
 };
 
-export const GROUPS: Record<Group, string> = { committed: "Committed", controllable: "Controllable", planned: "Vacation", other: "Income tax & one-off" };
-export const GKEYS: Group[] = ["committed", "controllable", "planned", "other"];
+export const GROUPS: Record<Group, string> = { committed: "Committed", controllable: "Controllable", planned: "Vacation", other: "Income tax & one-off", property: "EMIs & property", invest: "Investments" };
+export const GKEYS: Group[] = ["committed", "controllable", "planned", "other", "property", "invest"];
 /** One-tap scenarios. "Typical month" leaves planned recurring items (school fees, maintenance) in. */
 export const PRESETS: { name: string; keys: string[]; tip: string }[] = [
   { name: "Typical month", keys: ["g:other", "g:planned", "L"], tip: "Hides tax & one-off, vacation and large one-time charges" },
@@ -37,6 +38,8 @@ export const GSUB: Record<Group, string> = {
   controllable: "discretionary, incl. Learning",
   planned: "trips",
   other: "tax and one-off events",
+  property: "EMIs, property purchase, home loan",
+  invest: "insurance and equity investments",
 };
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -101,6 +104,14 @@ export function ledgerHref(D: SrData, categoryId: string, s: number, e: number) 
   return `/ledger?categoryId=${encodeURIComponent(categoryId)}&from=${y0}-${p(m0)}-01&to=${y1}-${p(m1)}-${p(lastDay)}&includeHistorical=1`;
 }
 
+/** Tax paid counts as spend (the sign decides) but starts hidden, so the headline average stays comparable; the chips bring it back. */
+const taxKeys = (D: SrData) => {
+  const out: string[] = [];
+  if (D.cats.some((c) => c.nat === "Income Tax")) out.push("n:Income Tax");
+  if (D.cats.some((c) => c.nat === "Income" && c.t === "Income Tax")) out.push("t:Income›Income Tax");
+  return out;
+};
+
 export function defaultOpts(D: SrData): Opts {
   const N = D.months.length;
   const last = D.partialLast && N > 1 ? N - 2 : N - 1;
@@ -119,8 +130,34 @@ export function defaultOpts(D: SrData): Opts {
     spread: true,
     plan: {},
     expected: [],
-    hidden: [],
+    scope: "spend",
+    hidden: taxKeys(D),
   };
+}
+
+/** The data restricted to the groups a scope counts. Category / transaction indexes are re-based, so re-key hides with remapHidden. */
+export function scopeData(D: SrData, scope: Scope): SrData {
+  const act = SCOPE_GROUPS[scope];
+  const map = new Map<number, number>();
+  const cats: SrCat[] = [];
+  D.cats.forEach((c, i) => { if (act.includes(c.g)) { map.set(i, cats.length); cats.push(c); } });
+  const tx = D.tx.filter((t) => map.has(t.c)).map((t) => ({ ...t, c: map.get(t.c)! }));
+  return { ...D, cats, tx };
+}
+/** Re-key hide keys when the scope changes: categories are followed by id; wider keys survive only if they still exist. */
+export function remapHidden(hidden: string[], from: SrData, to: SrData): string[] {
+  const nats = new Set(to.cats.map((c) => c.nat)), types = new Set(to.cats.map((c) => c.nat + "›" + c.t)), groups = new Set<string>(to.cats.map((c) => c.g));
+  const idx = new Map<string, number>(to.cats.map((c, i) => [c.id, i] as [string, number]));
+  const out: string[] = [];
+  for (const k of hidden) {
+    const t = k[0], v = k.slice(2);
+    if (t === "L") out.push(k);
+    else if (t === "g") { if (groups.has(v)) out.push(k); }
+    else if (t === "n") { if (nats.has(v)) out.push(k); }
+    else if (t === "t") { if (types.has(v)) out.push(k); }
+    else { const id = from.cats[+v]?.id; const j = id === undefined ? undefined : idx.get(id); if (j !== undefined) out.push("c:" + j); }
+  }
+  return out;
 }
 
 export type ChartSeries = { label: string; color?: string; hatch?: boolean; dim?: boolean; stroke?: boolean; vals: number[] };
@@ -131,6 +168,7 @@ export function createEngine(D: SrData, o: Opts) {
   const TX = D.tx;
   const L10 = monthLabels(D.months);
   const mask = o.person === "all" ? [0, 1, 2] : [+o.person];
+  const GK = SCOPE_GROUPS[o.scope];
 
   // ---- period
   // The in-progress month would drag year / fiscal-year averages down, so those views stop at the last complete month.
@@ -166,6 +204,7 @@ export function createEngine(D: SrData, o: Opts) {
   // ---- planned recurring: detected on the 12 months to the period end, then user overrides
   const PLANNED = new Set<number>();
   CATS.forEach((c, i) => {
+    if (c.g === "property" || c.g === "invest") return; // EMIs, property and investments are never "planned recurring"
     const tx = txByCat[i].filter((t) => t.m >= P.e - 11 && t.m <= P.e && inMask(t));
     const ms = [...new Set(tx.map((t) => t.m))].sort((a, b) => a - b);
     if (ms.length < 3) return;
@@ -183,12 +222,23 @@ export function createEngine(D: SrData, o: Opts) {
     else if (ov === false) PLANNED.delete(i);
   });
 
+  // ---- regular commitments (EMIs and the like): paid in 9+ of the last 12 months with a steady amount; never "large"
+  const REGULAR = new Set<number>();
+  CATS.forEach((c, i) => {
+    if (c.g !== "property" && c.g !== "invest") return;
+    const v: number[] = [];
+    for (let m = Math.max(0, P.e - 11); m <= P.e; m++) v.push(sum(mask.map((h) => c.by[h][m])));
+    if (v.filter((x) => x > 0).length < 9) return;
+    const mean = sum(v) / v.length, sd = Math.sqrt(sum(v.map((x) => (x - mean) ** 2)) / v.length);
+    if (sd / mean <= 0.4) REGULAR.add(i);
+  });
+
   // ---- large one-time charges
   const LG: number[][][] = CATS.map(() => [Array(N).fill(0), Array(N).fill(0), Array(N).fill(0)]);
   const FLAGGED: SrTx[] = [];
   for (const t of TX) {
     const c = CATS[t.c];
-    if (PLANNED.has(t.c)) continue;
+    if (PLANNED.has(t.c) || REGULAR.has(t.c)) continue;
     const byLimit = o.T > 0 && t.a >= o.T;
     const byMultiple = o.mult > 0 && t.a >= Math.max(MIN_TX, 0.5 * o.T) && t.a >= o.mult * c.med;
     if (byLimit || byMultiple) {
@@ -208,7 +258,7 @@ export function createEngine(D: SrData, o: Opts) {
     const t = k[0], v = hkVal(k);
     if (t === "g") return GROUPS[v as Group];
     if (t === "n") return v;
-    if (t === "t") return v.split("›")[1];
+    if (t === "t") { const [nt, ty] = v.split("›"); return nt === "Income" ? `${ty} (filed under Income)` : ty; }
     if (t === "c") return CATS[+v]?.n ?? v;
     return "Large one-time charges";
   };
@@ -280,6 +330,7 @@ export function createEngine(D: SrData, o: Opts) {
   /** Visible (after hides). */
   const groupReg = (g: Group, s: number, e: number) => sum(CATS.map((c, i) => (c.g === g ? vReg(i, s, e) : 0)));
   const largeAll = (s: number, e: number) => (o.sep ? sum(CATS.map((c, i) => vLg(i, s, e))) : 0);
+  const groupLg = (gs: Group[], s: number, e: number) => sum(CATS.map((c, i) => (gs.includes(c.g) ? vLg(i, s, e) : 0)));
   const chartCat = (ci: number, m: number) =>
     o.spread && PLANNED.has(ci) && o.ptype !== "month" && m >= P.s && m <= P.e ? catTot(ci, P.s, P.e) / len() : catReg(ci, m, m);
   const allV = (i: number, m: number) => chartCat(i, m) + catLg(i, m, m);
@@ -308,7 +359,7 @@ export function createEngine(D: SrData, o: Opts) {
       if (rest.length) ser.push({ label: `${rest.length} other categories`, color: mix(drill, 18), vals: ms.map((m) => sum(rest.map((x) => chartCat(x.i, m)))), stroke: true });
       if (o.sep && !LH()) ser.push({ label: "Large charges in " + GROUPS[drill], hatch: true, vals: ms.map((m) => sum(CATS.map((c, i) => (c.g === drill ? vLg(i, m, m) : 0)))) });
     } else {
-      GKEYS.forEach((g) => {
+      GK.forEach((g) => {
         if (hidden.has("g:" + g)) return;
         ser.push({ label: GROUPS[g], color: `var(--sr-${g})`, dim: sel.length > 0 && !sel.includes(g), vals: ms.map((m) => sum(CATS.map((c, i) => (c.g === g && !isHid(i) ? chartCat(i, m) : 0)))) });
       });
@@ -378,6 +429,38 @@ export function createEngine(D: SrData, o: Opts) {
       .sort((a, b) => b.yr - a.yr);
   }
 
+  // ---- regular commitments panel: current instalment and any step-ups over the last 18 months
+  function regularItems() {
+    return [...REGULAR].filter((i) => !isHid(i)).map((i) => {
+      const val = (m: number) => sum(mask.map((h) => CATS[i].by[h][m]));
+      const v: number[] = [];
+      for (let m = Math.max(0, P.e - 11); m <= P.e; m++) v.push(val(m));
+      const steps: { m: number; from: number; to: number }[] = [];
+      let prev = 0, first: { m: number; x: number } | null = null;
+      for (let m = Math.max(0, P.e - 17); m <= P.e; m++) {
+        const x = val(m);
+        if (x > 0 && !first) first = { m, x };
+        if (x > 0 && prev > 0 && Math.abs(x / prev - 1) >= 0.1) steps.push({ m, from: prev, to: x });
+        if (x > 0) prev = x;
+      }
+      return { i, paid: v.filter((x) => x > 0).length, n: v.length, now: val(P.e), yr: sum(v), steps: steps.slice(-3), first };
+    });
+  }
+  /** Scenario chips that only make sense once the wider scopes are on. */
+  const extraPresets = (() => {
+    const out: { name: string; keys: string[]; tip: string }[] = [];
+    if (GK.includes("property")) {
+      const { s0, e0 } = chartWindow();
+      const keys = CATS.map((_, i) => i)
+        .filter((i) => CATS[i].g === "property" && !REGULAR.has(i))
+        .filter((i) => { let v = 0; for (let m = s0; m <= e0; m++) v += allV(i, m); return v > 0; })
+        .map((i) => "c:" + i);
+      if (keys.length) out.push({ name: "EMIs without property payments", keys, tip: "Hides one-off property payments, keeps the regular EMIs" });
+    }
+    if (GK.includes("invest")) out.push({ name: "Without investments", keys: ["g:invest"], tip: "Hides the Investments bucket" });
+    return out;
+  })();
+
   // ---- movers
   const expected = new Set(o.expected);
   function movers() {
@@ -385,7 +468,7 @@ export function createEngine(D: SrData, o: Opts) {
     const L = len(), PL = P.prev[1] - P.prev[0] + 1;
     const out: { c: (typeof CATS)[number]; i: number; cur: number; prev: number; d: number; r: number }[] = [];
     CATS.forEach((c, i) => {
-      if (c.g === "other" || c.g === "planned" || expected.has(c.id) || isHid(i)) return;
+      if (c.g === "other" || c.g === "planned" || c.g === "property" || c.g === "invest" || expected.has(c.id) || isHid(i)) return;
       const cur = catReg(i, P.s, P.e) / L, prev = catReg(i, P.prev![0], P.prev![1]) / PL;
       out.push({ c, i, cur, prev, d: cur - prev, r: prev > 0 ? cur / prev : Infinity });
     });
@@ -424,7 +507,7 @@ export function createEngine(D: SrData, o: Opts) {
   }
 
   return {
-    D, N, CATS, TX, P, len, mask, L10, lastFull, PLANNED, FLAGGED, flaggedIn, flaggedAllIn,
+    D, N, CATS, TX, P, len, mask, L10, lastFull, PLANNED, FLAGGED, flaggedIn, flaggedAllIn, gkeys: GK, REGULAR, regularItems, extraPresets, groupLg,
     catTot, catLg, catReg, groupReg, groupRegAll, largeAll, largeAllRaw, prevAvg, chart, selSeries, plannedItems, movers, monthlyReg, opportunities,
     isMonthView: o.ptype === "month", hidden, isHid, hidBy, hkKind, hkLabel, hkGroup, keyCats, toggleKey, clearInside, lens, catAvg, LH,
     topTx: (ci: number, s: number, e: number, n: number) => txByCat[ci].filter((t) => t.m >= s && t.m <= e && inMask(t)).sort((a, b) => b.a - a.a).slice(0, n),

@@ -1,5 +1,14 @@
 // Shared (server + client) types for the Spend Review screen. Pure data shapes only.
-export type Group = "committed" | "controllable" | "planned" | "other";
+export type Group = "committed" | "controllable" | "planned" | "other" | "property" | "invest";
+
+/** What counts as outflow: spending only (default), plus EMIs & property, or all cash outflow. Transfers are never counted. */
+export type Scope = "spend" | "emi" | "all";
+export const BASE_GROUPS: Group[] = ["committed", "controllable", "planned", "other"];
+export const SCOPE_GROUPS: Record<Scope, Group[]> = {
+  spend: BASE_GROUPS,
+  emi: [...BASE_GROUPS, "property"],
+  all: [...BASE_GROUPS, "property", "invest"],
+};
 
 export type SrCat = {
   id: string; // Category.id — used to deep-link into the Ledger
