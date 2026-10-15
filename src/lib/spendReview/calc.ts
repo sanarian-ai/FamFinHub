@@ -19,10 +19,19 @@ export type Opts = {
   spread: boolean; // planned recurring: spread monthly vs as paid
   plan: Record<string, boolean>; // category id -> user override of "planned recurring"
   expected: string[]; // category ids the user marked "expected" (hidden from movers)
+  /** Temporary "leave it out" lens (never persisted). Keys: g:<group> n:<nature> t:<nature>›<type> c:<catIndex> L (large charges). */
+  hidden: string[];
 };
 
 export const GROUPS: Record<Group, string> = { committed: "Committed", controllable: "Controllable", planned: "Vacation", other: "Income tax & one-off" };
 export const GKEYS: Group[] = ["committed", "controllable", "planned", "other"];
+/** One-tap scenarios. "Typical month" leaves planned recurring items (school fees, maintenance) in. */
+export const PRESETS: { name: string; keys: string[]; tip: string }[] = [
+  { name: "Typical month", keys: ["g:other", "g:planned", "L"], tip: "Hides tax & one-off, vacation and large one-time charges" },
+  { name: "Without tax & one-offs", keys: ["g:other"], tip: "" },
+  { name: "Without trips", keys: ["g:planned"], tip: "" },
+  { name: "Without large charges", keys: ["L"], tip: "" },
+];
 export const GSUB: Record<Group, string> = {
   committed: "household, kids' education, medical, insurance",
   controllable: "discretionary, incl. Learning",
@@ -110,6 +119,7 @@ export function defaultOpts(D: SrData): Opts {
     spread: true,
     plan: {},
     expected: [],
+    hidden: [],
   };
 }
 
@@ -123,6 +133,8 @@ export function createEngine(D: SrData, o: Opts) {
   const mask = o.person === "all" ? [0, 1, 2] : [+o.person];
 
   // ---- period
+  // The in-progress month would drag year / fiscal-year averages down, so those views stop at the last complete month.
+  const lastFull = D.partialLast && N > 1 ? N - 2 : N - 1;
   const period = (): Period => {
     const { ptype } = o;
     if (ptype === "month") {
@@ -135,12 +147,12 @@ export function createEngine(D: SrData, o: Opts) {
     }
     if (ptype === "year") {
       const idx = D.months.map((m, i) => (m.startsWith(o.year + "-") ? i : -1)).filter((i) => i >= 0);
-      const s = idx.length ? idx[0] : 0, e = idx.length ? idx[idx.length - 1] : N - 1;
+      const s = idx.length ? idx[0] : 0, e = Math.max(s, Math.min(lastFull, idx.length ? idx[idx.length - 1] : N - 1));
       return { s, e, label: `Calendar ${o.year}`, prev: s - 12 >= 0 ? [s - 12, e - 12] : null, prevLabel: `the same months of ${o.year - 1}` };
     }
     const first = D.months.findIndex((m) => m === `${o.fy}-04`);
     const s = first < 0 ? 0 : first;
-    const e = Math.min(s + 11, N - 1);
+    const e = Math.max(s, Math.min(s + 11, lastFull));
     return { s, e, label: `FY ${o.fy}-${String(o.fy + 1).slice(2)}`, prev: s - 12 >= 0 ? [s - 12, e - 12] : null, prevLabel: `the same months of FY ${o.fy - 1}-${String(o.fy).slice(2)}` };
   };
   const P = period();
@@ -184,7 +196,59 @@ export function createEngine(D: SrData, o: Opts) {
       FLAGGED.push(t);
     }
   }
-  const flaggedIn = (s: number, e: number) => (o.sep ? FLAGGED.filter((t) => t.m >= s && t.m <= e && inMask(t)) : []);
+  const flaggedAllIn = (s: number, e: number) => (o.sep ? FLAGGED.filter((t) => t.m >= s && t.m <= e && inMask(t)) : []);
+
+  // ---- hide model: a key addresses a bucket, a nature, a type, one category, or the large-charge layer
+  const hidden = new Set(o.hidden);
+  const natG: Record<string, Group> = {}, typG: Record<string, Group> = {};
+  CATS.forEach((c) => { natG[c.nat] ??= c.g; typG[c.nat + "›" + c.t] ??= c.g; });
+  const hkKind = (k: string) => ({ g: "bucket", n: "nature", t: "type", c: "category", L: "large charges" } as Record<string, string>)[k[0]];
+  const hkVal = (k: string) => k.slice(2);
+  const hkLabel = (k: string) => {
+    const t = k[0], v = hkVal(k);
+    if (t === "g") return GROUPS[v as Group];
+    if (t === "n") return v;
+    if (t === "t") return v.split("›")[1];
+    if (t === "c") return CATS[+v]?.n ?? v;
+    return "Large one-time charges";
+  };
+  const hkGroup = (k: string): Group | null => {
+    const t = k[0], v = hkVal(k);
+    if (t === "g") return v as Group;
+    if (t === "n") return natG[v] ?? null;
+    if (t === "t") return typG[v] ?? null;
+    if (t === "c") return CATS[+v]?.g ?? null;
+    return null;
+  };
+  const keyCats = (k: string) => {
+    const t = k[0], v = hkVal(k);
+    const out = new Set<number>();
+    if (t === "L") return out;
+    CATS.forEach((c, i) => {
+      if (t === "g" ? c.g === v : t === "n" ? c.nat === v : t === "t" ? c.nat + "›" + c.t === v : i === +v) out.add(i);
+    });
+    return out;
+  };
+  const isHidS = (i: number, set: Set<string>) => { const c = CATS[i]; return set.has("g:" + c.g) || set.has("n:" + c.nat) || set.has("t:" + c.nat + "›" + c.t) || set.has("c:" + i); };
+  const isHid = (i: number) => isHidS(i, hidden);
+  const hidBy = (i: number) => { const c = CATS[i]; return ["c:" + i, "t:" + c.nat + "›" + c.t, "n:" + c.nat, "g:" + c.g].find((k) => hidden.has(k)) ?? null; };
+  const LH = () => o.sep && hidden.has("L");
+  /** New hidden list after toggling `k`; hiding a wider key drops narrower keys it already covers. */
+  const toggleKey = (cur: string[], k: string) => {
+    const set = new Set(cur);
+    if (set.has(k)) { set.delete(k); return [...set]; }
+    const a = keyCats(k);
+    [...set].forEach((b) => { if (b === "L" || k === "L") return; if ([...keyCats(b)].every((x) => a.has(x))) set.delete(b); });
+    set.add(k);
+    return [...set];
+  };
+  /** Un-hide everything inside `k` (used when a partly-hidden node is ticked again). */
+  const clearInside = (cur: string[], k: string) => {
+    const kc = keyCats(k);
+    return cur.filter((x) => x === "L" || ![...keyCats(x)].every((i) => kc.has(i)));
+  };
+
+  const flaggedIn = (s: number, e: number) => (LH() ? [] : flaggedAllIn(s, e).filter((t) => !isHid(t.c)));
 
   // ---- totals
   const catTot = (ci: number, s: number, e: number) => {
@@ -208,11 +272,18 @@ export function createEngine(D: SrData, o: Opts) {
     return v;
   };
   const catReg = (ci: number, s: number, e: number) => catTot(ci, s, e) - catLg(ci, s, e);
-  const groupReg = (g: Group, s: number, e: number) => sum(CATS.map((c, i) => (c.g === g ? catReg(i, s, e) : 0)));
-  const largeAll = (s: number, e: number) => (o.sep ? sum(CATS.map((c, i) => catLg(i, s, e))) : 0);
+  const vReg = (i: number, s: number, e: number) => (isHid(i) ? 0 : catReg(i, s, e));
+  const vLg = (i: number, s: number, e: number) => (isHid(i) || LH() ? 0 : catLg(i, s, e));
+  /** Everything, ignoring hides (used to show what a hidden bucket would have been). */
+  const groupRegAll = (g: Group, s: number, e: number) => sum(CATS.map((c, i) => (c.g === g ? catReg(i, s, e) : 0)));
+  const largeAllRaw = (s: number, e: number) => (o.sep ? sum(CATS.map((c, i) => catLg(i, s, e))) : 0);
+  /** Visible (after hides). */
+  const groupReg = (g: Group, s: number, e: number) => sum(CATS.map((c, i) => (c.g === g ? vReg(i, s, e) : 0)));
+  const largeAll = (s: number, e: number) => (o.sep ? sum(CATS.map((c, i) => vLg(i, s, e))) : 0);
   const chartCat = (ci: number, m: number) =>
     o.spread && PLANNED.has(ci) && o.ptype !== "month" && m >= P.s && m <= P.e ? catTot(ci, P.s, P.e) / len() : catReg(ci, m, m);
-  const chartGroup = (g: Group, m: number) => sum(CATS.map((c, i) => (c.g === g ? chartCat(i, m) : 0)));
+  const allV = (i: number, m: number) => chartCat(i, m) + catLg(i, m, m);
+  const visV = (i: number, m: number) => (isHid(i) ? 0 : chartCat(i, m) + (LH() ? 0 : catLg(i, m, m)));
   const prevAvg = (fn: (s: number, e: number) => number) => (P.prev ? fn(P.prev[0], P.prev[1]) / (P.prev[1] - P.prev[0] + 1) : null);
 
   // ---- chart
@@ -227,42 +298,75 @@ export function createEngine(D: SrData, o: Opts) {
     if (focus !== null) {
       const c = CATS[focus];
       title = c.n;
-      ser.push({ label: c.n, color: `var(--sr-${c.g})`, vals: ms.map((m) => chartCat(focus, m)) });
-      if (o.sep) ser.push({ label: "Large charges", hatch: true, vals: ms.map((m) => catLg(focus, m, m)) });
+      ser.push({ label: c.n + (isHid(focus) ? " (hidden)" : ""), color: `var(--sr-${c.g})`, vals: ms.map((m) => (isHid(focus) ? 0 : chartCat(focus, m))) });
+      if (o.sep) ser.push({ label: "Large charges", hatch: true, vals: ms.map((m) => vLg(focus, m, m)) });
     } else if (drill) {
       title = GROUPS[drill];
-      const idx = CATS.map((_, i) => i).filter((i) => CATS[i].g === drill).map((i) => ({ i, v: catReg(i, P.s, P.e) + catLg(i, P.s, P.e) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v);
+      const idx = CATS.map((_, i) => i).filter((i) => CATS[i].g === drill && !isHid(i)).map((i) => ({ i, v: catReg(i, P.s, P.e) + vLg(i, P.s, P.e) })).filter((x) => x.v > 0).sort((a, b) => b.v - a.v);
       const top = idx.slice(0, 6), rest = idx.slice(6), pct = [100, 80, 62, 48, 38, 30];
       top.forEach((x, k) => ser.push({ label: CATS[x.i].n, color: mix(drill, pct[k]), vals: ms.map((m) => chartCat(x.i, m)), stroke: true }));
       if (rest.length) ser.push({ label: `${rest.length} other categories`, color: mix(drill, 18), vals: ms.map((m) => sum(rest.map((x) => chartCat(x.i, m)))), stroke: true });
-      if (o.sep) ser.push({ label: "Large charges in " + GROUPS[drill], hatch: true, vals: ms.map((m) => sum(CATS.map((c, i) => (c.g === drill ? catLg(i, m, m) : 0)))) });
+      if (o.sep && !LH()) ser.push({ label: "Large charges in " + GROUPS[drill], hatch: true, vals: ms.map((m) => sum(CATS.map((c, i) => (c.g === drill ? vLg(i, m, m) : 0)))) });
     } else {
-      GKEYS.forEach((g) => ser.push({ label: GROUPS[g], color: `var(--sr-${g})`, dim: sel.length > 0 && !sel.includes(g), vals: ms.map((m) => chartGroup(g, m)) }));
-      if (o.sep) ser.push({ label: "Large one-time charges", hatch: true, vals: ms.map((m) => largeAll(m, m)) });
+      GKEYS.forEach((g) => {
+        if (hidden.has("g:" + g)) return;
+        ser.push({ label: GROUPS[g], color: `var(--sr-${g})`, dim: sel.length > 0 && !sel.includes(g), vals: ms.map((m) => sum(CATS.map((c, i) => (c.g === g && !isHid(i) ? chartCat(i, m) : 0)))) });
+      });
+      if (o.sep && !LH()) ser.push({ label: "Large one-time charges", hatch: true, vals: ms.map((m) => sum(CATS.map((_, i) => vLg(i, m, m)))) });
     }
+    const scope = focus !== null ? [focus] : drill ? CATS.map((_, i) => i).filter((i) => CATS[i].g === drill) : CATS.map((_, i) => i);
+    const ghost = ms.map((m) => sum(scope.map((i) => allV(i, m) - visV(i, m))));
     const totals = ms.map((_, i) => sum(ser.map((q) => q.vals[i])));
     const inWin = ms.map((m) => o.ptype === "month" || (m >= P.s && m <= P.e));
     const win = totals.filter((_, i) => inWin[i]);
     const avgT = win.length ? sum(win) / win.length : 0;
+    const w3 = totals.map((v, i) => v + ghost[i]).filter((_, i) => inWin[i]);
+    const avgAll = w3.length ? sum(w3) / w3.length : 0;
     let selAvg: number | null = null;
     if (sel.length && !drill && focus === null) {
-      const sv = ms.map((m) => sum(CATS.map((c, i) => (sel.includes(c.g) ? chartCat(i, m) + catLg(i, m, m) : 0))));
+      const sv = ms.map((m) => sum(CATS.map((c, i) => (sel.includes(c.g) && !isHid(i) ? chartCat(i, m) + (LH() ? 0 : catLg(i, m, m)) : 0))));
       const w2 = sv.filter((_, i) => inWin[i]);
       selAvg = sum(w2) / Math.max(1, w2.length);
     }
-    return { ms, ser, title, totals, avgT, selAvg };
+    return { ms, ser, title, totals, ghost, avgT, avgAll, selAvg, inWin };
   }
+
+  // ---- lens: what the average per month becomes if a set of keys were hidden (chart window, same basis as the average lines)
+  function visAvg(set: Set<string>) {
+    const { s0, e0 } = chartWindow();
+    let v = 0;
+    for (let m = s0; m <= e0; m++) for (let i = 0; i < CATS.length; i++) {
+      if (isHidS(i, set)) continue;
+      v += chartCat(i, m) + (set.has("L") && o.sep ? 0 : catLg(i, m, m));
+    }
+    return v / (e0 - s0 + 1);
+  }
+  function lens() {
+    const base = visAvg(new Set());
+    const acc = new Set<string>();
+    let prev = base;
+    const steps = o.hidden.map((k) => { acc.add(k); const v = visAvg(acc); const d = prev - v; prev = v; return { k, d }; });
+    return { base, cur: prev, steps };
+  }
+  /** Average per month (chart window, all-in) of one category; drives the amounts in the hide tree. */
+  const catAvg = (i: number) => {
+    const { s0, e0 } = chartWindow();
+    let v = 0;
+    for (let m = s0; m <= e0; m++) v += allV(i, m);
+    return v / (e0 - s0 + 1);
+  };
 
   // ---- combined selection summary
   function selSeries(sel: Group[], incLarge: boolean) {
     const out: number[] = [];
-    for (let m = P.s; m <= P.e; m++) out.push(sum(CATS.map((c, i) => (sel.includes(c.g) ? chartCat(i, m) + (incLarge ? catLg(i, m, m) : 0) : 0))));
+    for (let m = P.s; m <= P.e; m++) out.push(sum(CATS.map((c, i) => (sel.includes(c.g) && !isHid(i) ? chartCat(i, m) + (incLarge && !LH() ? catLg(i, m, m) : 0) : 0))));
     return out;
   }
 
   // ---- planned recurring panel
   function plannedItems() {
     return [...PLANNED]
+      .filter((i) => !isHid(i))
       .map((i) => {
         const tx = txByCat[i].filter((x) => x.m >= P.e - 11 && x.m <= P.e && inMask(x)).sort((a, b) => a.m - b.m);
         const ms = [...new Set(tx.map((x) => x.m))];
@@ -281,7 +385,7 @@ export function createEngine(D: SrData, o: Opts) {
     const L = len(), PL = P.prev[1] - P.prev[0] + 1;
     const out: { c: (typeof CATS)[number]; i: number; cur: number; prev: number; d: number; r: number }[] = [];
     CATS.forEach((c, i) => {
-      if (c.g === "other" || c.g === "planned" || expected.has(c.id)) return;
+      if (c.g === "other" || c.g === "planned" || expected.has(c.id) || isHid(i)) return;
       const cur = catReg(i, P.s, P.e) / L, prev = catReg(i, P.prev![0], P.prev![1]) / PL;
       out.push({ c, i, cur, prev, d: cur - prev, r: prev > 0 ? cur / prev : Infinity });
     });
@@ -300,7 +404,7 @@ export function createEngine(D: SrData, o: Opts) {
     const byI = new Map(mv.map((x) => [x.i, x]));
     const out: { c: (typeof CATS)[number]; i: number; v: number; annual: number; tags: string[]; top?: SrTx; ly: number | null }[] = [];
     CATS.forEach((c, i) => {
-      if (c.nat !== "Discretionary Expense") return;
+      if (c.nat !== "Discretionary Expense" || isHid(i)) return;
       const v = catReg(i, P.s, P.e);
       if (v <= 0) return;
       const act = [...Array(L).keys()].filter((k) => catReg(i, P.s + k, P.s + k) > 0).length;
@@ -320,8 +424,9 @@ export function createEngine(D: SrData, o: Opts) {
   }
 
   return {
-    D, N, CATS, TX, P, len, mask, L10, PLANNED, FLAGGED, flaggedIn,
-    catTot, catLg, catReg, groupReg, largeAll, prevAvg, chart, selSeries, plannedItems, movers, monthlyReg, opportunities,
+    D, N, CATS, TX, P, len, mask, L10, lastFull, PLANNED, FLAGGED, flaggedIn, flaggedAllIn,
+    catTot, catLg, catReg, groupReg, groupRegAll, largeAll, largeAllRaw, prevAvg, chart, selSeries, plannedItems, movers, monthlyReg, opportunities,
+    isMonthView: o.ptype === "month", hidden, isHid, hidBy, hkKind, hkLabel, hkGroup, keyCats, toggleKey, clearInside, lens, catAvg, LH,
     topTx: (ci: number, s: number, e: number, n: number) => txByCat[ci].filter((t) => t.m >= s && t.m <= e && inMask(t)).sort((a, b) => b.a - a.a).slice(0, n),
   };
 }

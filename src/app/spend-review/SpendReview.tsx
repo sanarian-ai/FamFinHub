@@ -7,6 +7,7 @@ import {
   type Opts, type Mode, type PType,
 } from "@/lib/spendReview/calc";
 import { TrendChart } from "./TrendChart";
+import { HideLens, EyeIcon } from "./HideLens";
 import "./SpendReview.css";
 
 const STORE = "spendReview.v1";
@@ -58,12 +59,19 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
   const set = <K extends keyof Opts>(k: K, v: Opts[K]) => setO((p) => ({ ...p, [k]: v }));
   const mo = (v: number) => (mode === "avg" ? v / L : v);
   const sfx = mode === "avg" ? "/mo" : "";
+  const hiddenKeys = o.hidden;
+  const toggleHide = (k: string) => {
+    const next = eng.toggleKey(o.hidden, k);
+    set("hidden", next);
+    if (drill && next.includes("g:" + drill)) setDrill(null);
+  };
   const personName = o.person === "all" ? "Household" : o.person === "0" ? data.holders[0] : data.holders[1];
 
   const monthIdx = [...Array(N).keys()].reverse();
   const years = [...new Set(data.months.map((m) => +m.slice(0, 4)))].sort((a, b) => b - a);
   const fys = [...new Set(data.months.map((m) => { const [y, mm] = m.split("-").map(Number); return mm >= 4 ? y : y - 1; }))].sort((a, b) => b - a);
   const lastLbl = L10.ml(N - 1);
+  const fullLbl = L10.ml(eng.lastFull).split(" ")[0];
 
   // ---- headline numbers
   const tot = sum(GKEYS.map((g) => eng.groupReg(g, P.s, P.e)));
@@ -73,6 +81,9 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
   const pct = (v: number) => (tot ? Math.round((v / tot) * 100) + "%" : "0%");
   const flagged = eng.flaggedIn(P.s, P.e);
   const nL = flagged.length;
+  const nLAll = eng.flaggedAllIn(P.s, P.e).length;
+  const lgRaw = eng.largeAllRaw(P.s, P.e);
+  const lh = eng.LH();
   const plannedNames = [...eng.PLANNED].map((i) => CATS[i].n);
 
   // ---- tile interactions
@@ -92,9 +103,10 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
   const selTot = sum(selA), selTotEx = sum(selB), selAct = selA.filter((v) => v > 0).length;
 
   // ---- drill table rows
-  const rows = CATS.map((c, i) => ({ c, i, v: eng.catReg(i, P.s, P.e), lg: eng.catLg(i, P.s, P.e) }))
+  const rows = CATS.map((c, i) => ({ c, i, v: eng.catReg(i, P.s, P.e), lg: eng.catLg(i, P.s, P.e), hid: eng.isHid(i) }))
     .filter((r) => (r.v > 0 || r.lg > 0) && (drill ? r.c.g === drill : !sel.length || sel.includes(r.c.g)))
     .sort((a, b) => b.v + b.lg - (a.v + a.lg));
+  const nHidRows = rows.filter((r) => r.hid).length;
   const tableTitle = drill ? GROUPS[drill] + " (drilled)" : sel.length ? sel.map((g) => GROUPS[g]).join(" + ") : "All groups";
 
   // ---- movers / opportunities
@@ -127,6 +139,7 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
           <button className="lnk" onClick={() => goFocus(x.i)}>Trend</button>
           <Link className="lnk" href={ledger(x.i)}>Open in Ledger</Link>
           {!neg && <button className="lnk" onClick={() => set("expected", [...o.expected, x.c.id])}>Mark as expected</button>}
+          <button className="lnk" onClick={() => toggleHide("c:" + x.i)}>Hide</button>
         </span>
       </div>
       <div style={{ whiteSpace: "nowrap" }}>
@@ -176,12 +189,12 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
             )}
             {o.ptype === "year" && (
               <select aria-label="Year" value={o.year} onChange={(e) => set("year", +e.target.value)}>
-                {years.map((y) => <option key={y} value={y}>{y}{y === years[0] ? ` (to ${lastLbl.split(" ")[0]})` : y === years[years.length - 1] ? " (from Apr)" : ""}</option>)}
+                {years.map((y) => <option key={y} value={y}>{y}{y === years[0] ? ` (to ${fullLbl})` : y === years[years.length - 1] ? " (from Apr)" : ""}</option>)}
               </select>
             )}
             {o.ptype === "fy" && (
               <select aria-label="Fiscal year" value={o.fy} onChange={(e) => set("fy", +e.target.value)}>
-                {fys.map((y) => <option key={y} value={y}>FY {y}-{String(y + 1).slice(2)}{y === fys[0] ? ` (to ${lastLbl.split(" ")[0]})` : ""}</option>)}
+                {fys.map((y) => <option key={y} value={y}>FY {y}-{String(y + 1).slice(2)}{y === fys[0] ? ` (to ${fullLbl})` : ""}</option>)}
               </select>
             )}
           </span>
@@ -218,46 +231,63 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
             <p className="sub">{P.label} · {L} month{L > 1 ? "s" : ""} · {personName}. Compared with {P.prev ? P.prevLabel : "no earlier period in the data"}.</p>
           </div></div>
           <p className="said">
-            <b>{P.label}:</b> total spend was <b>{inr(all)}</b>{L > 1 ? ` (${inr(all / L)} a month)` : ""}. Run-rate spend is <b>{inr(tot)}</b>: committed <b>{inr(cm)}</b> ({pct(cm)}) and controllable <b>{inr(kc)}</b> ({pct(kc)}).
-            {o.sep && <> {nL} large one-time charge{nL === 1 ? "" : "s"} totalling <b>{inr(lg)}</b> {nL ? (nL === 1 ? "is" : "are") + " shown separately below" : "in this period"}.</>}
+            <b>{P.label}:</b> total spend was <b>{inr(all)}</b>{L > 1 ? ` (${inr(all / L)} a month)` : ""}{hiddenKeys.length ? <i> with the hidden items left out</i> : null}. Run-rate spend is <b>{inr(tot)}</b>: committed <b>{inr(cm)}</b> ({pct(cm)}) and controllable <b>{inr(kc)}</b> ({pct(kc)}).
+            {o.sep && !lh && <> {nL} large one-time charge{nL === 1 ? "" : "s"} totalling <b>{inr(lg)}</b> {nL ? (nL === 1 ? "is" : "are") + " shown separately below" : "in this period"}.</>}
             {o.spread && plannedNames.length > 0 && o.ptype === "month" && <> Planned recurring items ({plannedNames.join(", ")}) are shown at their monthly equivalent, not as paid.</>}
           </p>
 
           <div className="tiles">
             {GKEYS.map((g) => {
-              const v = eng.groupReg(g, P.s, P.e), avg = v / L, pa = eng.prevAvg((s, e) => eng.groupReg(g, s, e));
-              const rel = pa === null || pa < 500 ? "no comparison" : Math.abs(avg / pa - 1) < 0.08 ? "flat vs prev" : (avg > pa ? "▲ " : "▼ ") + Math.round(Math.abs(avg / pa - 1) * 100) + "% vs prev";
+              const raw = eng.groupRegAll(g, P.s, P.e), v = eng.groupReg(g, P.s, P.e), avg = v / L, pa = eng.prevAvg((s, e) => eng.groupReg(g, s, e));
+              const hg = hiddenKeys.includes("g:" + g);
+              const part = !hg && raw - v > 1;
+              const rel = hg ? "hidden from all numbers" : pa === null || pa < 500 ? "no comparison" : Math.abs(avg / pa - 1) < 0.08 ? "flat vs prev" : (avg > pa ? "▲ " : "▼ ") + Math.round(Math.abs(avg / pa - 1) * 100) + "% vs prev";
               const on = sel.includes(g);
               return (
-                <div key={g} className="tile" role="button" tabIndex={0} aria-pressed={on} data-drill-on={drill === g ? "1" : "0"}
+                <div key={g} className={`tile${hg ? " hid" : ""}`} role="button" tabIndex={0} aria-pressed={on} data-drill-on={drill === g ? "1" : "0"}
                   onClick={(e) => {
-                    if ((e.target as HTMLElement).closest("[data-drill]")) { e.stopPropagation(); doDrill(g); return; }
+                    const t = e.target as HTMLElement;
+                    if (t.closest("[data-hide]")) { e.stopPropagation(); toggleHide("g:" + g); return; }
+                    if (t.closest("[data-drill]")) { e.stopPropagation(); doDrill(g); return; }
                     if (clickT.current) clearTimeout(clickT.current);
                     clickT.current = setTimeout(() => toggleSel(g), 230);
                   }}
-                  onDoubleClick={() => { if (clickT.current) clearTimeout(clickT.current); doDrill(g); }}
+                  onDoubleClick={(e) => { if ((e.target as HTMLElement).closest("[data-hide]")) return; if (clickT.current) clearTimeout(clickT.current); doDrill(g); }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleSel(g); }
                     else if (e.key === "d" || e.key === "D") doDrill(g);
+                    else if (e.key === "h" || e.key === "H") toggleHide("g:" + g);
                   }}>
-                  <div className="tl"><i className="dot" style={{ background: `var(--sr-${g})` }} />{GROUPS[g]}{on ? " ✓" : ""}<span className="lnk dr" data-drill={g} role="button" tabIndex={0}>Drill ▸</span></div>
-                  <div className="amt">{inr(mo(v))}<span className="tx" style={{ fontWeight: 400, fontSize: 12 }}> {sfx}</span></div>
-                  <div className="vs">{mode === "avg" ? inr(v) + " total" : inr(avg) + "/mo"} · {rel}</div>
+                  <div className="tl">
+                    <span className="nmx"><i className="dot" style={{ background: `var(--sr-${g})` }} /><span>{GROUPS[g]}{on ? " ✓" : ""}</span></span>
+                    <span className="acts">
+                      <button className="eye" data-hide aria-pressed={hg} aria-label={`${hg ? "Include" : "Hide"} ${GROUPS[g]}`} title={`${hg ? "Include in" : "Hide from"} all numbers (H)`}><EyeIcon off={hg} /></button>
+                      <span className="lnk dr" data-drill={g} role="button" tabIndex={0}>Drill ▸</span>
+                    </span>
+                  </div>
+                  <div className="amt">{inr(mo(hg ? raw : v))}<span className="tx" style={{ fontWeight: 400, fontSize: 12 }}> {sfx}</span></div>
+                  <div className="vs">{hg ? `would be ${inr(raw / L)}/mo · hidden` : `${mode === "avg" ? inr(v) + " total" : inr(avg) + "/mo"} · ${rel}`}</div>
+                  {part && <div className="vs">excl. {inr(mo(raw - v))}{sfx} hidden inside</div>}
                   <div className="tx" style={{ marginTop: 2 }}>{GSUB[g]}</div>
                 </div>
               );
             })}
             {o.sep ? (
-              <div className="tile static">
-                <div className="tl"><i className="dot hatch" />Large charges</div>
-                <div className="amt">{inr(mo(lg))}<span className="tx" style={{ fontWeight: 400, fontSize: 12 }}> {sfx}</span></div>
-                <div className="vs">{nL} charge{nL === 1 ? "" : "s"}, not a run rate</div>
+              <div className={`tile static${lh ? " hid" : ""}`}>
+                <div className="tl">
+                  <span className="nmx"><i className="dot hatch" /><span>Large charges</span></span>
+                  <span className="acts"><button className="eye" aria-pressed={lh} aria-label={`${lh ? "Include" : "Hide"} large charges`} title={`${lh ? "Include" : "Hide"} large one-time charges`} onClick={() => toggleHide("L")}><EyeIcon off={lh} /></button></span>
+                </div>
+                <div className="amt">{inr(mo(lgRaw))}<span className="tx" style={{ fontWeight: 400, fontSize: 12 }}> {sfx}</span></div>
+                <div className="vs">{lh ? "hidden from all numbers" : `${nLAll} charge${nLAll === 1 ? "" : "s"}, not a run rate`}</div>
               </div>
             ) : (
-              <div className="tile static"><div className="tl">Large charges</div><div className="amt">—</div><div className="vs">folded into their groups</div></div>
+              <div className="tile static"><div className="tl"><span className="nmx">Large charges</span></div><div className="amt">—</div><div className="vs">folded into their groups</div></div>
             )}
           </div>
-          <p className="hint">Click a bucket to select it (select several to combine them). Double-click, or use Drill, to open a bucket into its categories.</p>
+          <p className="hint">Click a bucket to select it (select several to combine them). Double-click, or use Drill, to open it into its categories. The eye hides it from every number on this page.</p>
+
+          <HideLens eng={eng} hidden={hiddenKeys} sep={o.sep} onSet={(h) => { set("hidden", h); if (drill && h.includes("g:" + drill)) setDrill(null); }} onToggle={toggleHide} />
 
           {sel.length > 0 && (
             <div className="selbar">
@@ -303,6 +333,7 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
                     <span className="d">
                       {x.n} payment{x.n === 1 ? "" : "s"} in the last 12 months, typically {inr(x.typ)}, {cad}; {inr(x.yr)} over the year. {nextDue(x)}{" "}
                       <Link className="lnk" href={ledger(x.i)}>Open in Ledger</Link>
+                      <button className="lnk" onClick={() => toggleHide("c:" + x.i)}>Hide</button>
                       <button className="lnk" onClick={() => set("plan", { ...o.plan, [c.id]: false })}>Not recurring: treat as large charge</button>
                     </span>
                   </div>
@@ -311,7 +342,10 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
             </div>
           )}
 
-          {o.sep && (
+          {o.sep && lh && (
+            <div><p className="sec">Large one-time charges</p><p className="sub">Hidden from every number. <button className="lnk" onClick={() => toggleHide("L")}>Include again</button></p></div>
+          )}
+          {o.sep && !lh && (
             <div>
               {nL === 0 ? (
                 <><p className="sec">Large one-time charges</p><p className="sub">None in this period at the current threshold.</p></>
@@ -327,6 +361,7 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
                         <span />
                         <span className="d">{cleanDesc(t.d)}{" "}
                           <Link className="lnk" href={ledgerHref(data, c.id, t.m, t.m)}>Open in Ledger</Link>
+                          <button className="lnk" onClick={() => toggleHide("c:" + t.c)}>Hide category</button>
                           <button className="lnk" onClick={() => set("plan", { ...o.plan, [c.id]: true })}>Mark category as planned recurring</button>
                         </span>
                       </div>
@@ -341,7 +376,7 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
           <div className="scroll" style={{ marginTop: 14 }}>
             <table>
               <thead><tr>
-                <th>{tableTitle} · {P.label} · {rows.length} categories</th>
+                <th>{tableTitle} · {P.label} · {rows.length - nHidRows} categories{nHidRows ? ` + ${nHidRows} hidden` : ""}</th>
                 <th className="r">{mode === "avg" ? "Per month" : "Total in period"}</th>
                 <th className="r">{mode === "avg" ? "Total" : "Per month"}</th>
                 <th>vs {P.prev ? "prev" : "—"}</th>
@@ -356,18 +391,32 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
                     else if (pa >= 500) { const q = avg / pa; chip = q >= 1.4 ? <span className="chip">{q.toFixed(1)}x</span> : q <= 0.6 ? <span className="chip g">▼ {Math.round((1 - q) * 100)}%</span> : <span className="chip n">normal</span>; }
                   }
                   const tops = eng.topTx(r.i, P.s, P.e, 3);
+                  const hb = eng.hidBy(r.i);
+                  const tk = "t:" + r.c.nat + "›" + r.c.t;
+                  const typeHid = hiddenKeys.includes(tk);
+                  const typeLocked = r.hid && !typeHid && hb !== tk;
+                  const ownHid = hb === "c:" + r.i;
                   const isOpen = open.has(r.i);
                   return (
                     <Fragment key={r.i}>
-                      <tr className="cat" onClick={() => setOpen((s) => { const n = new Set(s); if (n.has(r.i)) n.delete(r.i); else n.add(r.i); return n; })}>
+                      <tr className={`cat${r.hid ? " hid" : ""}`} onClick={() => setOpen((s) => { const n = new Set(s); if (n.has(r.i)) n.delete(r.i); else n.add(r.i); return n; })}>
                         <td>
-                          <i className="dot" style={{ background: `var(--sr-${r.c.g})`, marginRight: 8 }} />{r.c.n}
-                          {eng.PLANNED.has(r.i) && <> <span className="chip n">planned recurring</span></>}
-                          <span className="tx" style={{ display: "block", marginLeft: 17 }}>
-                            {r.c.nat} › {r.c.t}<br />
-                            <button className="lnk" onClick={(e) => { e.stopPropagation(); goFocus(r.i); }}>Trend</button>
-                            <Link className="lnk" href={ledger(r.i)} onClick={(e) => e.stopPropagation()}>Open in Ledger</Link>
-                          </span>
+                          <div className="rowtl">
+                            <button className="eye" style={{ marginTop: -2 }} aria-pressed={r.hid} disabled={r.hid && !ownHid}
+                              aria-label={`${r.hid ? "Include" : "Hide"} ${r.c.n}`}
+                              title={r.hid ? (ownHid ? "Include this category" : `Hidden with ${eng.hkLabel(hb ?? "")}. Include it from the lens above.`) : "Hide this category"}
+                              onClick={(e) => { e.stopPropagation(); toggleHide("c:" + r.i); }}><EyeIcon off={r.hid} /></button>
+                            <div>
+                              <i className="dot" style={{ background: `var(--sr-${r.c.g})`, marginRight: 8 }} />{r.c.n}
+                              {eng.PLANNED.has(r.i) && <> <span className="chip n">planned recurring</span></>}
+                              <span className="tx" style={{ display: "block", marginLeft: 17 }}>
+                                {r.c.nat} › {r.c.t}<br />
+                                <button className="lnk" onClick={(e) => { e.stopPropagation(); goFocus(r.i); }}>Trend</button>
+                                <Link className="lnk" href={ledger(r.i)} onClick={(e) => e.stopPropagation()}>Open in Ledger</Link>
+                                {!typeLocked && <button className="lnk" onClick={(e) => { e.stopPropagation(); toggleHide(tk); }}>{typeHid ? "Include" : "Hide"} all “{r.c.t}”</button>}
+                              </span>
+                            </div>
+                          </div>
                         </td>
                         <td className="r"><b>{full(mode === "avg" ? avg : r.v)}</b>{r.lg > 0 && <span className="tx" style={{ display: "block" }}>+ {inr(mode === "avg" ? r.lg / L : r.lg)} large</span>}</td>
                         <td className="r tx">{full(mode === "avg" ? r.v : avg)}</td>
@@ -391,6 +440,7 @@ export function SpendReview({ data, initial = {} }: { data: SrData; initial?: In
           <div className="panelhead"><div>
             <h2 id="sr-h2">2 · What changed vs your normal</h2>
             <p className="sub">Run-rate spend per month, {P.label} vs {P.prev ? P.prevLabel : "n/a"}. Vacation, tax and one-off events are shown in section 1, not here. Large one-time charges are excluded when separated.</p>
+            {hiddenKeys.length > 0 && <span className="banner">Hidden items are left out here too: {hiddenKeys.map((k) => eng.hkLabel(k)).join(", ")}</span>}
           </div></div>
           {!mv ? <p className="sub">No earlier period in the data to compare against.</p> : (
             <>
